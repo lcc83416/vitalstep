@@ -998,18 +998,25 @@
           <div id="pantry-photos-grid" style="display:flex; gap:8px; overflow-x:auto; padding:4px 0;"></div>
         </div>
 
-        <!-- 智能排菜按鈕列 -->
+        <!-- 智能排菜按鈕列（100% 本機離線演算，零網路、無需金鑰） -->
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px;">
           <button class="btn btn-primary" style="padding:10px 4px; font-size:11px; font-weight:700; line-height:1.3;" onclick="generateMenuPlan('weekdays')">
-            ⚡ 產生平日晚歸菜單<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週一至五・零洗切免開火)</span>
+            ⚡ 產生平日晚歸菜單<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週一至五・本機零洗切免開火)</span>
           </button>
           <button class="btn" style="padding:10px 4px; font-size:11px; font-weight:700; line-height:1.3; background:linear-gradient(135deg, #0284c7, #6366f1); color:white; border:none;" onclick="generateMenuPlan('weekend')">
-            🍲 產生週末暖鍋食譜<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週六日・自煮療癒小鍋)</span>
+            🍲 產生週末暖鍋食譜<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週六日・本機自煮療癒小鍋)</span>
           </button>
         </div>
         <button class="btn" style="width:100%; margin-top:8px; padding:8px; font-size:11px; font-weight:700; background:var(--card-bg); border:1px solid var(--primary); color:var(--primary);" onclick="generateMenuPlan('fullweek')">
-          📅 一鍵排滿「一週 7 天晚餐靈感」（買現成 + 自己煮均衡搭配）
+          📅 一鍵排滿「一週 7 天晚餐靈感」（本機秒配・買現成+自己煮均衡）
         </button>
+
+        <!-- ✨ 暖胃廚房專屬：AI 主廚深度排餐按鈕（僅在暖胃廚房單獨設定 API Key 時顯示） -->
+        <div id="recipe-ai-btn-container" style="display:none; margin-top:8px;">
+          <button class="btn" style="width:100%; padding:9px; font-size:12px; background:linear-gradient(135deg, #059669, #0284c7); color:white; border:none; font-weight:700;" onclick="generateRecipeWithGemini()">
+            ✨ 呼叫雲端 AI 主廚客製深度排餐（嚴格僅傳此食材與照片）
+          </button>
+        </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-top:1px dashed var(--border); padding-top:8px;">
           <button class="btn" style="font-size:10px; color:var(--text-muted); padding:4px 8px;" onclick="clearPantryInput()">
@@ -1018,6 +1025,32 @@
           <button class="btn" style="font-size:10px; color:var(--text-muted); padding:4px 8px;" onclick="resetMenuPlan()">
             🔄 還原示範菜單
           </button>
+        </div>
+
+        <!-- ⚙️ 暖胃廚房專屬：獨立 AI 金鑰授權（與餐食拍照徹底物理隔離） -->
+        <div style="margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleRecipeAiKeyPanel()">
+            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+              ⚙️ 暖胃廚房 AI 主廚設定 <span class="tag" style="font-size:9px; background:#ecfdf5; color:#059669;">選填・獨立隔離金鑰</span>
+            </span>
+            <span id="recipe-ai-key-toggle-arrow" style="font-size:11px; color:var(--text-muted);">▼</span>
+          </div>
+
+          <!-- 展開面板 -->
+          <div id="recipe-ai-key-panel" style="display:none; margin-top:10px; background:var(--bg); padding:10px; border-radius:10px; border:1px solid var(--border);">
+            <div style="font-size:11px; line-height:1.6; color:var(--text-main); margin-bottom:8px;">
+              🛡️ <strong>100% 獨立模組隔離保證</strong>：<br>
+              此處金鑰與「今日打卡照片分析」<strong>完全獨立分開儲存</strong>！<br>
+              若此處未單獨輸入金鑰，暖胃廚房<strong>100% 採用本機純離線演算法</strong>（不連網、零個資）。即使設定金鑰，也<strong>僅會單純傳送食材名稱與照片</strong>，嚴格隔離任何個人數值！
+            </div>
+            <div style="display:flex; gap:6px;">
+              <input type="password" id="recipe-gemini-key-input" placeholder="貼上此模組專屬 Gemini API Key" 
+                style="flex:1; padding:7px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--card-bg); color:var(--text-main); outline:none;">
+              <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="saveRecipeGeminiKey()">儲存</button>
+              <button class="btn" style="padding:6px 10px; font-size:11px;" onclick="clearRecipeGeminiKey()">清除</button>
+            </div>
+            <div id="recipe-gemini-key-status" style="font-size:10px; color:var(--primary); margin-top:5px; font-weight:700;"></div>
+          </div>
         </div>
 
         <div id="menu-gen-status" style="margin-top:8px; font-size:11px; display:none;"></div>
@@ -2021,8 +2054,8 @@
 
         const prompt = `你是一位專業且溫暖的臨床營養師。請針對使用者上傳的這餐（食材備註：${note || '無備註，請辨識照片'}）進行精簡專業點評：
 1. 估算熱量與食材組成（澱粉、蛋白質、蔬菜比例）
-2. 針對「高三酸甘油酯(TG)與脂肪肝」指出隱藏地雷與優點
-3. 下次外食可以怎麼微調（繁體中文，條列式3點以內，口吻親切鼓勵，避免長篇大論）`;
+2. 針對高纖維、低精緻糖、清爽護胃給予專業點評
+3. 下次外食可以怎麼微調更均衡（繁體中文，條列式3點以內，口吻親切鼓勵，避免長篇大論）`;
 
         parts.push({ text: prompt });
 
@@ -2261,6 +2294,7 @@
       }
       updateMenuTabButtons();
       renderMenuCards();
+      checkRecipeGeminiKeyStatus();
     }
 
     function savePantryText() {
@@ -2494,11 +2528,89 @@
       return plans;
     }
 
-    async function generateAiMenuWithGemini(type, text) {
-      const key = localStorage.getItem('vitalstep_gemini_key');
+    // --- ⚙️ 暖胃廚房獨立 AI 主廚金鑰管理（與餐食拍照徹底物理隔離） ---
+    function toggleRecipeAiKeyPanel() {
+      const p = document.getElementById('recipe-ai-key-panel');
+      const arrow = document.getElementById('recipe-ai-key-toggle-arrow');
+      if (p.style.display === 'none') {
+        p.style.display = 'block';
+        arrow.textContent = '▲';
+      } else {
+        p.style.display = 'none';
+        arrow.textContent = '▼';
+      }
+    }
+
+    function saveRecipeGeminiKey() {
+      const k = document.getElementById('recipe-gemini-key-input').value.trim();
+      if (!k) {
+        alert('請先輸入此模組專屬的 API Key！');
+        return;
+      }
+      localStorage.setItem('vitalstep_recipe_chef_key', k);
+      checkRecipeGeminiKeyStatus();
+      showToast('✅ 已儲存暖胃廚房獨立 API Key！');
+    }
+
+    function clearRecipeGeminiKey() {
+      if (confirm('確定要清除暖胃廚房儲存的 API Key 嗎？')) {
+        localStorage.removeItem('vitalstep_recipe_chef_key');
+        document.getElementById('recipe-gemini-key-input').value = '';
+        checkRecipeGeminiKeyStatus();
+        showToast('已清除暖胃廚房 API Key，恢復 100% 純本機模式。');
+      }
+    }
+
+    function checkRecipeGeminiKeyStatus() {
+      const k = localStorage.getItem('vitalstep_recipe_chef_key');
+      const statusEl = document.getElementById('recipe-gemini-key-status');
+      const inputEl = document.getElementById('recipe-gemini-key-input');
+      const btnContainer = document.getElementById('recipe-ai-btn-container');
+
+      if (k) {
+        if (inputEl) inputEl.value = k;
+        if (statusEl) statusEl.textContent = '✓ 已設定此模組獨立 API Key（已解鎖 AI 深度排餐按鈕）';
+        if (btnContainer) btnContainer.style.display = 'block';
+      } else {
+        if (statusEl) statusEl.textContent = '尚未設定獨立 Key（本模組 100% 純本機運算，絕不讀取餐食照片 Key）';
+        if (btnContainer) btnContainer.style.display = 'none';
+      }
+    }
+
+    // 🛡️ 暖胃廚房常規排餐：100% 本機純離線智能演算法（零網路請求、零金鑰、零個資）
+    function generateMenuPlan(type) {
+      const pantryText = (document.getElementById('pantry-text-input')?.value || state.pantryText || '').trim();
+      currentMenuSubTab = type === 'fullweek' ? 'fullweek' : (type === 'weekend' ? 'weekend' : 'weekdays');
+      updateMenuTabButtons();
+
+      state.customMenuPlan = generateLocalMenuPlan(type, pantryText);
+      save();
+      renderMenuCards();
+      const statusEl = document.getElementById('menu-gen-status');
+      if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.innerHTML = `<span style="color:var(--primary); font-weight:700;">✨ 已由本機智慧廚房為您搭配專屬菜單（100% 離線私密、未連網）！</span>`;
+      }
+      showToast('✨ 專屬菜單已就緒（本機模式）！');
+    }
+
+    // ✨ 僅在使用者於暖胃廚房主動輸入獨立 Key 並明確點擊時才調用（嚴格僅傳食材，無任何個人健檢數字）
+    async function generateRecipeWithGemini() {
+      const key = localStorage.getItem('vitalstep_recipe_chef_key');
+      if (!key) {
+        alert('請先在下方「⚙️ 暖胃廚房 AI 主廚設定」輸入此模組專屬的 API Key 喔！');
+        return;
+      }
+
+      const pantryText = (document.getElementById('pantry-text-input')?.value || state.pantryText || '').trim();
+      if (!pantryText && pantryPhotos.length === 0) {
+        alert('請先打字輸入食材或上傳買菜照片，AI 主廚才能為您排餐喔！');
+        return;
+      }
+
       const statusEl = document.getElementById('menu-gen-status');
       statusEl.style.display = 'block';
-      statusEl.innerHTML = '<div style="color:var(--primary); font-weight:700;">🤖 AI 專屬主廚正在根據您的食材規劃菜單，請稍候 3~5 秒...</div>';
+      statusEl.innerHTML = '<div style="color:var(--primary); font-weight:700;">🤖 雲端 AI 主廚正在單獨看您輸入的食材，請稍候 3~5 秒...</div>';
 
       try {
         const parts = [];
@@ -2514,31 +2626,25 @@
           });
         }
 
-        const typePromptMap = {
-          weekdays: '平日週一至五晚歸（20:30到家，極速、免開火或微波≤3分鐘、零洗切洗鍋，以及超商/外食買現成避雷搭法）',
-          weekend: '週末週六週日（悠閒療癒自煮小暖鍋或低GI煲，高纖抗發炎）',
-          fullweek: '一週 7 天晚餐靈感（週一至週五平日晚歸極速零洗切，週末自煮清爽暖鍋，買現成與自己煮平衡搭配）'
-        };
-
-        const prompt = `你是一位米其林級暖心臨床營養主廚。專為一位「每日通勤3-4小時、20:30到家、膝蓋無法負重深蹲、健檢三酸甘油酯TG 260與脂肪肝」的上班族規劃晚餐。
-使用者目前持有/買入的食材為：${text || '無打字，請辨識照片中的食材'}。
-請為他規劃【${typePromptMap[type] || typePromptMap.weekdays}】菜單提案。
+        const prompt = `你是一位米其林級暖心臨床營養主廚。
+使用者目前持有/買入的食材清單為：${pantryText || '無打字，請辨識照片中的食材'}。
+請為他規劃平日晚歸免洗切（≤3分鐘）或週末自煮暖鍋的精簡提案。
 要求：
-1. 平日晚歸必須「極速≤3-5分鐘、零洗切免洗菜刀砧板、免開火或微波」，或是「超商/外食現成避雷買法」。
-2. 週末自煮以「少油少鹽暖胃小鍋或低GI煲」為主。
-3. 嚴格避開高果糖、過量澱粉與高鈉重鹹，保護脂肪肝與降TG。
-請以繁體中文輸出，包含 3 道精簡具體菜餚。每道請用如下 JSON 格式輸出：
+1. 平日晚歸以「極速、免開火或微波、零洗切洗鍋」為主，或推薦超商外食避雷買法。
+2. 週末料理以「清爽蔬菜小暖鍋或高纖低GI煲」為主。
+3. 嚴格把握「高纖維、優質蛋白質、低精緻糖、好油脂」原則。
+請以繁體中文輸出 3 道精簡具體菜餚，使用純 JSON 陣列格式：
 [
   {
     "title": "菜餚名稱",
     "category": "買現成 或 自己做",
     "time": "⏱️ 所需時間",
-    "desc": "食材與作法說明（條列式）",
-    "highlight": "護肝降TG與健康效益",
+    "desc": "食材與極速作法（條列式）",
+    "highlight": "高纖低卡營養亮點",
     "planText": "簡短打卡備註（50字以內）"
   }
 ]
-只返回純 JSON 陣列，不要包含任何額外 markdown 或說明。`;
+只返回純 JSON 陣列，不要包含任何 markdown 標記或額外字元。`;
 
         parts.push({ text: prompt });
 
@@ -2560,7 +2666,7 @@
         try {
           parsedPlans = JSON.parse(replyText);
         } catch (e) {
-          console.warn('JSON parse failed, falling back to local synthesizer:', e);
+          console.warn('JSON parse failed:', e);
         }
 
         if (Array.isArray(parsedPlans) && parsedPlans.length > 0) {
@@ -2570,17 +2676,17 @@
             category: p.category || (p.time && p.time.includes('外帶') ? '買現成' : '自己做'),
             badgeClass: (p.category && p.category.includes('現成')) ? 'badge-ready' : 'badge-cook',
             time: p.time || '⏱️ 3 分鐘',
-            tags: ['AI 專屬量身配', 'TG 260 防護'],
+            tags: ['AI 專屬量身配'],
             desc: p.desc,
-            highlight: `🛡️ <strong>護肝降TG：</strong>${p.highlight}`,
+            highlight: `🛡️ <strong>營養亮點：</strong>${p.highlight}`,
             planText: p.planText || p.title
           }));
           save();
           renderMenuCards();
-          statusEl.innerHTML = '<span style="color:var(--primary); font-weight:700;">✨ Gemini AI 已根據您的食材量身生成專屬菜單！</span>';
-          showToast('✨ Gemini AI 專屬菜單生成成功！');
+          statusEl.innerHTML = '<span style="color:var(--primary); font-weight:700;">✨ 雲端 AI 已根據您的食材量身生成專屬菜單！</span>';
+          showToast('✨ 專屬菜單生成成功！');
         } else {
-          state.customMenuPlan = generateLocalMenuPlan(type, text);
+          state.customMenuPlan = generateLocalMenuPlan('weekdays', pantryText);
           save();
           renderMenuCards();
           statusEl.innerHTML = '<span style="color:var(--primary); font-weight:700;">✨ 已根據您的食材完成菜單排程！</span>';
@@ -2588,33 +2694,11 @@
         }
       } catch (err) {
         console.error('Gemini Menu Generation Error:', err);
-        state.customMenuPlan = generateLocalMenuPlan(type, text);
+        state.customMenuPlan = generateLocalMenuPlan('weekdays', pantryText);
         save();
         renderMenuCards();
         statusEl.innerHTML = `<span style="color:var(--text-muted);">💡 雲端連線較慢，已切換至本機智能廚房為您搭配完成！</span>`;
         showToast('✨ 專屬菜單已生成（本機智能模式）！');
-      }
-    }
-
-    function generateMenuPlan(type) {
-      const pantryText = (document.getElementById('pantry-text-input')?.value || state.pantryText || '').trim();
-      const key = localStorage.getItem('vitalstep_gemini_key');
-
-      currentMenuSubTab = type === 'fullweek' ? 'fullweek' : (type === 'weekend' ? 'weekend' : 'weekdays');
-      updateMenuTabButtons();
-
-      if (key && (pantryText || pantryPhotos.length > 0)) {
-        generateAiMenuWithGemini(type, pantryText);
-      } else {
-        state.customMenuPlan = generateLocalMenuPlan(type, pantryText);
-        save();
-        renderMenuCards();
-        const statusEl = document.getElementById('menu-gen-status');
-        if (statusEl) {
-          statusEl.style.display = 'block';
-          statusEl.innerHTML = `<span style="color:var(--primary); font-weight:700;">✨ 已根據您現有的食材規劃專屬料理靈感！</span>`;
-        }
-        showToast('✨ 專屬菜單已就緒！');
       }
     }
 
