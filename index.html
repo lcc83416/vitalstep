@@ -358,6 +358,30 @@
       color: var(--danger-text);
     }
 
+    /* 餐別選擇膠囊按鈕 */
+    .meal-type-chip {
+      text-align: center;
+      padding: 8px 2px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .meal-type-chip:active {
+      transform: scale(0.96);
+    }
+    .meal-type-chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(5,150,105,0.25);
+    }
+
     /* 椅子操計時面板 */
     .chair-timer-box {
       background: linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08));
@@ -431,7 +455,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 4.0 <span class="tag">椅子操+動態管家</span></div>
+        <div class="logo-title">微步輕健 4.1 <span class="tag">餐別分類+零食護肝</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -605,11 +629,24 @@
         </div>
       </div>
 
-      <!-- 飲食拍照（升級：常駐文字輸入 + 支援相簿與拍照） -->
+      <!-- 飲食拍照（升級：餐別分類 + 常駐打字 + 相簿支援 + 零食與優格避坑） -->
       <div class="card">
         <div class="card-title">
-          <span>📸 飲食拍照記錄 & 食材筆記</span>
+          <span>📸 飲食拍照記錄 & 餐別筆記</span>
           <span class="tag" style="background:#fef3c7; color:#b45309;">混在一起也能記</span>
+        </div>
+
+        <!-- 🍽️ 餐別選擇膠囊按鈕 -->
+        <div style="margin-bottom:12px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:5px;">
+            🍽️ 選擇餐別（已依當前時間預選）：
+          </label>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
+            <div class="meal-type-chip" id="chip-breakfast" onclick="selectMealType('早餐')">🌅 早餐</div>
+            <div class="meal-type-chip" id="chip-lunch" onclick="selectMealType('午餐')">🍱 午餐</div>
+            <div class="meal-type-chip" id="chip-dinner" onclick="selectMealType('晚餐')">🌙 晚餐</div>
+            <div class="meal-type-chip" id="chip-snack" onclick="selectMealType('點心')">🍪 點心零食</div>
+          </div>
         </div>
         
         <!-- 常駐打字輸入框 -->
@@ -617,8 +654,9 @@
           <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
             📝 這餐吃了什麼？打字備註（隨時可寫）：
           </label>
-          <input type="text" id="food-note-input" placeholder="例如：滷味（高麗菜、白蘿蔔、非油炸豆干、瘦肉片，未加酸菜）" 
-            style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;">
+          <input type="text" id="food-note-input" placeholder="例如：拿鐵+茶葉蛋 / 滷味（高麗菜、肉片） / 餅乾2片 / 優格飲" 
+            style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;"
+            oninput="updateAiAdvice()">
         </div>
 
         <!-- 支援從相簿選擇或拍照 (移除 capture 限制) -->
@@ -637,19 +675,21 @@
         </div>
 
         <!-- 地雷標籤切換 -->
-        <div style="font-size:11px; font-weight:700; margin-bottom:4px;">點選標記是否有隱形地雷（選填）：</div>
+        <div style="font-size:11px; font-weight:700; margin-bottom:4px;">點選標籤獲得即時避坑建議（選填）：</div>
         <div style="margin-bottom:10px;">
+          <span class="tag-chip" onclick="toggleTag(this, '餅乾零食消耗')">🍪 餅乾零食消庫存</span>
+          <span class="tag-chip" onclick="toggleTag(this, '優格飲果醬')">🍯 果醬優格/優格飲</span>
           <span class="tag-chip" onclick="toggleTag(this, '不餓亂吃')">⚠️ 不餓只是嘴饞</span>
           <span class="tag-chip" onclick="toggleTag(this, '晚餐零食代餐')">🍫 晚歸用零食代餐</span>
           <span class="tag-chip" onclick="toggleTag(this, '糖醋/油炸')">🍗 糖醋肉/油炸裹粉</span>
           <span class="tag-chip" onclick="toggleTag(this, '精緻甜食')">🍰 蛋糕/米漿/甜點</span>
         </div>
 
-        <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:8px; border-radius:10px; font-size:11px; line-height:1.6; display:none;"></div>
+        <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6; display:none; border:1px solid var(--border);"></div>
         
         <!-- 儲存記錄按鈕 -->
         <div style="text-align:right;">
-          <button class="btn btn-primary" style="width:100%; padding:9px; font-size:13px;" onclick="saveFoodLog()">
+          <button class="btn btn-primary" style="width:100%; padding:10px; font-size:13px;" onclick="saveFoodLog()">
             💾 儲存此餐記錄（打字或相片都能存）
           </button>
         </div>
@@ -764,6 +804,19 @@
             2. 淋入一顆打散的蛋花，加入燕麥片拌勻微滾 1 分鐘關火。<br>
             3. 調味：黑胡椒粒、少許鹽、幾滴香油。完全不用醬油，酸香清爽暖呼呼！
           </div>
+        </div>
+      </div>
+
+      <!-- 🍪 甜點、優格飲與零食消庫存真相指南 -->
+      <div class="card" style="border-left: 4px solid #f59e0b; background:linear-gradient(to bottom, var(--card-bg), var(--warning-bg));">
+        <div class="card-title">
+          <span>🍪 甜點、優格飲與零食「消庫存」指南</span>
+          <span style="font-size:10px; color:#b45309;">TG 260 避坑</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-main);">
+          • <strong>市售優格飲/果醬優格真相</strong>：很多優格飲雖然標榜助消化，但為了掩蓋發酵酸味，每瓶常加入高達 <strong>20~30g 的精緻糖（相當於 5~6 顆方糖！）</strong>，果醬也是高果糖糖漿熬煮，是三酸甘油酯飆到 260 的隱形推手！<br>
+          • <strong>想助消化怎麼喝？</strong>：中午配「無糖茶」或「無糖高纖豆漿」；若想吃優格改買<strong>「無糖希臘優格」</strong>，自己撒幾顆冷凍藍莓或小把堅果，既有豐富蛋白質又完全不傷肝！<br>
+          • <strong>家裡餅乾零食怎麼消？</strong>：想吃甜食很正常，請把握<strong>「放在午餐正餐剛吃飽後立刻吃」</strong>！利用正餐的蔬菜纖維與蛋白質延緩糖分吸收，<strong>絕對不要在下午空腹或晚上宵夜吃</strong>！
         </div>
       </div>
 
@@ -914,6 +967,15 @@
       if (state.steps) document.getElementById('input-steps').value = state.steps;
       if (state.weight) document.getElementById('input-morning-weight').value = state.weight;
 
+      // 歷史記錄向下相容
+      if (state.foodLogs) {
+        state.foodLogs.forEach((item, idx) => {
+          if (!item.id) item.id = Date.now() - idx * 1000;
+          if (!item.mealType) item.mealType = '晚餐';
+        });
+      }
+
+      initMealType();
       renderHabits();
       renderWater();
       renderCountdown();
@@ -1065,6 +1127,12 @@
         msgs.push(`✨ 今日微習慣已完成 ${doneHabits} 項，執行力超棒，今晚帶著成就感好好放鬆睡覺！`);
       }
 
+      // 零食與餐點綜合反饋
+      const snacksLogged = (state.foodLogs || []).filter(item => item.mealType === '點心' || (item.tags || []).includes('餅乾零食消耗')).length;
+      if (snacksLogged > 0) {
+        msgs.push(`🍪 <strong>今日點心提醒</strong>：餅乾零食有記錄很棒！記得庫存消完就不補貨，且盡量安排在「午餐飯後」吃，晚上睡前嚴防糖分進攻肝臟喔！`);
+      }
+
       if (msgs.length === 0) {
         msgs.push('今天起跑！白天在公司用茶包喝足水分，晚歸 20:30 到家後停止灌水；下班洗澡前試試看 4 分鐘椅子燃脂操，身體就會很舒服！');
       }
@@ -1162,9 +1230,35 @@
       }
     }
 
-    // --- 飲食拍照與記錄 ---
+    // --- 飲食拍照與餐別記錄 ---
     let currentTags = [];
     let currentPhotoData = null;
+    let selectedMealType = '晚餐';
+
+    function initMealType() {
+      const h = new Date().getHours();
+      if (h < 10) selectedMealType = '早餐';
+      else if (h < 14) selectedMealType = '午餐';
+      else if (h < 17) selectedMealType = '點心';
+      else selectedMealType = '晚餐';
+      updateMealChips();
+    }
+
+    function selectMealType(meal) {
+      selectedMealType = meal;
+      updateMealChips();
+      updateAiAdvice();
+    }
+
+    function updateMealChips() {
+      document.querySelectorAll('.meal-type-chip').forEach(c => {
+        if (c.textContent.includes(selectedMealType)) {
+          c.classList.add('active');
+        } else {
+          c.classList.remove('active');
+        }
+      });
+    }
 
     function triggerPhotoUpload() {
       document.getElementById('photo-input').click();
@@ -1195,21 +1289,39 @@
 
     function updateAiAdvice() {
       const box = document.getElementById('ai-advice-box');
-      if (currentTags.length === 0) {
+      const noteText = (document.getElementById('food-note-input')?.value || '').toLowerCase();
+      let tips = [];
+
+      // 點心與餅乾零食建議
+      if (selectedMealType === '點心' || currentTags.includes('餅乾零食消耗') || noteText.includes('餅') || noteText.includes('零食') || noteText.includes('糖')) {
+        tips.push('🍪 <strong>餅乾零食「消庫存減害吃法」</strong>：想吃甜點很正常，不必感到罪惡！最重要的護肝技巧是：<strong>「放在午餐正餐吃飽後立刻吃」</strong>！利用正餐的蔬菜與蛋白質纖維延緩糖分吸收，<strong>千萬不要在下午 3、4 點空腹吃，更別在晚上當宵夜</strong>，這樣三酸甘油酯（TG）才不會飆升！');
+      }
+
+      // 果醬優格與優格飲真相
+      if (currentTags.includes('優格飲果醬') || noteText.includes('優格') || noteText.includes('優酪乳')) {
+        tips.push('🍯 <strong>優格飲與果醬優格真相</strong>：市售優格飲雖然標榜助消化、有益生菌，但為了壓過酸味，每瓶常加入高達 <strong>20~30g 精緻糖（相當於 5~6 顆方糖！）</strong>，果醬也是高果糖糖漿熬煮，是三酸甘油酯飆到 260 的隱形推手！<br>👉 <strong>聰明喝法</strong>：助消化中午可改配「無糖高纖豆漿」或「無糖茶」；若想吃優格改買<strong>「無糖希臘優格」</strong>加幾顆藍莓或堅果，既補蛋白質又完全不傷肝！');
+      }
+
+      // 代餐地雷
+      if (currentTags.includes('不餓亂吃') || currentTags.includes('晚餐零食代餐')) {
+        tips.push('⚠️ <strong>代餐地雷</strong>：晚歸不餓時拿零食充飢，劣質油與糖分會在睡眠時直接堆進肝臟！如果太晚回家不餓，改喝一杯「溫無糖豆漿」或「茶葉蛋+小黃瓜」最安撫嘴饞。');
+      }
+
+      // 糖醋油炸
+      if (currentTags.includes('糖醋/油炸') || noteText.includes('炸') || noteText.includes('糖醋')) {
+        tips.push('🍗 <strong>外食換菜建議</strong>：糖醋肉含「厚裹粉油炸 + 黏稠砂糖醬汁」，下次自助餐改挑「滷雞腿去皮」、「蒜泥白肉」或「番茄炒蛋」，美味又完全不傷肝！');
+      }
+
+      // 精緻甜食
+      if (currentTags.includes('精緻甜食') || noteText.includes('蛋糕') || noteText.includes('米漿') || noteText.includes('手搖')) {
+        tips.push('🍰 <strong>控糖叮嚀</strong>：精緻液體糖（如米漿、含糖手搖）會直接轉化為肝臟脂肪滴。想喝冰飲建議用「無糖氣泡水 + 檸檬片」替代！');
+      }
+
+      if (tips.length === 0) {
         box.style.display = 'none';
         return;
       }
       box.style.display = 'block';
-      let tips = [];
-      if (currentTags.includes('不餓亂吃') || currentTags.includes('晚餐零食代餐')) {
-        tips.push('⚠️ <strong>代餐地雷</strong>：零食含有大量精緻糖與劣質油，是 TG 飆到 260 的首要元凶！晚歸不餓時，請改喝「無糖溫豆漿」或吃「茶葉蛋+小黃瓜」安撫嘴饞。');
-      }
-      if (currentTags.includes('糖醋/油炸')) {
-        tips.push('🍗 <strong>外食換菜建議</strong>：糖醋肉含「炸油 + 黏稠砂糖醬汁」，下次自助餐改挑「滷雞腿去皮」、「蒜泥白肉」或「番茄炒蛋」，美味又完全不傷肝！');
-      }
-      if (currentTags.includes('精緻甜食')) {
-        tips.push('🍰 <strong>控糖叮嚀</strong>：精緻甜食直接轉化為肝臟脂肪滴。想吃甜時，建議用「無糖氣泡水 + 檸檬片」或「小把無調味堅果」替代。');
-      }
       box.innerHTML = tips.join('<br><br>');
     }
 
@@ -1222,14 +1334,17 @@
 
       state.foodLogs = state.foodLogs || [];
       state.foodLogs.unshift({
+        id: Date.now(),
+        mealType: selectedMealType,
         time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
         photo: currentPhotoData || null,
         note: note,
         tags: [...currentTags]
       });
-      if (state.foodLogs.length > 5) state.foodLogs.pop();
+      if (state.foodLogs.length > 10) state.foodLogs.pop(); // 保留當日最多 10 筆
       save();
       renderFoodLogs();
+      updateCoachFeedback();
       
       // 重置輸入區
       document.getElementById('food-note-input').value = '';
@@ -1242,25 +1357,48 @@
       currentTags = [];
     }
 
+    function deleteFoodLog(id) {
+      if (confirm('確定刪除這筆餐點記錄嗎？')) {
+        state.foodLogs = (state.foodLogs || []).filter(item => item.id !== id);
+        save();
+        renderFoodLogs();
+        updateCoachFeedback();
+      }
+    }
+
     function renderFoodLogs() {
       const c = document.getElementById('food-logs-history');
       if (!state.foodLogs || state.foodLogs.length === 0) {
-        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，今晚吃了什麼？打字或拍照記錄一下吧！</div>';
+        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，今天吃了什麼？打字或拍照記錄一下吧！</div>';
         return;
       }
-      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">今日已記錄餐點：</div>' +
-        state.foodLogs.map(item => `
-          <div style="display:flex; gap:10px; align-items:flex-start; background:var(--bg); padding:10px; border-radius:12px; margin-bottom:8px; border:1px solid var(--border);">
-            ${item.photo ? `<img src="${item.photo}" style="width:56px; height:56px; object-fit:cover; border-radius:8px; flex-shrink:0;">` : `<div style="width:56px; height:56px; border-radius:8px; background:var(--card-bg); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; border:1px solid var(--border);">🥗</div>`}
-            <div style="flex:1;">
+
+      const mealBadgeMap = {
+        '早餐': { bg: '#fef3c7', color: '#b45309', icon: '🌅 早餐' },
+        '午餐': { bg: '#ecfdf5', color: '#059669', icon: '🍱 午餐' },
+        '晚餐': { bg: '#e0e7ff', color: '#3730a3', icon: '🌙 晚餐' },
+        '點心': { bg: '#ffe4e6', color: '#9f1239', icon: '🍪 點心零食' }
+      };
+
+      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">今日已記錄餐點（依時間排序）：</div>' +
+        state.foodLogs.map(item => {
+          const badge = mealBadgeMap[item.mealType] || mealBadgeMap['晚餐'];
+          return `
+          <div style="display:flex; gap:10px; align-items:flex-start; background:var(--bg); padding:10px; border-radius:12px; margin-bottom:8px; border:1px solid var(--border); position:relative;">
+            ${item.photo ? `<img src="${item.photo}" style="width:58px; height:58px; object-fit:cover; border-radius:8px; flex-shrink:0;">` : `<div style="width:58px; height:58px; border-radius:8px; background:var(--card-bg); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; border:1px solid var(--border);">${item.mealType === '點心' ? '🍪' : (item.mealType === '早餐' ? '☕' : (item.mealType === '午餐' ? '🍱' : '🥗'))}</div>`}
+            <div style="flex:1; min-width:0;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:12px; font-weight:700;">${item.time}</span>
-                <span style="font-size:10px; color:var(--text-muted);">${item.tags.length ? item.tags.join('、') : '健康記錄'}</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="background:${badge.bg}; color:${badge.color}; padding:2px 6px; border-radius:6px; font-weight:700; font-size:10px;">${badge.icon}</span>
+                  <span style="font-size:11px; color:var(--text-muted);">${item.time}</span>
+                </div>
+                <button onclick="deleteFoodLog(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:13px; cursor:pointer; padding:2px 4px;" title="刪除記錄">🗑️</button>
               </div>
-              ${item.note ? `<div style="font-size:12px; color:var(--text-main); margin-top:4px; background:var(--card-bg); padding:5px 8px; border-radius:6px; border:1px solid var(--border); line-height:1.4;">${item.note}</div>` : ''}
+              ${item.note ? `<div style="font-size:12px; color:var(--text-main); margin-top:5px; background:var(--card-bg); padding:6px 8px; border-radius:6px; border:1px solid var(--border); line-height:1.4; word-break:break-word;">${item.note}</div>` : ''}
+              ${item.tags && item.tags.length ? `<div style="font-size:10px; color:var(--danger-text); margin-top:4px;">🏷️ ${item.tags.join('、')}</div>` : ''}
             </div>
           </div>
-        `).join('');
+        `}).join('');
     }
 
     // --- 呼吸法動畫 ---
