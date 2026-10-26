@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>微步輕健 VitalStep 3.0 - 專屬健康日誌</title>
+  <style>
+    /* 100% 離線獨立樣式，針對 iPhone 16 Pro Max 尺寸全面優化 */
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #059669;
+      --primary-light: #ecfdf5;
+      --accent: #0284c7;
+      --accent-light: #f0f9ff;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      --warning-text: #b45309;
+      --danger-bg: #fef2f2;
+      --danger-text: #b91c1c;
+      --radius: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card-bg: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --primary: #10b981;
+        --primary-light: #064e3b;
+        --accent: #38bdf8;
+        --accent-light: #0c4a6e;
+        --warning-bg: #451a03;
+        --warning-border: #78350f;
+        --warning-text: #fcd34d;
+        --danger-bg: #450a0a;
+        --danger-text: #fca5a5;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding-bottom: calc(90px + env(safe-area-inset-bottom, 34px));
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 440px; /* 精準適配 iPhone 16 Pro Max 寬度 */
+      margin: 0 auto;
+      padding: 14px 16px;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      padding-top: calc(12px + env(safe-area-inset-top, 0px));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      color: white;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .logo-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .date-str {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 頂部膠囊分段切換器 (一打開最上方直接看到，免滾動) */
+    .top-segment-bar {
+      display: flex;
+      background: var(--card-bg);
+      padding: 5px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+      gap: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .segment-btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 2px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .segment-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 6px rgba(5,150,105,0.25);
+    }
+
+    /* 底部導航欄 (雙保險，底部安全區避讓) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding-top: 8px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 34px));
+      z-index: 50;
+      max-width: 440px;
+      margin: 0 auto;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 3px 12px;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+    }
+    .nav-item.active {
+      color: var(--primary);
+    }
+    .nav-item .icon {
+      font-size: 19px;
+      margin-bottom: 2px;
+    }
+
+    /* 分頁頁面容器 */
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* 卡片通用樣式 */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* 進度條 */
+    .progress-bar-bg {
+      background: var(--border);
+      height: 8px;
+      border-radius: 99px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-bar-fill {
+      background: var(--primary);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 99px;
+    }
+
+    /* 習慣列表 */
+    .habit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .habit-item:active {
+      transform: scale(0.98);
+    }
+    .habit-item.done {
+      background: var(--primary-light);
+      border-color: rgba(5,150,105,0.3);
+    }
+    .habit-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .habit-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .habit-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .habit-item.done .habit-title {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+    .habit-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+      transition: all 0.2s;
+    }
+    .habit-item.done .checkbox {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* 水杯小元件 */
+    .water-cups {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .cup {
+      height: 24px;
+      border-radius: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .cup.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* 按鈕 */
+    .btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:active {
+      transform: scale(0.96);
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+    .btn-accent {
+      background: var(--accent);
+      color: white;
+      border: none;
+    }
+
+    /* 標籤小片 */
+    .tag-chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 3px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+    }
+    .tag-chip.active {
+      background: var(--danger-bg);
+      border-color: var(--danger-text);
+      color: var(--danger-text);
+    }
+
+    /* 食譜卡片 */
+    .recipe-card {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--primary);
+    }
+    .recipe-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .recipe-steps {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* 健檢數據網格 */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .metric-box {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+    .metric-val {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 4px 0;
+    }
+    .red-flag { color: #ef4444; }
+    .green-flag { color: #10b981; }
+
+    /* 呼吸法圓圈動畫 */
+    .breathing-circle {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(5,150,105,0.2), rgba(2,132,199,0.2));
+      border: 2px solid var(--primary);
+      margin: 14px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      transition: transform 4s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部標題列 -->
+  <header>
+    <div class="logo-badge">
+      <div class="logo-icon">🌱</div>
+      <div>
+        <div class="logo-title">微步輕健 3.0 <span class="tag">iPhone 16 PM版</span></div>
+        <div class="date-str" id="date-display">載入中...</div>
+      </div>
+    </div>
+    <div style="font-size:11px; color:var(--text-muted);" id="header-streak-badge">🔥 第 1 週啟航</div>
+  </header>
+
+  <div class="container">
+
+    <!-- 🌟 頂部膠囊分段按鈕：一開螢幕直接點，完全不用往下滑！ -->
+    <div class="top-segment-bar">
+      <div class="segment-btn active" data-tab="today" onclick="switchTab('today')">今日打卡</div>
+      <div class="segment-btn" data-tab="stats" onclick="switchTab('stats')">每週統計</div>
+      <div class="segment-btn" data-tab="recipes" onclick="switchTab('recipes')">暖胃廚房</div>
+      <div class="segment-btn" data-tab="health" onclick="switchTab('health')">健檢放鬆</div>
+    </div>
+
+    <!-- ==================== TAB 1: 今日打卡 ==================== -->
+    <div id="tab-today" class="tab-pane active">
+
+      <!-- 護膝鐵則警告 -->
+      <div style="background:var(--warning-bg); border:1px solid var(--warning-border); color:var(--warning-text); padding:10px 12px; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px; display:flex; gap:8px;">
+        <span style="font-size:16px;">⚠️</span>
+        <div><strong>護膝防線（體重 93.5kg）：</strong>下樓梯承重逼近 400kg！<strong>通勤「下樓梯請搭手扶梯」</strong>，絕不勉強深蹲，坐姿抬腿即可保護髕骨。</div>
+      </div>
+
+      <!-- 今日進度 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🎯 今日微習慣達成率</span>
+          <span id="progress-pct" style="color:var(--primary); font-weight:800;">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
+          <span id="progress-count">完成 0 / 6 個微習慣</span>
+          <span id="encouragement">明天正式起跑，跨出第一步就是勝利！</span>
+        </div>
+      </div>
+
+      <!-- 微活動打卡 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🚶‍♂️ 零裝備・護膝微活動（不流汗）</span>
+          <span style="font-size:11px; color:var(--primary);">膝蓋 0 壓力</span>
+        </div>
+        <div id="exercise-list"></div>
+      </div>
+
+      <!-- 飲食抗發炎打卡 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🥗 脂肪肝與抗發炎微習慣</span>
+          <span style="font-size:11px; color:#ef4444;">TG 260 避雷</span>
+        </div>
+        <div id="diet-list"></div>
+      </div>
+
+      <!-- 茶水排程 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🍵 茶水排程（無糖茶 100% 算水）</span>
+          <span style="font-size:11px; color:var(--accent);" id="water-text">0 / 2000 ml</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">
+          💡 <strong>防夜尿黃金律</strong>：白天公司用茶包喝足 1500ml；晚上 20:30 到家後只潤喉，解決半夜頻尿！
+        </div>
+        <div class="water-cups" id="cups-container">
+          <div class="cup"></div><div class="cup"></div><div class="cup"></div><div class="cup"></div>
+          <div class="cup"></div><div class="cup"></div><div class="cup"></div><div class="cup"></div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button class="btn" onclick="addWater(-250)">- 250ml</button>
+          <button class="btn btn-accent" onclick="addWater(250)">+ 一杯茶水 (250ml)</button>
+        </div>
+      </div>
+
+      <!-- 飲食拍照 -->
+      <div class="card">
+        <div class="card-title">
+          <span>📸 飲食拍照記錄 & NG 地雷偵測</span>
+          <button class="btn btn-primary" onclick="triggerPhotoUpload()">+ 拍照/選照片</button>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload(event)">
+        
+        <div id="photo-preview-container" style="display:none; margin-top:10px;">
+          <img id="food-img-preview" src="" style="width:100%; max-height:200px; object-fit:cover; border-radius:12px; margin-bottom:8px;">
+          <div style="font-size:11px; font-weight:700; margin-bottom:4px;">點選標記是否有隱形地雷：</div>
+          <div>
+            <span class="tag-chip" onclick="toggleTag(this, '不餓亂吃')">⚠️ 不餓只是嘴饞</span>
+            <span class="tag-chip" onclick="toggleTag(this, '晚餐零食代餐')">🍫 晚歸用零食代餐</span>
+            <span class="tag-chip" onclick="toggleTag(this, '糖醋/油炸')">🍗 糖醋肉/油炸裹粉</span>
+            <span class="tag-chip" onclick="toggleTag(this, '精緻甜食')">🍰 蛋糕/米漿/甜點</span>
+          </div>
+          <div id="ai-advice-box" style="margin-top:8px; background:var(--bg); padding:8px; border-radius:10px; font-size:11px; line-height:1.6; display:none;"></div>
+          <div style="text-align:right; margin-top:8px;">
+            <button class="btn btn-primary" onclick="saveFoodLog()">儲存此餐記錄</button>
+          </div>
+        </div>
+
+        <div id="food-logs-history" style="margin-top:8px; font-size:12px;"></div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB 2: 每週統計 ==================== -->
+    <div id="tab-stats" class="tab-pane">
+      <div class="card">
+        <div class="card-title">
+          <span>🔥 打卡堅持里程碑</span>
+          <span style="color:var(--primary); font-weight:700;">第 1 週啟航</span>
+        </div>
+        <div style="text-align:center; padding:15px 0;">
+          <div style="font-size:36px; font-weight:900; color:var(--primary);" id="streak-days-count">1</div>
+          <div style="font-size:12px; color:var(--text-muted);">天連續執行微習慣</div>
+          <div style="font-size:11px; color:var(--primary); margin-top:4px;">「只要開始，身體就在修復中！」</div>
+        </div>
+      </div>
+
+      <!-- 目標卡片 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🎯 第一階段減脂目標</span>
+          <span style="font-size:11px; color:var(--primary);">-4.7 kg (5%)</span>
+        </div>
+        <div style="font-size:12px; line-height:1.6;">
+          • 目前體重：<strong>93.5 kg</strong><br>
+          • 第一階段降脂門檻：<strong>88.8 kg</strong><br>
+          • <strong>重要叮嚀</strong>：家裡沒體重計<strong>完全不用急著買</strong>！前期請專注在「每天打卡」與「腰圍褲頭有沒有變鬆」，不要天天量體重把自己逼焦慮。
+        </div>
+      </div>
+
+      <!-- 過去 7 天達成圖表模擬 -->
+      <div class="card">
+        <div class="card-title">
+          <span>📊 本週打卡達成率概況</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; height:100px; padding-top:20px; text-align:center; font-size:10px; color:var(--text-muted);">
+          <div style="flex:1;"><div style="background:var(--primary); height:25px; border-radius:4px; margin:0 4px;"></div>一</div>
+          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>二</div>
+          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>三</div>
+          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>四</div>
+          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>五</div>
+          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>六</div>
+          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>日</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: 暖胃廚房與食譜 ==================== -->
+    <div id="tab-recipes" class="tab-pane">
+
+      <!-- 買菜拍照料理建議 -->
+      <div class="card" style="border:2px dashed var(--primary); background:var(--primary-light);">
+        <div class="card-title" style="color:var(--primary);">
+          <span>📸 買菜拍一張，立刻給料理靈感</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-main); margin-bottom:8px;">
+          去超市買了什麼青菜、肉片或豆腐？拍下來，不用天天醬油，教你 5 分鐘熱騰騰上桌：
+        </div>
+        <button class="btn btn-primary" style="width:100%; padding:10px;" onclick="triggerPhotoUpload()">
+          📷 拍照上傳現有食材
+        </button>
+      </div>
+
+      <!-- 熱鹹燕麥專題 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🍲 告別冰優格！暖胃「熱鹹燕麥粥」食譜</span>
+          <span style="font-size:10px; color:var(--primary);">3~5 分鐘免廚藝</span>
+        </div>
+        
+        <div class="recipe-card">
+          <div class="recipe-title">
+            <span>🥚 超商/超快版：香菇雞肉豆腐熱燕麥粥</span>
+            <span style="color:var(--primary); font-size:11px;">暖胃第一名</span>
+          </div>
+          <div class="recipe-steps">
+            1. 碗中加入大燕麥片 4~5 湯匙，沖入熱開水淹過燕麥，靜置 2 分鐘化為綿密粥底。<br>
+            2. 放入全聯/超商嫩豆腐半盒（或即食雞胸肉丁）、茶葉蛋一顆壓碎。<br>
+            3. 調味：灑<strong>白胡椒粉、少許鹽花、蔥花或海苔絲</strong>。<br>
+            👉 像廣東廣式雞蓉蛋花粥一樣滑順，完全不冰冷，低卡高纖排宿便！
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div class="recipe-title">
+            <span>🍅 番茄蛋花熱燕麥粥</span>
+            <span style="color:var(--accent); font-size:11px;">抗氧化護肝</span>
+          </div>
+          <div class="recipe-steps">
+            1. 鍋中水煮滾，丟入牛番茄切丁煮軟（釋放豐富茄紅素）。<br>
+            2. 淋入一顆打散的蛋花，加入燕麥片拌勻微滾 1 分鐘關火。<br>
+            3. 調味：黑胡椒粒、少許鹽、幾滴香油。完全不用醬油，酸香清爽暖呼呼！
+          </div>
+        </div>
+      </div>
+
+      <!-- 晚歸外食指南 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🌙 20:30 晚歸外食「免開火避雷指南」</span>
+        </div>
+        <div style="font-size:11px; line-height:1.7;">
+          • <strong>滷味攤怎麼點</strong>：白蘿蔔、非油炸豆干、香菇、木耳、嘴邊肉/瘦肉片。<strong>避開百頁豆腐（整塊吸油）與炸豆皮</strong>，請老闆不要淋重醬膏。<br>
+          • <strong>假日吃火鍋</strong>：板豆腐、雞肉、青菜、菇類超棒！<strong>少吃魚餃燕餃等魚漿加工品</strong>，冬粉最後煮或只吃半把。
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB 4: 健檢與身心放鬆 ==================== -->
+    <div id="tab-health" class="tab-pane">
+
+      <!-- 血壓焦慮破解專區 -->
+      <div class="card" style="border:1px solid #38bdf8; background:linear-gradient(135deg, rgba(2,132,199,0.06), rgba(99,102,241,0.06));">
+        <div class="card-title" style="color:var(--accent);">
+          <span>🧘‍♀️ 血壓焦慮與壓脈帶恐懼「解方」</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6;">
+          只要壓脈帶充氣，大腦就觸發警戒心跳加快，血壓就會被「嚇出紅字」！<br>
+          <strong>現在請先不要天天逼自己量血壓！</strong>只要體重微降、少吃重鹹加工物，血管自然放鬆。
+        </div>
+        
+        <!-- 呼吸練習引導 -->
+        <div style="text-align:center; margin-top:10px;">
+          <div class="breathing-circle" id="breath-circle" onclick="startBreathing()">
+            點我深呼吸
+          </div>
+          <div style="font-size:11px; color:var(--text-muted);" id="breath-instruction">
+            吸氣 4 秒 ➜ 憋氣 4 秒 ➜ 吐氣 6 秒，讓交感神經冷靜
+          </div>
+        </div>
+      </div>
+
+      <!-- 健檢真實數據對比 -->
+      <div class="card">
+        <div class="card-title">
+          <span>📊 你的健檢數據趨勢對比</span>
+          <span style="font-size:11px; color:var(--text-muted);">2025 vs 2026</span>
+        </div>
+        <div class="metric-grid">
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">三酸甘油酯 TG</div>
+            <div class="metric-val red-flag">260</div>
+            <div style="font-size:10px; color:#ef4444;">去年 169 🚨 脂肪肝根源</div>
+          </div>
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">糖化血色素 HbA1c</div>
+            <div class="metric-val" style="color:#f59e0b;">5.7%</div>
+            <div style="font-size:10px;">糖尿病前期門檻</div>
+          </div>
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">肝指數 ALT (GPT)</div>
+            <div class="metric-val green-flag">17</div>
+            <div style="font-size:10px; color:#10b981;">無急性壞死（黃金修復期）</div>
+          </div>
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">體重 (kg)</div>
+            <div class="metric-val">93.5</div>
+            <div style="font-size:10px; color:#ef4444;">+5.9 kg 較去年</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6;">
+          🔬 <strong>白血球 WBC 偏高與蟹足腫真相</strong>：<br>
+          93.5kg 的內臟脂肪會持續分泌發炎激素，引發「代謝性白血球增多」；加上蕁麻疹與蟹足腫的過敏體質，身體一直處於備戰狀態。<strong>體重降 4.5 公斤，發炎和白血球就會跟著降下來！</strong>
+        </div>
+      </div>
+
+      <!-- 超音波倒數 -->
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:12px; font-weight:700; color:var(--primary);">📅 超音波追蹤倒數</div>
+            <div style="font-size:24px; font-weight:900; color:var(--primary);" id="countdown-days">90 <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">天後回診</span></div>
+          </div>
+          <button class="btn" onclick="editFollowup()">設定日期</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- 底部固定導航欄 -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-tab="today" onclick="switchTab('today')">
+      <span class="icon">📅</span>
+      <span>今日打卡</span>
+    </div>
+    <div class="nav-item" data-tab="stats" onclick="switchTab('stats')">
+      <span class="icon">📊</span>
+      <span>每週統計</span>
+    </div>
+    <div class="nav-item" data-tab="recipes" onclick="switchTab('recipes')">
+      <span class="icon">🍲</span>
+      <span>暖胃廚房</span>
+    </div>
+    <div class="nav-item" data-tab="health" onclick="switchTab('health')">
+      <span class="icon">🩺</span>
+      <span>健檢放鬆</span>
+    </div>
+  </nav>
+
+  <script>
+    const KEY_PREFIX = 'vitalstep_v3_';
+    const TODAY = new Date().toISOString().split('T')[0];
+
+    const HABITS = [
+      { id: 'commute_walk', cat: 'ex', title: '通勤平地快走 10 分鐘', desc: '捷運內加快步頻，不傷膝蓋且是脂肪肝首選有氧', icon: '👟' },
+      { id: 'seated_raise', cat: 'ex', title: '辦公室「坐姿抬腿」左右各 15 下', desc: '坐椅子水平伸直停留 3 秒，強化股四頭肌保護膝關節', icon: '🪑' },
+      { id: 'heel_raise', cat: 'ex', title: '通勤等車墊腳尖 30 下', desc: '小腿幫浦回流，消下肢水腫，膝蓋 0 負擔', icon: '🦶' },
+      { id: 'no_fructose', cat: 'diet', title: '今日無糖（不喝米漿/含糖手搖）', desc: '切斷肝臟生成三酸甘油酯(TG)的最大源頭', icon: '🥤' },
+      { id: 'no_sour_pork', cat: 'diet', title: '午餐避開油炸裹粉（如糖醋肉）', desc: '改夾蔥油雞、滷雞腿、番茄炒蛋，有肉有菜不吃水煮', icon: '🍗' },
+      { id: 'no_snack_dinner', cat: 'diet', title: '晚餐不拿零食代餐，21:00 前結束進食', desc: '晚歸吃清淡輕食，不讓肝臟在夜間超載堆油', icon: '🥗' }
+    ];
+
+    let state = {
+      habits: {},
+      water: 0,
+      followup: '2027-01-26',
+      streak: 1,
+      foodLogs: []
+    };
+
+    function init() {
+      const d = new Date();
+      document.getElementById('date-display').textContent = d.toLocaleDateString('zh-TW', {
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+      });
+
+      const savedState = localStorage.getItem(KEY_PREFIX + 'state');
+      const savedDate = localStorage.getItem(KEY_PREFIX + 'date');
+
+      if (savedState) {
+        state = JSON.parse(savedState);
+      }
+
+      if (savedDate !== TODAY) {
+        localStorage.setItem(KEY_PREFIX + 'date', TODAY);
+        state.habits = {};
+        state.water = 0;
+        save();
+      }
+
+      renderHabits();
+      renderWater();
+      renderCountdown();
+      renderFoodLogs();
+      updateProgress();
+    }
+
+    function save() {
+      localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
+    }
+
+    // 同步切換頂部膠囊鈕與底部導航欄
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.segment-btn').forEach(b => {
+        if (b.getAttribute('data-tab') === tabId) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('data-tab') === tabId) n.classList.add('active');
+        else n.classList.remove('active');
+      });
+
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderHabits() {
+      const ex = document.getElementById('exercise-list');
+      const dt = document.getElementById('diet-list');
+      ex.innerHTML = '';
+      dt.innerHTML = '';
+
+      HABITS.forEach(h => {
+        const isDone = !!state.habits[h.id];
+        const el = document.createElement('div');
+        el.className = `habit-item ${isDone ? 'done' : ''}`;
+        el.onclick = () => toggleHabit(h.id);
+        el.innerHTML = `
+          <div class="habit-left">
+            <div class="habit-icon">${h.icon}</div>
+            <div>
+              <div class="habit-title">${h.title}</div>
+              <div class="habit-desc">${h.desc}</div>
+            </div>
+          </div>
+          <div class="checkbox">${isDone ? '✓' : ''}</div>
+        `;
+        if (h.cat === 'ex') ex.appendChild(el);
+        else dt.appendChild(el);
+      });
+    }
+
+    function toggleHabit(id) {
+      state.habits[id] = !state.habits[id];
+      save();
+      renderHabits();
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = HABITS.length;
+      const done = Object.values(state.habits).filter(Boolean).length;
+      const pct = Math.round((done / total) * 100);
+
+      document.getElementById('progress-pct').textContent = `${pct}%`;
+      document.getElementById('progress-bar').style.width = `${pct}%`;
+      document.getElementById('progress-count').textContent = `完成 ${done} / ${total} 個微習慣`;
+
+      const enc = document.getElementById('encouragement');
+      if (pct === 100) enc.textContent = '太厲害了！今天發炎大降，肝臟滿分修復 🎉';
+      else if (pct >= 50) enc.textContent = '已經完成一半了，身體正在變輕盈！💪';
+      else if (pct > 0) enc.textContent = '動一動，跨出第一步就是成功！✨';
+      else enc.textContent = '明天正式起跑，跨出第一步就是勝利！';
+    }
+
+    function addWater(val) {
+      state.water = Math.max(0, Math.min(3000, (state.water || 0) + val));
+      save();
+      renderWater();
+    }
+
+    function renderWater() {
+      const w = state.water || 0;
+      document.getElementById('water-text').textContent = `${w} / 2000 ml`;
+      const cups = Math.floor(w / 250);
+      document.querySelectorAll('#cups-container .cup').forEach((c, idx) => {
+        if (idx < cups) c.classList.add('filled');
+        else c.classList.remove('filled');
+      });
+    }
+
+    function renderCountdown() {
+      const target = new Date(state.followup || '2027-01-26');
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      target.setHours(0,0,0,0);
+      const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+      document.getElementById('countdown-days').innerHTML = `${diff > 0 ? diff : 0} <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">天後回診</span>`;
+    }
+
+    function editFollowup() {
+      const val = prompt('請輸入下次超音波回診預計日期 (YYYY-MM-DD)：', state.followup || '2027-01-26');
+      if (val) {
+        state.followup = val;
+        save();
+        renderCountdown();
+      }
+    }
+
+    // 拍照
+    let currentTags = [];
+    let currentPhotoData = null;
+
+    function triggerPhotoUpload() {
+      document.getElementById('photo-input').click();
+    }
+
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        currentPhotoData = evt.target.result;
+        document.getElementById('food-img-preview').src = currentPhotoData;
+        document.getElementById('photo-preview-container').style.display = 'block';
+        currentTags = [];
+        document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+        updateAiAdvice();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function toggleTag(el, tag) {
+      el.classList.toggle('active');
+      if (el.classList.contains('active')) currentTags.push(tag);
+      else currentTags = currentTags.filter(t => t !== tag);
+      updateAiAdvice();
+    }
+
+    function updateAiAdvice() {
+      const box = document.getElementById('ai-advice-box');
+      if (currentTags.length === 0) {
+        box.style.display = 'none';
+        return;
+      }
+      box.style.display = 'block';
+      let tips = [];
+      if (currentTags.includes('不餓亂吃') || currentTags.includes('晚餐零食代餐')) {
+        tips.push('⚠️ <strong>代餐地雷</strong>：零食含有大量精緻糖與劣質油，是 TG 飆到 260 的首要元凶！晚歸不餓時，請改喝「無糖溫豆漿」或吃「茶葉蛋+小黃瓜」安撫嘴饞。');
+      }
+      if (currentTags.includes('糖醋/油炸')) {
+        tips.push('🍗 <strong>外食換菜建議</strong>：糖醋肉含「炸油 + 黏稠砂糖醬汁」，下次自助餐改挑「滷雞腿去皮」、「蒜泥白肉」或「番茄炒蛋」，美味又完全不傷肝！');
+      }
+      if (currentTags.includes('精緻甜食')) {
+        tips.push('🍰 <strong>控糖叮嚀</strong>：精緻甜食直接轉化為肝臟脂肪滴。想吃甜時，建議用「無糖氣泡水 + 檸檬片」或「小把無調味堅果」替代。');
+      }
+      box.innerHTML = tips.join('<br><br>');
+    }
+
+    function saveFoodLog() {
+      if (!currentPhotoData) return;
+      state.foodLogs = state.foodLogs || [];
+      state.foodLogs.unshift({
+        time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+        photo: currentPhotoData,
+        tags: [...currentTags]
+      });
+      if (state.foodLogs.length > 5) state.foodLogs.pop();
+      save();
+      renderFoodLogs();
+      document.getElementById('photo-preview-container').style.display = 'none';
+      currentPhotoData = null;
+      currentTags = [];
+    }
+
+    function renderFoodLogs() {
+      const c = document.getElementById('food-logs-history');
+      if (!state.foodLogs || state.foodLogs.length === 0) {
+        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，點擊上方按鈕記錄你的餐點吧！</div>';
+        return;
+      }
+      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px;">今日已記錄餐點：</div>' +
+        state.foodLogs.map(item => `
+          <div style="display:flex; gap:10px; align-items:center; background:var(--bg); padding:8px; border-radius:10px; margin-bottom:6px;">
+            <img src="${item.photo}" style="width:48px; height:48px; object-fit:cover; border-radius:8px;">
+            <div>
+              <div style="font-size:11px; font-weight:700;">${item.time}</div>
+              <div style="font-size:10px; color:var(--text-muted);">標籤: ${item.tags.length ? item.tags.join('、') : '一般飲食'}</div>
+            </div>
+          </div>
+        `).join('');
+    }
+
+    // 呼吸動畫
+    function startBreathing() {
+      const circle = document.getElementById('breath-circle');
+      const text = document.getElementById('breath-instruction');
+      circle.style.transform = 'scale(1.35)';
+      circle.textContent = '吸氣...';
+      text.textContent = '深深吸氣 4 秒鐘...';
+
+      setTimeout(() => {
+        circle.textContent = '憋氣...';
+        text.textContent = '屏住呼吸 4 秒鐘，安撫神經...';
+        setTimeout(() => {
+          circle.style.transform = 'scale(1.0)';
+          circle.textContent = '吐氣...';
+          text.textContent = '慢慢吐氣 6 秒鐘，釋放血管壓力...';
+        }, 4000);
+      }, 4000);
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
