@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>微步輕健 VitalStep 3.0 - 專屬健康日誌</title>
+  <title>微步輕健 VitalStep 3.1 - 專屬健康日誌</title>
   <style>
     /* 100% 離線獨立樣式，針對 iPhone 16 Pro Max 尺寸全面優化 */
     :root {
@@ -410,12 +410,12 @@
 </head>
 <body>
 
-  <!-- 頂部標題列 -->
+  <!-- 頂部標題列：明確顯示 v3.1 食材備註版 -->
   <header>
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 3.0 <span class="tag">iPhone 16 PM版</span></div>
+        <div class="logo-title">微步輕健 3.1 <span class="tag">食材備註版</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -493,40 +493,57 @@
         </div>
       </div>
 
-      <!-- 飲食拍照（升級：加入食材文字說明欄位） -->
+      <!-- 飲食記錄卡（全新升級：打字欄位直接常駐在卡片上，一目了然！） -->
       <div class="card">
         <div class="card-title">
-          <span>📸 飲食拍照記錄 & NG 地雷偵測</span>
-          <button class="btn btn-primary" onclick="triggerPhotoUpload()">+ 拍照/選照片</button>
+          <span>📸 飲食拍照記錄 & 食材筆記</span>
+          <span class="tag" style="background:#fef3c7; color:#b45309;">混在一起也能記</span>
         </div>
+        
+        <!-- 📝 常駐打字輸入框：一眼就能看見！ -->
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+            📝 這餐吃了什麼？打字備註（隨時可寫）：
+          </label>
+          <input type="text" id="food-note-input" placeholder="例如：滷味（蘿蔔、非油炸豆干、嘴邊肉）、燙青菜" 
+            style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;">
+        </div>
+
+        <!-- 拍照按鈕與預覽 -->
         <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload(event)">
         
-        <div id="photo-preview-container" style="display:none; margin-top:10px;">
-          <img id="food-img-preview" src="" style="width:100%; max-height:200px; object-fit:cover; border-radius:12px; margin-bottom:8px;">
-          
-          <!-- 📝 新增：食材與餐點詳細文字說明欄位 -->
-          <div style="margin-bottom:8px;">
-            <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
-              📝 這餐包含哪些食材？（打字補充，混在一起也能記錄清楚）：
-            </label>
-            <input type="text" id="food-note-input" placeholder="例如：滷味（高麗菜、白蘿蔔、非油炸豆干、瘦肉片，未加酸菜）" 
-              style="width:100%; padding:9px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;">
-          </div>
-
-          <div style="font-size:11px; font-weight:700; margin-bottom:4px;">點選標記是否有隱形地雷：</div>
-          <div>
-            <span class="tag-chip" onclick="toggleTag(this, '不餓亂吃')">⚠️ 不餓只是嘴饞</span>
-            <span class="tag-chip" onclick="toggleTag(this, '晚餐零食代餐')">🍫 晚歸用零食代餐</span>
-            <span class="tag-chip" onclick="toggleTag(this, '糖醋/油炸')">🍗 糖醋肉/油炸裹粉</span>
-            <span class="tag-chip" onclick="toggleTag(this, '精緻甜食')">🍰 蛋糕/米漿/甜點</span>
-          </div>
-          <div id="ai-advice-box" style="margin-top:8px; background:var(--bg); padding:8px; border-radius:10px; font-size:11px; line-height:1.6; display:none;"></div>
-          <div style="text-align:right; margin-top:8px;">
-            <button class="btn btn-primary" onclick="saveFoodLog()">儲存此餐記錄</button>
-          </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+          <button class="btn" style="flex:1; padding:8px;" onclick="triggerPhotoUpload()">
+            📷 <span id="photo-btn-text">拍照 / 上傳食物照片</span>
+          </button>
+          <span id="photo-status-text" style="font-size:11px; color:var(--text-muted); display:none;">已選取照片 ✓</span>
         </div>
 
-        <div id="food-logs-history" style="margin-top:8px; font-size:12px;"></div>
+        <!-- 照片縮圖預覽 -->
+        <div id="photo-preview-container" style="display:none; margin-bottom:10px;">
+          <img id="food-img-preview" src="" style="width:100%; max-height:180px; object-fit:cover; border-radius:12px;">
+        </div>
+
+        <!-- 地雷標籤切換 -->
+        <div style="font-size:11px; font-weight:700; margin-bottom:4px;">點選標記是否有隱形地雷（選填）：</div>
+        <div style="margin-bottom:10px;">
+          <span class="tag-chip" onclick="toggleTag(this, '不餓亂吃')">⚠️ 不餓只是嘴饞</span>
+          <span class="tag-chip" onclick="toggleTag(this, '晚餐零食代餐')">🍫 晚歸用零食代餐</span>
+          <span class="tag-chip" onclick="toggleTag(this, '糖醋/油炸')">🍗 糖醋肉/油炸裹粉</span>
+          <span class="tag-chip" onclick="toggleTag(this, '精緻甜食')">🍰 蛋糕/米漿/甜點</span>
+        </div>
+
+        <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:8px; border-radius:10px; font-size:11px; line-height:1.6; display:none;"></div>
+        
+        <!-- 儲存記錄按鈕 -->
+        <div style="text-align:right;">
+          <button class="btn btn-primary" style="width:100%; padding:9px; font-size:13px;" onclick="saveFoodLog()">
+            💾 儲存此餐記錄（打字或拍照都能存）
+          </button>
+        </div>
+
+        <!-- 今日記錄歷史 -->
+        <div id="food-logs-history" style="margin-top:14px; font-size:12px;"></div>
       </div>
 
     </div>
@@ -883,7 +900,7 @@
       }
     }
 
-    // 拍照上傳與標籤
+    // 拍照上傳與打字說明
     let currentTags = [];
     let currentPhotoData = null;
 
@@ -900,9 +917,8 @@
         currentPhotoData = evt.target.result;
         document.getElementById('food-img-preview').src = currentPhotoData;
         document.getElementById('photo-preview-container').style.display = 'block';
-        document.getElementById('food-note-input').value = ''; // 清空說明欄
-        currentTags = [];
-        document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+        document.getElementById('photo-status-text').style.display = 'inline';
+        document.getElementById('photo-btn-text').textContent = '更換照片';
         updateAiAdvice();
       };
       reader.readAsDataURL(file);
@@ -936,19 +952,30 @@
     }
 
     function saveFoodLog() {
-      if (!currentPhotoData) return;
       const note = document.getElementById('food-note-input').value.trim();
+      if (!currentPhotoData && !note) {
+        alert('請至少打字填寫「餐點食材」或「拍照」一張照片喔！');
+        return;
+      }
+
       state.foodLogs = state.foodLogs || [];
       state.foodLogs.unshift({
         time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
-        photo: currentPhotoData,
+        photo: currentPhotoData || null,
         note: note,
         tags: [...currentTags]
       });
       if (state.foodLogs.length > 5) state.foodLogs.pop();
       save();
       renderFoodLogs();
+      
+      // 重置輸入區
+      document.getElementById('food-note-input').value = '';
       document.getElementById('photo-preview-container').style.display = 'none';
+      document.getElementById('photo-status-text').style.display = 'none';
+      document.getElementById('photo-btn-text').textContent = '拍照 / 上傳食物照片';
+      document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
+      document.getElementById('ai-advice-box').style.display = 'none';
       currentPhotoData = null;
       currentTags = [];
     }
@@ -956,19 +983,19 @@
     function renderFoodLogs() {
       const c = document.getElementById('food-logs-history');
       if (!state.foodLogs || state.foodLogs.length === 0) {
-        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，點擊上方按鈕記錄你的晚餐吧！</div>';
+        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，今晚吃了什麼？打字或拍照記錄一下吧！</div>';
         return;
       }
-      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px;">今日已記錄餐點：</div>' +
+      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">今日已記錄餐點：</div>' +
         state.foodLogs.map(item => `
-          <div style="display:flex; gap:10px; align-items:flex-start; background:var(--bg); padding:10px; border-radius:10px; margin-bottom:8px;">
-            <img src="${item.photo}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+          <div style="display:flex; gap:10px; align-items:flex-start; background:var(--bg); padding:10px; border-radius:12px; margin-bottom:8px; border:1px solid var(--border);">
+            ${item.photo ? `<img src="${item.photo}" style="width:56px; height:56px; object-fit:cover; border-radius:8px; flex-shrink:0;">` : `<div style="width:56px; height:56px; border-radius:8px; background:var(--card-bg); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; border:1px solid var(--border);">🥗</div>`}
             <div style="flex:1;">
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:11px; font-weight:700;">${item.time}</span>
-                <span style="font-size:10px; color:var(--text-muted);">${item.tags.length ? item.tags.join('、') : '一般飲食'}</span>
+                <span style="font-size:12px; font-weight:700;">${item.time}</span>
+                <span style="font-size:10px; color:var(--text-muted);">${item.tags.length ? item.tags.join('、') : '健康記錄'}</span>
               </div>
-              ${item.note ? `<div style="font-size:11px; color:var(--text-main); margin-top:4px; background:var(--card-bg); padding:4px 8px; border-radius:6px; border:1px solid var(--border); line-height:1.4;">${item.note}</div>` : ''}
+              ${item.note ? `<div style="font-size:12px; color:var(--text-main); margin-top:4px; background:var(--card-bg); padding:5px 8px; border-radius:6px; border:1px solid var(--border); line-height:1.4;">${item.note}</div>` : ''}
             </div>
           </div>
         `).join('');
