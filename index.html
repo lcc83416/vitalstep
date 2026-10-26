@@ -755,12 +755,12 @@
       <div class="card">
         <div class="card-title">
           <span>🔥 打卡堅持里程碑</span>
-          <span style="color:var(--primary); font-weight:700;">第 1 週啟航</span>
+          <span style="color:var(--primary); font-weight:700;" id="stats-phase-tag">第 1 週啟航</span>
         </div>
         <div style="text-align:center; padding:15px 0;">
-          <div style="font-size:36px; font-weight:900; color:var(--primary);" id="streak-days-count">1</div>
-          <div style="font-size:12px; color:var(--text-muted);">天連續執行微習慣</div>
-          <div style="font-size:11px; color:var(--primary); margin-top:4px;">「只要開始，身體就在修復中！」</div>
+          <div style="font-size:36px; font-weight:900; color:var(--primary);" id="streak-days-count">0</div>
+          <div style="font-size:12px; color:var(--text-muted);" id="streak-sub-text">天連續執行（準備明天正式開始第 1 天！）</div>
+          <div style="font-size:11px; color:var(--primary); margin-top:4px;" id="streak-encourage-text">「只要跨出第一步，身體就在修復中！」</div>
         </div>
       </div>
 
@@ -777,19 +777,19 @@
         </div>
       </div>
 
-      <!-- 過去 7 天達成圖表模擬 -->
+      <!-- 過去 7 天達成圖表（純真實動態計算） -->
       <div class="card">
         <div class="card-title">
           <span>📊 本週打卡達成率概況</span>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:flex-end; height:100px; padding-top:20px; text-align:center; font-size:10px; color:var(--text-muted);">
-          <div style="flex:1;"><div style="background:var(--primary); height:25px; border-radius:4px; margin:0 4px;"></div>一</div>
-          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>二</div>
-          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>三</div>
-          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>四</div>
-          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>五</div>
-          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>六</div>
-          <div style="flex:1;"><div style="background:var(--border); height:10px; border-radius:4px; margin:0 4px;"></div>日</div>
+          <div style="flex:1;"><div id="bar-mon" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>一</div>
+          <div style="flex:1;"><div id="bar-tue" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>二</div>
+          <div style="flex:1;"><div id="bar-wed" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>三</div>
+          <div style="flex:1;"><div id="bar-thu" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>四</div>
+          <div style="flex:1;"><div id="bar-fri" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>五</div>
+          <div style="flex:1;"><div id="bar-sat" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>六</div>
+          <div style="flex:1;"><div id="bar-sun" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>日</div>
         </div>
       </div>
     </div>
@@ -987,7 +987,7 @@
       steps: '',
       weight: '',
       followup: '2027-01-26',
-      streak: 1,
+      streak: 0,
       foodLogs: []
     };
 
@@ -1036,6 +1036,7 @@
       renderCountdown();
       renderFoodLogs();
       updateProgress();
+      renderStats();
       updateCoachFeedback();
       checkGeminiKeyStatus();
     }
@@ -1123,6 +1124,53 @@
       else if (pct >= 50) enc.textContent = '已經完成一半了，身體正在變輕盈！💪';
       else if (pct > 0) enc.textContent = '動一動，跨出第一步就是成功！✨';
       else enc.textContent = '今天正式起跑，跨出第一步就是勝利！';
+
+      if (pct >= 50 && (state.streak === 0 || !state.streak)) {
+        state.streak = 1;
+        save();
+      }
+      renderStats();
+    }
+
+    // --- 每週統計與圖表動態渲染 ---
+    function renderStats() {
+      const streak = state.streak || 0;
+      const countEl = document.getElementById('streak-days-count');
+      const streakSub = document.getElementById('streak-sub-text');
+      const badge = document.getElementById('header-streak-badge');
+
+      if (countEl) countEl.textContent = streak;
+      if (streakSub) {
+        if (streak === 0) streakSub.textContent = '天連續執行（準備明天正式開始第 1 天！）';
+        else streakSub.textContent = '天連續執行微習慣，身體正在修復中！';
+      }
+      if (badge) {
+        if (streak === 0) badge.textContent = '🌱 明日正式啟程 (Day 0)';
+        else badge.textContent = `🔥 連續第 ${streak} 天`;
+      }
+
+      // 7 天長條圖：重置為灰色短槓 (10px)
+      const bars = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      bars.forEach(d => {
+        const el = document.getElementById('bar-' + d);
+        if (el) {
+          el.style.background = 'var(--border)';
+          el.style.height = '10px';
+        }
+      });
+
+      // 當天若有打卡微習慣，長條圖才動態升高並亮起綠色
+      const doneCount = Object.values(state.habits || {}).filter(Boolean).length;
+      if (doneCount > 0) {
+        const dayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        const currentDay = dayMap[new Date().getDay()];
+        const el = document.getElementById('bar-' + currentDay);
+        if (el) {
+          const height = Math.min(80, Math.max(16, doneCount * 13));
+          el.style.height = height + 'px';
+          el.style.background = 'var(--primary)';
+        }
+      }
     }
 
     // --- 600ml 保溫杯水分 ---
@@ -1692,7 +1740,7 @@
           steps: '',
           weight: '',
           followup: state.followup || '2027-01-26',
-          streak: 1,
+          streak: 0,
           foodLogs: []
         };
         save();
@@ -1704,6 +1752,7 @@
         renderWater();
         renderFoodLogs();
         updateProgress();
+        renderStats();
         updateCoachFeedback();
         showToast('✨ 所有測試資料已清空！乾淨迎接明日第一天！');
       }
