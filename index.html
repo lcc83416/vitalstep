@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>微步輕健 VitalStep 4.0 - 專屬健康日誌</title>
+  <title>微步輕健 VitalStep 5.1 - 專屬健康日誌與智能菜單</title>
   <style>
     /* 100% 離線獨立樣式，針對 iPhone 16 Pro Max 尺寸全面優化 */
     :root {
@@ -446,6 +446,134 @@
       color: var(--primary);
       transition: transform 4s ease-in-out;
     }
+
+    /* 暖胃廚房與菜單規劃專屬樣式 */
+    .pantry-chip {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-main);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .pantry-chip:active {
+      transform: scale(0.95);
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+    .menu-sub-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .menu-sub-btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .menu-sub-btn.active {
+      background: var(--card-bg);
+      color: var(--primary);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .menu-item-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      transition: transform 0.15s ease;
+    }
+    .menu-item-card:hover {
+      border-color: rgba(5,150,105,0.4);
+    }
+    .menu-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .menu-item-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .menu-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .badge-ready {
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .badge-cook {
+      background: #ecfdf5;
+      color: #059669;
+    }
+    .badge-weekend {
+      background: #f0f9ff;
+      color: #0284c7;
+    }
+    .menu-desc {
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .menu-highlight-box {
+      background: var(--bg);
+      border-left: 3px solid var(--primary);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .btn-apply-dinner {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      border: 1px solid rgba(5,150,105,0.3);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-apply-dinner:active {
+      transform: scale(0.98);
+      background: var(--primary);
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -489,7 +617,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.0 <span class="tag">多圖補記+自律守護</span></div>
+        <div class="logo-title">微步輕健 5.1 <span class="tag">智能菜單・暖胃廚房</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -819,20 +947,106 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 3: 暖胃廚房與食譜 ==================== -->
+    <!-- ==================== TAB 3: 暖胃廚房與一週晚餐菜單 ==================== -->
     <div id="tab-recipes" class="tab-pane">
 
-      <!-- 買菜拍照料理建議 -->
-      <div class="card" style="border:2px dashed var(--primary); background:var(--primary-light);">
+      <!-- 🛒 食材採買與冰箱庫存輸入區（支援打字 + 拍照） -->
+      <div class="card" style="border: 2px solid rgba(5,150,105,0.3); background: linear-gradient(180deg, var(--card-bg), var(--primary-light));">
         <div class="card-title" style="color:var(--primary);">
-          <span>📸 買菜拍一張，立刻給料理靈感</span>
+          <span>🛒 週末採買與食材庫存</span>
+          <span class="tag" style="background:var(--primary); color:white;">打字 / 拍照排菜單</span>
         </div>
-        <div style="font-size:11px; color:var(--text-main); margin-bottom:8px;">
-          去超市買了什麼青菜、肉片或豆腐？拍下來，不用天天醬油，教你 5 分鐘熱騰騰上桌：
+        <div style="font-size:11px; color:var(--text-main); margin-bottom:8px; line-height:1.5;">
+          去超市買了什麼食材、或拍下冰箱庫存，AI 主廚為您量身規劃<strong>「平日晚歸免洗切」</strong>與<strong>「週末自煮暖鍋」</strong>晚餐：
         </div>
-        <button class="btn btn-primary" style="width:100%; padding:10px;" onclick="triggerPhotoUpload()">
-          📷 拍照/相簿上傳現有食材
+
+        <!-- 常用食材快速點選標籤 -->
+        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選快速加入食材：</div>
+        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
+          <span class="pantry-chip" onclick="addPantryChip('嫩豆腐')">+ 嫩豆腐</span>
+          <span class="pantry-chip" onclick="addPantryChip('雞里肌/雞肉')">+ 雞里肌/雞肉</span>
+          <span class="pantry-chip" onclick="addPantryChip('大燕麥片')">+ 大燕麥片</span>
+          <span class="pantry-chip" onclick="addPantryChip('免洗高麗菜')">+ 免洗高麗菜</span>
+          <span class="pantry-chip" onclick="addPantryChip('雞蛋')">+ 雞蛋</span>
+          <span class="pantry-chip" onclick="addPantryChip('金針菇/洋菇')">+ 金針菇/香菇</span>
+          <span class="pantry-chip" onclick="addPantryChip('牛番茄')">+ 牛番茄</span>
+          <span class="pantry-chip" onclick="addPantryChip('冷凍水餃')">+ 冷凍水餃</span>
+          <span class="pantry-chip" onclick="addPantryChip('無糖黑豆漿')">+ 無糖黑豆漿</span>
+          <span class="pantry-chip" onclick="addPantryChip('關東煮蘿蔔蒟蒻')">+ 關東煮</span>
+          <span class="pantry-chip" onclick="addPantryChip('外食加熱滷味')">+ 加熱滷味</span>
+        </div>
+
+        <!-- 食材打字輸入框 -->
+        <div style="margin-bottom:8px;">
+          <textarea id="pantry-text-input" rows="2" 
+            placeholder="打字輸入現有食材，例如：嫩豆腐、大燕麥片、雞里肌、牛番茄、高麗菜、金針菇、蛋、冷凍水餃..." 
+            style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"
+            oninput="savePantryText()"></textarea>
+        </div>
+
+        <!-- 照片上傳區 (支援多張) -->
+        <input type="file" id="pantry-photo-input" accept="image/*" multiple style="display:none;" onchange="handlePantryPhotosUpload(event)">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+          <button class="btn" style="flex:1; padding:8px; font-size:11px;" onclick="triggerPantryPhotoUpload()">
+            📷 <span id="pantry-photo-btn-text">拍照 / 上傳採買照（可多張，如超市採買袋、冰箱）</span>
+          </button>
+        </div>
+
+        <!-- 食材照片縮圖預覽列 -->
+        <div id="pantry-photos-preview-container" style="display:none; margin-bottom:10px;">
+          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">採買照片預覽（點 × 可移除）：</div>
+          <div id="pantry-photos-grid" style="display:flex; gap:8px; overflow-x:auto; padding:4px 0;"></div>
+        </div>
+
+        <!-- 智能排菜按鈕列 -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px;">
+          <button class="btn btn-primary" style="padding:10px 4px; font-size:11px; font-weight:700; line-height:1.3;" onclick="generateMenuPlan('weekdays')">
+            ⚡ 產生平日晚歸菜單<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週一至五・零洗切免開火)</span>
+          </button>
+          <button class="btn" style="padding:10px 4px; font-size:11px; font-weight:700; line-height:1.3; background:linear-gradient(135deg, #0284c7, #6366f1); color:white; border:none;" onclick="generateMenuPlan('weekend')">
+            🍲 產生週末暖鍋食譜<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週六日・自煮療癒小鍋)</span>
+          </button>
+        </div>
+        <button class="btn" style="width:100%; margin-top:8px; padding:8px; font-size:11px; font-weight:700; background:var(--card-bg); border:1px solid var(--primary); color:var(--primary);" onclick="generateMenuPlan('fullweek')">
+          📅 一鍵排滿「一週 7 天晚餐靈感」（買現成 + 自己煮均衡搭配）
         </button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-top:1px dashed var(--border); padding-top:8px;">
+          <button class="btn" style="font-size:10px; color:var(--text-muted); padding:4px 8px;" onclick="clearPantryInput()">
+            🧹 清空輸入食材
+          </button>
+          <button class="btn" style="font-size:10px; color:var(--text-muted); padding:4px 8px;" onclick="resetMenuPlan()">
+            🔄 還原示範菜單
+          </button>
+        </div>
+
+        <div id="menu-gen-status" style="margin-top:8px; font-size:11px; display:none;"></div>
+      </div>
+
+      <!-- 🍽️ 菜單瀏覽與一週排程 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🍽️ 晚餐計畫庫（買現成 vs 自己煮）</span>
+          <span style="font-size:10px; color:var(--primary);">一鍵帶入今晚打卡</span>
+        </div>
+
+        <!-- 次級分段切換導航 (平日 / 週末 / 一週) -->
+        <div class="menu-sub-bar">
+          <button class="menu-sub-btn active" id="btn-sub-weekdays" onclick="switchMenuTab('weekdays')">
+            🌙 平日晚歸 (一至五)
+          </button>
+          <button class="menu-sub-btn" id="btn-sub-weekend" onclick="switchMenuTab('weekend')">
+            🍲 週末自煮 (六日)
+          </button>
+          <button class="menu-sub-btn" id="btn-sub-fullweek" onclick="switchMenuTab('fullweek')">
+            📅 一週 7 天排程
+          </button>
+        </div>
+
+        <!-- 動態菜單卡片容器 -->
+        <div id="menu-cards-container">
+          <!-- 由 JavaScript renderMenuCards() 動態填入 -->
+        </div>
       </div>
 
       <!-- 椅子全身操動作圖解 -->
@@ -856,29 +1070,35 @@
           <span style="font-size:10px; color:var(--primary);">3~5 分鐘免廚藝</span>
         </div>
         
-        <div class="recipe-card">
-          <div class="recipe-title">
-            <span>🥚 超商/超快版：香菇雞肉豆腐熱燕麥粥</span>
-            <span style="color:var(--primary); font-size:11px;">暖胃第一名</span>
+        <div class="menu-item-card">
+          <div class="menu-header-row">
+            <span class="menu-item-title">🥚 香菇雞肉豆腐熱燕麥粥</span>
+            <span class="menu-badge badge-cook">暖胃第一名</span>
           </div>
-          <div class="recipe-steps">
+          <div class="menu-desc">
             1. 碗中加入大燕麥片 4~5 湯匙，沖入熱開水淹過燕麥，靜置 2 分鐘化為綿密粥底。<br>
             2. 放入全聯/超商嫩豆腐半盒（或即食雞胸肉丁）、茶葉蛋一顆壓碎。<br>
             3. 調味：灑<strong>白胡椒粉、少許鹽花、蔥花或海苔絲</strong>。<br>
             👉 像廣東廣式雞蓉蛋花粥一樣滑順，完全不冰冷，低卡高纖排宿便！
           </div>
+          <button class="btn-apply-dinner" onclick="setAsTonightDinner('香菇雞肉豆腐熱燕麥粥', '大燕麥片4匙+嫩豆腐半盒+即食雞肉+白胡椒')">
+            📌 設為今晚晚餐（帶入打卡）
+          </button>
         </div>
 
-        <div class="recipe-card">
-          <div class="recipe-title">
-            <span>🍅 番茄蛋花熱燕麥粥</span>
-            <span style="color:var(--accent); font-size:11px;">抗氧化護肝</span>
+        <div class="menu-item-card">
+          <div class="menu-header-row">
+            <span class="menu-item-title">🍅 番茄蛋花熱燕麥粥</span>
+            <span class="menu-badge badge-ready">抗氧化護肝</span>
           </div>
-          <div class="recipe-steps">
+          <div class="menu-desc">
             1. 鍋中水煮滾，丟入牛番茄切丁煮軟（釋放豐富茄紅素）。<br>
             2. 淋入一顆打散的蛋花，加入燕麥片拌勻微滾 1 分鐘關火。<br>
             3. 調味：黑胡椒粒、少許鹽、幾滴香油。完全不用醬油，酸香清爽暖呼呼！
           </div>
+          <button class="btn-apply-dinner" onclick="setAsTonightDinner('番茄蛋花熱燕麥粥', '牛番茄+蛋花+燕麥片+黑胡椒')">
+            📌 設為今晚晚餐（帶入打卡）
+          </button>
         </div>
       </div>
 
@@ -1029,7 +1249,9 @@
       weight: '',
       followup: '2027-01-26',
       streak: 0,
-      foodLogs: []
+      foodLogs: [],
+      pantryText: '',
+      customMenuPlan: null
     };
 
     function init() {
@@ -1080,6 +1302,7 @@
       renderStats();
       updateCoachFeedback();
       checkGeminiKeyStatus();
+      initPantry();
     }
 
     function save() {
@@ -1795,11 +2018,6 @@
             });
           });
         }
-              mime_type: 'image/jpeg',
-              data: base64Data
-            }
-          });
-        }
 
         const prompt = `你是一位專業且溫暖的臨床營養師。請針對使用者上傳的這餐（食材備註：${note || '無備註，請辨識照片'}）進行精簡專業點評：
 1. 估算熱量與食材組成（澱粉、蛋白質、蔬菜比例）
@@ -1910,6 +2128,583 @@
         p.style.display = 'none';
         arrow.textContent = '▼';
       }
+    }
+
+    // ==================== 🍲 暖胃廚房與智能晚餐菜單管理系統 ====================
+    let pantryPhotos = [];
+    let currentMenuSubTab = 'weekdays';
+
+    const DEFAULT_MENU = {
+      weekdays: [
+        {
+          id: 'w1',
+          title: '胡椒雞蓉嫩豆腐熱鹹燕麥粥',
+          category: '自己做・免開火',
+          badgeClass: 'badge-cook',
+          time: '⏱️ 3 分鐘沖泡',
+          tags: ['高纖', '高蛋白', '零洗切'],
+          desc: '<strong>食材：</strong>大燕麥片 4 湯匙、全聯/超商嫩豆腐半盒、即食雞胸肉 1 片（或茶葉蛋壓碎）、白胡椒粉、海苔酥。<br><strong>作法：</strong>燕麥片倒入大碗，熱水淹過靜置 2 分鐘化為綿密粥底；用湯匙舀入半盒嫩豆腐壓碎、雞胸肉手撕碎片，撒上滿滿白胡椒粉與海苔酥。免開火、免洗菜刀砧板！',
+          highlight: '🛡️ <strong>護肝降TG：</strong>燕麥 β-葡聚醣直接抓吸膽固醇與三酸甘油酯，豆腐高蛋白溫和好消化，21:00 前吃完睡前 2 小時零胃酸逆流。',
+          planText: '熱鹹燕麥粥（嫩豆腐半盒+即食雞肉+白胡椒，免開火3分鐘）'
+        },
+        {
+          id: 'w2',
+          title: '超商關東煮極速暖胃低卡組',
+          category: '買現成・超商',
+          badgeClass: 'badge-ready',
+          time: '⏱️ 2 分鐘外帶',
+          tags: ['超商', '低卡熱食', '低鈉攻略'],
+          desc: '<strong>食材組合：</strong>關東煮白蘿蔔 2 塊 + 蒟蒻絲 2 結 + 油豆腐 1 塊 + 茶碗蒸 1 個 + 熱無糖高纖黑豆漿 1 瓶。<br><strong>避坑攻略：</strong>超商湯底含鈉量高，<strong>「只夾料、不喝鹹湯」</strong>！吸滿甘甜水分的白蘿蔔與蒟蒻，配蒸蛋與黑豆漿，暖呼呼又飽足。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>總熱量僅約 270 kcal，碳水極低，完全不刺激肝臟合成三酸甘油酯，超快搞定免洗鍋。',
+          planText: '超商關東煮（蘿蔔+蒟蒻+豆腐）+蒸蛋+熱無糖黑豆漿（不喝鹹湯）'
+        },
+        {
+          id: 'w3',
+          title: '鮮採番茄豆腐微波暖蛋湯',
+          category: '自己做・微波爐',
+          badgeClass: 'badge-cook',
+          time: '⏱️ 2.5 分鐘微波',
+          tags: ['微波免洗鍋', '抗氧化', '高茄紅素'],
+          desc: '<strong>食材：</strong>全聯水洗小番茄 5-6 顆（免切，叉子戳破）、嫩豆腐半盒、雞蛋 1 顆、熱水 250ml、白胡椒、香油 2 滴。<br><strong>作法：</strong>小番茄戳洞放入大碗，倒入熱水與嫩豆腐，微波 1.5 分鐘；打散蛋液淋入，再微波 1 分鐘，起鍋撒白胡椒與 2 滴香油。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>微波加熱使番茄徹底釋放脂溶性茄紅素，強效抗發炎修復脂肪肝細胞；酸香開胃完全不用醬油。',
+          planText: '番茄滑蛋豆腐微波暖湯（水洗番茄+嫩豆腐+蛋花，微波2.5分）'
+        },
+        {
+          id: 'w4',
+          title: '加熱滷味「護肝通關密語」避雷餐',
+          category: '買現成・外食',
+          badgeClass: 'badge-ready',
+          time: '⏱️ 0 分鐘廚藝',
+          tags: ['外食避雷', '蔬菜自由', '高蛋白'],
+          desc: '<strong>食材點法：</strong>大份高麗菜/空心菜 + 嫩豆腐/大豆干 + 瘦肉片/牛腱 + 金針菇。<br><strong>老闆通關密語：</strong>「<strong>不要酸菜、不要火鍋料、醬油膏少半匙、加蔥花與生辣椒</strong>」。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>避開高鈉酸菜與重糖醬油膏，大量蔬菜鉀離子迅速排出外食鹽分，深層修復下班疲憊身體。',
+          planText: '外食加熱滷味（深綠蔬菜+豆干豆腐+瘦肉，去酸菜少醬料）'
+        },
+        {
+          id: 'w5',
+          title: '控量 8 顆水餃 + 免洗高纖沙拉豆漿餐',
+          category: '自己做・快煮',
+          badgeClass: 'badge-cook',
+          time: '⏱️ 6 分鐘水煮',
+          tags: ['澱粉控量', '高纖緩釋', '解嘴饞'],
+          desc: '<strong>食材：</strong>冷凍水餃 8 顆（嚴格不超過 8 顆）、超商水洗生菜盒、熱無糖黑豆漿。<br><strong>作法：</strong>水滾煮水餃 6 分鐘撈起，沙拉淋自備少許橄欖油與黑胡椒；<strong>先喝半瓶黑豆漿並吃半盒沙拉，再吃水餃</strong>。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>水餃皮是精緻澱粉，但透過先吃蔬菜與蛋白質在腸道形成纖維屏障，能大幅平緩血糖與三酸甘油酯峰值！',
+          planText: '控量8顆水餃+免洗生菜沙拉+熱無糖黑豆漿（先菜肉後澱粉）'
+        },
+        {
+          id: 'w6',
+          title: '清蒸魚/去皮雞腿溫暖自助餐',
+          category: '買現成・外食',
+          badgeClass: 'badge-ready',
+          time: '⏱️ 下班外帶',
+          tags: ['外食便當', '白肉蛋白質', '低油脂'],
+          desc: '<strong>食材夾法：</strong>清蒸魚片或滷雞腿（吃時把皮剝掉）+ 2 格深綠色清炒蔬菜 + 蒸蛋或滷豆腐，白飯嚴格「減半」或換成小地瓜。<br><strong>地雷警告：</strong>避開糖醋排骨、厚粉炸排骨、三色豆與玉米羹。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>優質低脂白肉富含甲硫胺酸，幫助肝臟解毒代謝脂肪，飽足而不昏沉。',
+          planText: '自助餐清蒸魚/去皮雞腿+2格青菜+蒸蛋（白飯減半）'
+        }
+      ],
+      weekend: [
+        {
+          id: 'k1',
+          title: '週六：昆布白菜菇菇嫩豆腐雞肉小暖鍋',
+          category: '週末悠閒・自煮暖鍋',
+          badgeClass: 'badge-weekend',
+          time: '⏱️ 10 分鐘小鍋',
+          tags: ['週末排毒', '清腸高纖', '天然甘甜'],
+          desc: '<strong>食材：</strong>昆布高湯包 1 包、嫩豆腐 1 盒、大白菜半顆（手撕免切菜刀）、金針菇 1 包、雞里肌肉片 1 盒。<br><strong>作法：</strong>小湯鍋裝水 400ml 放高湯包滾 3 分鐘，手撕大白菜與金針菇、整塊豆腐入鍋滾煮，最後放入雞里肌片涮熟關火。沾醬用日式薄鹽醬油加白蘿蔔泥與白胡椒。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>大量菇菇多醣體與大白菜膳食纖維，清空一週累積在腸道的代謝廢物，高鉀排鈉消水腫。',
+          planText: '週末昆布蔬菜菇菇嫩豆腐雞肉小暖鍋（手撕蔬菜+豆腐+雞肉）'
+        },
+        {
+          id: 'k2',
+          title: '週日：鮮採番茄蒜香菇菇低GI義大利麵煲',
+          category: '週末蓄能・一鍋到底',
+          badgeClass: 'badge-weekend',
+          time: '⏱️ 12 分鐘料理',
+          tags: ['低GI澱粉', '抗發炎', '地中海飲食'],
+          desc: '<strong>食材：</strong>牛番茄 2 顆切塊、大蒜 4 瓣切碎、洋菇/鴻喜菇 1 包、雞肉片或鮮蝦、全麥義大利麵 60g（或蒟蒻麵）、橄欖油 1 匙、黑胡椒。<br><strong>作法：</strong>熱鍋倒橄欖油爆香大蒜與菇菇，加入切塊番茄炒出紅油茄汁；加半碗水煮滾，放入全麥義大利麵燜煮 8 分鐘至收汁，下雞肉片拌熟撒黑胡椒出鍋。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>初榨橄欖油單元不飽和脂肪酸保護心血管，全麥義大利麵低 GI（升糖指數僅 45），為週一蓄滿能量！',
+          planText: '鮮採番茄蒜香菇菇低GI溫暖麵煲（全麥麵+橄欖油+番茄雞肉）'
+        },
+        {
+          id: 'k3',
+          title: '日式柴魚滑蛋嫩豆腐煲',
+          category: '假日輕食・滑嫩',
+          badgeClass: 'badge-weekend',
+          time: '⏱️ 5 分鐘出鍋',
+          tags: ['雙倍蛋白', '胃壁修復', '溫和低卡'],
+          desc: '<strong>食材：</strong>嫩豆腐 1 盒、雞蛋 2 顆、柴魚片 1 小包、蔥花、日式高湯 100ml。<br><strong>作法：</strong>高湯煮滾，嫩豆腐切大塊放入煨煮 2 分鐘，均勻淋上蛋液，蓋鍋燜 30 秒至半熟關火，撒滿柴魚片與蔥花。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>滑順好消化，雙倍優質蛋白質（大豆+蛋），滋養肝臟受損細胞，適合週末早午餐或輕晚餐。',
+          planText: '日式柴魚滑蛋嫩豆腐煲（嫩豆腐+雙蛋花+柴魚高湯）'
+        }
+      ],
+      fullweek: [
+        { day: '週一 (Mon)', title: '胡椒雞蓉嫩豆腐熱燕麥粥', badge: '免開火 3分', planText: '大燕麥片4匙+嫩豆腐半盒+即食雞肉+白胡椒粉（免開火3分鐘）', desc: '剛開工身心疲憊，熱水沖泡 3 分鐘即食，溫暖養胃排空快。' },
+        { day: '週二 (Tue)', title: '超商關東煮蘿蔔蒟蒻+蒸蛋+黑豆漿', badge: '買現成 2分', planText: '超商關東煮（蘿蔔+蒟蒻+豆腐）+蒸蛋+熱無糖黑豆漿（不喝鹹湯）', desc: '下班直接超商解決，不喝重鹹高湯，高蛋白低碳水無負擔。' },
+        { day: '週三 (Wed)', title: '鮮採番茄豆腐微波暖蛋湯', badge: '微波 2.5分', planText: '番茄豆腐微波暖蛋湯（水洗番茄+嫩豆腐+蛋花+白胡椒）', desc: '番茄免切戳破直接微波，茄紅素抗氧化修復脂肪肝。' },
+        { day: '週四 (Thu)', title: '外食加熱滷味高纖蛋白質餐', badge: '買現成 外食', planText: '外食加熱滷味（深綠蔬菜+豆干豆腐+瘦肉，去酸菜少醬料）', desc: '通關密語「去酸菜、少醬膏」，下班路過直接外帶免開火。' },
+        { day: '週五 (Fri)', title: '控量 8 顆水餃 + 免洗高纖沙拉豆漿', badge: '快煮 6分', planText: '控量8顆水餃+免洗生菜沙拉+熱無糖黑豆漿（先菜肉後澱粉）', desc: '週五慰勞想吃澱粉，先喝豆漿吃生菜再吃 8 顆水餃，TG 穩如泰山。' },
+        { day: '週六 (Sat)', title: '週末昆布白菜菇菇嫩豆腐雞肉小暖鍋', badge: '自煮暖鍋 10分', planText: '昆布白菜菇菇嫩豆腐雞肉小暖鍋（手撕蔬菜+嫩豆腐+雞里肌）', desc: '假日採買滿滿高纖蔬菜，一鍋清爽暖胃，清空一週腸胃負擔。' },
+        { day: '週日 (Sun)', title: '鮮採番茄蒜香菇菇低GI義大利麵煲', badge: '蓄能煲 12分', planText: '鮮採番茄蒜香菇菇低GI義大利麵煲（全麥麵+橄欖油+番茄雞肉）', desc: '好油蒜香抗發炎，全麥低升糖，為週一通勤蓄滿能量。' }
+      ]
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function initPantry() {
+      if (state.pantryText) {
+        const el = document.getElementById('pantry-text-input');
+        if (el) el.value = state.pantryText;
+      }
+      updateMenuTabButtons();
+      renderMenuCards();
+    }
+
+    function savePantryText() {
+      const el = document.getElementById('pantry-text-input');
+      if (el) {
+        state.pantryText = el.value;
+        save();
+      }
+    }
+
+    function addPantryChip(name) {
+      const input = document.getElementById('pantry-text-input');
+      if (!input) return;
+      let current = input.value.trim();
+      if (current.includes(name)) return;
+      input.value = current ? `${current}、${name}` : name;
+      savePantryText();
+      showToast(`已加入食材：${name}`);
+    }
+
+    function triggerPantryPhotoUpload() {
+      document.getElementById('pantry-photo-input').click();
+    }
+
+    function handlePantryPhotosUpload(e) {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+
+      const btnText = document.getElementById('pantry-photo-btn-text');
+      btnText.textContent = `⏳ 正在優化壓縮 ${files.length} 張食材照片...`;
+
+      let processed = 0;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          compressImage(evt.target.result, 720, 0.65, function(compressedData) {
+            if (pantryPhotos.length < 5) {
+              pantryPhotos.push(compressedData);
+            }
+            processed++;
+            if (processed === files.length) {
+              btnText.textContent = `📷 已載入 ${pantryPhotos.length} 張買菜照（可繼續加選）`;
+              renderPantryPhotosPreview();
+              showToast(`已載入 ${pantryPhotos.length} 張食材照片 ✓`);
+            }
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+
+    function renderPantryPhotosPreview() {
+      const container = document.getElementById('pantry-photos-preview-container');
+      const grid = document.getElementById('pantry-photos-grid');
+      if (!container || !grid) return;
+
+      if (pantryPhotos.length === 0) {
+        container.style.display = 'none';
+        grid.innerHTML = '';
+        return;
+      }
+
+      container.style.display = 'block';
+      grid.innerHTML = pantryPhotos.map((p, idx) => `
+        <div style="position:relative; flex-shrink:0; width:68px; height:68px; border-radius:8px; overflow:hidden; border:1px solid var(--border);">
+          <img src="${p}" style="width:100%; height:100%; object-fit:cover;">
+          <div onclick="removePantryPhoto(${idx})" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.65); color:white; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; cursor:pointer;">×</div>
+        </div>
+      `).join('');
+    }
+
+    function removePantryPhoto(idx) {
+      pantryPhotos.splice(idx, 1);
+      renderPantryPhotosPreview();
+      const btnText = document.getElementById('pantry-photo-btn-text');
+      if (btnText) {
+        btnText.textContent = pantryPhotos.length > 0 
+          ? `📷 已載入 ${pantryPhotos.length} 張買菜照（可繼續加選）` 
+          : '📷 拍照 / 上傳採買照（可多張，如超市採買袋、冰箱）';
+      }
+    }
+
+    function clearPantryInput() {
+      const el = document.getElementById('pantry-text-input');
+      if (el) el.value = '';
+      state.pantryText = '';
+      pantryPhotos = [];
+      renderPantryPhotosPreview();
+      save();
+      const btnText = document.getElementById('pantry-photo-btn-text');
+      if (btnText) btnText.textContent = '📷 拍照 / 上傳採買照（可多張，如超市採買袋、冰箱）';
+      const statusEl = document.getElementById('menu-gen-status');
+      if (statusEl) statusEl.style.display = 'none';
+      showToast('已清空食材輸入清單');
+    }
+
+    function resetMenuPlan() {
+      state.customMenuPlan = null;
+      save();
+      renderMenuCards();
+      const statusEl = document.getElementById('menu-gen-status');
+      if (statusEl) statusEl.style.display = 'none';
+      showToast('已還原為精選一週晚餐示範菜單！');
+    }
+
+    function switchMenuTab(tabType) {
+      currentMenuSubTab = tabType;
+      updateMenuTabButtons();
+      renderMenuCards();
+    }
+
+    function updateMenuTabButtons() {
+      ['weekdays', 'weekend', 'fullweek'].forEach(t => {
+        const btn = document.getElementById('btn-sub-' + t);
+        if (btn) {
+          if (t === currentMenuSubTab) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+    }
+
+    function setAsTonightDinner(mealName, mealDesc) {
+      switchTab('today');
+      selectMealType('晚餐');
+      const input = document.getElementById('food-note-input');
+      if (input) {
+        input.value = `${mealName}（${mealDesc || ''}）`;
+        updateAiAdvice();
+      }
+      setTimeout(() => {
+        const target = document.getElementById('food-note-input');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          target.focus();
+        }
+      }, 150);
+      showToast(`✨ 已將「${mealName}」設為今晚晚餐打卡！`);
+    }
+
+    function generateLocalMenuPlan(type, text) {
+      const t = (text || '').toLowerCase();
+      const plans = [];
+
+      const hasTofu = t.includes('豆腐');
+      const hasChicken = t.includes('雞') || t.includes('里肌') || t.includes('肉');
+      const hasOats = t.includes('燕麥');
+      const hasTomato = t.includes('番茄');
+      const hasEgg = t.includes('蛋');
+      const hasMushroom = t.includes('菇');
+      const hasCabbage = t.includes('菜') || t.includes('高麗菜') || t.includes('白菜');
+      const hasDumpling = t.includes('水餃') || t.includes('餃');
+      const hasSoyMilk = t.includes('豆漿');
+
+      if (type === 'weekdays' || type === 'fullweek') {
+        plans.push({
+          title: '胡椒雞肉嫩豆腐熱燕麥粥',
+          category: '自己做・免開火',
+          badgeClass: 'badge-cook',
+          time: '⏱️ 3 分鐘沖泡',
+          desc: `<strong>運用現有食材：</strong>${[hasOats?'大燕麥片':'大燕麥片', hasTofu?'嫩豆腐':'嫩豆腐半盒', hasChicken?'雞肉片/雞胸肉':'即食雞肉'].join('、')}。<br><strong>作法：</strong>燕麥沖熱水 2 分鐘，用湯匙舀入嫩豆腐壓碎、撕入雞肉片，撒白胡椒與鹽。免開火、免洗菜刀砧板！`,
+          highlight: '🛡️ <strong>護肝降TG：</strong>燕麥 β-葡聚醣吸附三酸甘油酯，豆腐補充大豆蛋白，20:30 到家 3 分鐘熱騰騰下肚，睡前 2 小時排空。',
+          planText: '熱燕麥粥（嫩豆腐+雞肉+白胡椒，免開火3分鐘）'
+        });
+
+        plans.push({
+          title: '鮮採番茄滑蛋豆腐免洗微波暖湯',
+          category: '自己做・微波爐',
+          badgeClass: 'badge-cook',
+          time: '⏱️ 2.5 分鐘微波',
+          desc: `<strong>運用現有食材：</strong>${[hasTomato?'牛番茄/小番茄':'小番茄', hasEgg?'雞蛋':'雞蛋1顆', hasTofu?'嫩豆腐':'嫩豆腐'].join('、')}。<br><strong>作法：</strong>番茄免切（叉子戳破）與嫩豆腐置入大碗，倒熱水微波 1.5 分鐘；淋入攪散蛋液再微波 1 分鐘，起鍋滴少許香油與黑胡椒。`,
+          highlight: '🛡️ <strong>護肝降TG：</strong>微波徹底活化番茄茄紅素，強力抗發炎修復脂肪肝細胞；完全零洗鍋！',
+          planText: '番茄滑蛋豆腐微波暖湯（水洗番茄+嫩豆腐+蛋花，微波2.5分）'
+        });
+
+        if (hasDumpling) {
+          plans.push({
+            title: '控量 8 顆水餃 + 高纖無糖豆漿餐',
+            category: '自己做・快煮',
+            badgeClass: 'badge-cook',
+            time: '⏱️ 6 分鐘水煮',
+            desc: `<strong>運用現有食材：</strong>冷凍水餃（嚴格限 8 顆）+ ${hasSoyMilk?'無糖黑豆漿':'無糖高纖豆漿'} + ${hasCabbage?'免洗生菜/燙高麗菜':'蔬菜'}。<br><strong>作法：</strong>水滾煮水餃 6 分鐘；先喝半瓶豆漿吃蔬菜，最後才吃水餃。`,
+            highlight: '🛡️ <strong>護肝降TG：</strong>以豆漿蛋白質與蔬菜纖維先墊胃，延緩水餃澱粉吸收，保護胰島素與肝臟脂肪代謝。',
+            planText: '控量8顆水餃+蔬菜+無糖黑豆漿（先菜肉後澱粉）'
+          });
+        }
+
+        plans.push({
+          title: '加熱滷味「護肝通關密語」避雷餐',
+          category: '買現成・外食',
+          badgeClass: 'badge-ready',
+          time: '⏱️ 0 廚藝外帶',
+          desc: '<strong>外帶點法：</strong>大份高麗菜 + 嫩豆腐/大豆干 + 瘦肉片/牛腱 + 金針菇。<br><strong>老闆密語：</strong>「不要酸菜、不要火鍋料、醬油少半匙、加生辣椒與蔥花」。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>避開高鈉酸菜與重糖醬油膏，吸收大量蔬菜鉀離子消水腫，零洗鍋首選。',
+          planText: '外食加熱滷味（深綠蔬菜+豆干豆腐+瘦肉，去酸菜少醬料）'
+        });
+
+        plans.push({
+          title: '超商關東煮蘿蔔蒟蒻+蒸蛋+黑豆漿',
+          category: '買現成・超商',
+          badgeClass: 'badge-ready',
+          time: '⏱️ 2 分鐘外帶',
+          desc: '<strong>超商夾法：</strong>關東煮白蘿蔔 2 塊 + 蒟蒻絲 2 結 + 油豆腐 1 塊 + 茶碗蒸 1 個 + 熱無糖高纖黑豆漿。<br><strong>攻略：</strong>「只夾料、不喝鹹湯」，總熱量僅 270 kcal，碳水極低。',
+          highlight: '🛡️ <strong>護肝降TG：</strong>完全不刺激肝臟合成三酸甘油酯，到家極速吃完好入睡。',
+          planText: '超商關東煮（蘿蔔+蒟蒻+豆腐）+蒸蛋+熱無糖黑豆漿'
+        });
+      }
+
+      if (type === 'weekend' || type === 'fullweek') {
+        plans.push({
+          title: '週末昆布高纖蔬菜嫩豆腐雞肉小暖鍋',
+          category: '週末悠閒・自煮暖鍋',
+          badgeClass: 'badge-weekend',
+          time: '⏱️ 10 分鐘小鍋',
+          desc: `<strong>運用現有食材：</strong>昆布高湯包 + ${hasTofu?'嫩豆腐1盒':'嫩豆腐'} + ${hasCabbage?'大白菜/高麗菜':'大白菜手撕'} + ${hasMushroom?'金針菇/菇類':'金針菇'} + ${hasChicken?'雞肉片/里肌':'雞肉片'}。<br><strong>作法：</strong>湯鍋煮滾高湯 3 分鐘，手撕蔬菜菇類與整塊豆腐入鍋滾煮，最後涮熟雞肉片。沾醬搭配白蘿蔔泥與白胡椒。`,
+          highlight: '🛡️ <strong>護肝降TG：</strong>大量膳食纖維與菇菇多醣體清空一週腸胃代謝廢物，高鉀排鈉，身心徹底放鬆。',
+          planText: '週末昆布蔬菜菇菇嫩豆腐雞肉小暖鍋（手撕蔬菜+豆腐+雞肉）'
+        });
+
+        plans.push({
+          title: '鮮採番茄蒜香菇菇低GI溫暖麵煲',
+          category: '週末蓄能・一鍋到底',
+          badgeClass: 'badge-weekend',
+          time: '⏱️ 12 分鐘料理',
+          desc: `<strong>運用現有食材：</strong>${hasTomato?'牛番茄':'牛番茄2顆'} + 大蒜 + ${hasMushroom?'菇類':'洋菇/金針菇'} + ${hasChicken?'雞肉片':'雞肉片'} + 全麥麵/蒟蒻麵。<br><strong>作法：</strong>熱鍋倒橄欖油爆香大蒜與菇菇，炒出番茄紅油茄汁；加水滾煮全麥麵 8 分鐘至收汁，下雞肉片拌熟起鍋撒黑胡椒。`,
+          highlight: '🛡️ <strong>護肝降TG：</strong>初榨橄欖油好油脂抗發炎護心血管，全麥低GI升糖指數僅45，為週一蓄滿能量！',
+          planText: '鮮採番茄蒜香菇菇低GI溫暖麵煲（全麥麵+橄欖油+番茄雞肉）'
+        });
+      }
+
+      return plans;
+    }
+
+    async function generateAiMenuWithGemini(type, text) {
+      const key = localStorage.getItem('vitalstep_gemini_key');
+      const statusEl = document.getElementById('menu-gen-status');
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = '<div style="color:var(--primary); font-weight:700;">🤖 AI 專屬主廚正在根據您的食材規劃菜單，請稍候 3~5 秒...</div>';
+
+      try {
+        const parts = [];
+        if (pantryPhotos.length > 0) {
+          pantryPhotos.forEach(p => {
+            const base64Data = p.split(',')[1];
+            parts.push({
+              inline_data: {
+                mime_type: 'image/jpeg',
+                data: base64Data
+              }
+            });
+          });
+        }
+
+        const typePromptMap = {
+          weekdays: '平日週一至五晚歸（20:30到家，極速、免開火或微波≤3分鐘、零洗切洗鍋，以及超商/外食買現成避雷搭法）',
+          weekend: '週末週六週日（悠閒療癒自煮小暖鍋或低GI煲，高纖抗發炎）',
+          fullweek: '一週 7 天晚餐靈感（週一至週五平日晚歸極速零洗切，週末自煮清爽暖鍋，買現成與自己煮平衡搭配）'
+        };
+
+        const prompt = `你是一位米其林級暖心臨床營養主廚。專為一位「每日通勤3-4小時、20:30到家、膝蓋無法負重深蹲、健檢三酸甘油酯TG 260與脂肪肝」的上班族規劃晚餐。
+使用者目前持有/買入的食材為：${text || '無打字，請辨識照片中的食材'}。
+請為他規劃【${typePromptMap[type] || typePromptMap.weekdays}】菜單提案。
+要求：
+1. 平日晚歸必須「極速≤3-5分鐘、零洗切免洗菜刀砧板、免開火或微波」，或是「超商/外食現成避雷買法」。
+2. 週末自煮以「少油少鹽暖胃小鍋或低GI煲」為主。
+3. 嚴格避開高果糖、過量澱粉與高鈉重鹹，保護脂肪肝與降TG。
+請以繁體中文輸出，包含 3 道精簡具體菜餚。每道請用如下 JSON 格式輸出：
+[
+  {
+    "title": "菜餚名稱",
+    "category": "買現成 或 自己做",
+    "time": "⏱️ 所需時間",
+    "desc": "食材與作法說明（條列式）",
+    "highlight": "護肝降TG與健康效益",
+    "planText": "簡短打卡備註（50字以內）"
+  }
+]
+只返回純 JSON 陣列，不要包含任何額外 markdown 或說明。`;
+
+        parts.push({ text: prompt });
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts }] })
+        });
+
+        const resData = await response.json();
+        if (resData.error) {
+          throw new Error(resData.error.message || 'Gemini 呼叫失敗');
+        }
+
+        let replyText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        replyText = replyText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        let parsedPlans = null;
+        try {
+          parsedPlans = JSON.parse(replyText);
+        } catch (e) {
+          console.warn('JSON parse failed, falling back to local synthesizer:', e);
+        }
+
+        if (Array.isArray(parsedPlans) && parsedPlans.length > 0) {
+          state.customMenuPlan = parsedPlans.map((p, idx) => ({
+            id: 'ai_' + Date.now() + '_' + idx,
+            title: p.title,
+            category: p.category || (p.time && p.time.includes('外帶') ? '買現成' : '自己做'),
+            badgeClass: (p.category && p.category.includes('現成')) ? 'badge-ready' : 'badge-cook',
+            time: p.time || '⏱️ 3 分鐘',
+            tags: ['AI 專屬量身配', 'TG 260 防護'],
+            desc: p.desc,
+            highlight: `🛡️ <strong>護肝降TG：</strong>${p.highlight}`,
+            planText: p.planText || p.title
+          }));
+          save();
+          renderMenuCards();
+          statusEl.innerHTML = '<span style="color:var(--primary); font-weight:700;">✨ Gemini AI 已根據您的食材量身生成專屬菜單！</span>';
+          showToast('✨ Gemini AI 專屬菜單生成成功！');
+        } else {
+          state.customMenuPlan = generateLocalMenuPlan(type, text);
+          save();
+          renderMenuCards();
+          statusEl.innerHTML = '<span style="color:var(--primary); font-weight:700;">✨ 已根據您的食材完成菜單排程！</span>';
+          showToast('✨ 專屬菜單已生成！');
+        }
+      } catch (err) {
+        console.error('Gemini Menu Generation Error:', err);
+        state.customMenuPlan = generateLocalMenuPlan(type, text);
+        save();
+        renderMenuCards();
+        statusEl.innerHTML = `<span style="color:var(--text-muted);">💡 雲端連線較慢，已切換至本機智能廚房為您搭配完成！</span>`;
+        showToast('✨ 專屬菜單已生成（本機智能模式）！');
+      }
+    }
+
+    function generateMenuPlan(type) {
+      const pantryText = (document.getElementById('pantry-text-input')?.value || state.pantryText || '').trim();
+      const key = localStorage.getItem('vitalstep_gemini_key');
+
+      currentMenuSubTab = type === 'fullweek' ? 'fullweek' : (type === 'weekend' ? 'weekend' : 'weekdays');
+      updateMenuTabButtons();
+
+      if (key && (pantryText || pantryPhotos.length > 0)) {
+        generateAiMenuWithGemini(type, pantryText);
+      } else {
+        state.customMenuPlan = generateLocalMenuPlan(type, pantryText);
+        save();
+        renderMenuCards();
+        const statusEl = document.getElementById('menu-gen-status');
+        if (statusEl) {
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = `<span style="color:var(--primary); font-weight:700;">✨ 已根據您現有的食材規劃專屬料理靈感！</span>`;
+        }
+        showToast('✨ 專屬菜單已就緒！');
+      }
+    }
+
+    function renderMenuCards() {
+      const container = document.getElementById('menu-cards-container');
+      if (!container) return;
+
+      let html = '';
+
+      if (state.customMenuPlan && state.customMenuPlan.length > 0) {
+        html += `
+          <div style="background:var(--primary-light); border:1px solid rgba(5,150,105,0.3); border-radius:12px; padding:8px 12px; margin-bottom:12px; font-size:11px; display:flex; justify-content:space-between; align-items:center;">
+            <span style="color:var(--primary); font-weight:700;">✨ 根據您輸入的食材量身打造：</span>
+            <button class="btn" style="padding:2px 7px; font-size:10px; background:var(--card-bg);" onclick="resetMenuPlan()">切換回標準示範</button>
+          </div>
+        `;
+
+        state.customMenuPlan.forEach(item => {
+          html += `
+            <div class="menu-item-card">
+              <div class="menu-header-row">
+                <span class="menu-item-title">🍲 ${item.title}</span>
+                <span class="menu-badge ${item.badgeClass || 'badge-cook'}">${item.category || '專屬搭配'}</span>
+              </div>
+              <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">${item.time || ''}</div>
+              <div class="menu-desc">${item.desc}</div>
+              ${item.highlight ? `<div class="menu-highlight-box">${item.highlight}</div>` : ''}
+              <button class="btn-apply-dinner" onclick="setAsTonightDinner('${escapeHtml(item.title)}', '${escapeHtml(item.planText || item.title)}')">
+                📌 設為今晚晚餐（帶入打卡）
+              </button>
+            </div>
+          `;
+        });
+
+        html += `<div style="text-align:center; font-size:11px; color:var(--text-muted); margin:14px 0 8px 0; border-top:1px dashed var(--border); padding-top:10px;">👇 以下為常備示範菜單與靈感庫：</div>`;
+      }
+
+      if (currentMenuSubTab === 'weekdays') {
+        DEFAULT_MENU.weekdays.forEach(item => {
+          html += `
+            <div class="menu-item-card">
+              <div class="menu-header-row">
+                <span class="menu-item-title">🍲 ${item.title}</span>
+                <span class="menu-badge ${item.badgeClass}">${item.category}</span>
+              </div>
+              <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">${item.time}</div>
+              <div class="menu-desc">${item.desc}</div>
+              <div class="menu-highlight-box">${item.highlight}</div>
+              <button class="btn-apply-dinner" onclick="setAsTonightDinner('${escapeHtml(item.title)}', '${escapeHtml(item.planText)}')">
+                📌 設為今晚晚餐（帶入打卡）
+              </button>
+            </div>
+          `;
+        });
+      } else if (currentMenuSubTab === 'weekend') {
+        DEFAULT_MENU.weekend.forEach(item => {
+          html += `
+            <div class="menu-item-card">
+              <div class="menu-header-row">
+                <span class="menu-item-title">🍲 ${item.title}</span>
+                <span class="menu-badge ${item.badgeClass}">${item.category}</span>
+              </div>
+              <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">${item.time}</div>
+              <div class="menu-desc">${item.desc}</div>
+              <div class="menu-highlight-box">${item.highlight}</div>
+              <button class="btn-apply-dinner" onclick="setAsTonightDinner('${escapeHtml(item.title)}', '${escapeHtml(item.planText)}')">
+                📌 設為今晚晚餐（帶入打卡）
+              </button>
+            </div>
+          `;
+        });
+      } else if (currentMenuSubTab === 'fullweek') {
+        DEFAULT_MENU.fullweek.forEach(item => {
+          html += `
+            <div class="menu-item-card">
+              <div class="menu-header-row">
+                <span class="menu-item-title">${item.day}：${item.title}</span>
+                <span class="menu-badge badge-fast">${item.badge}</span>
+              </div>
+              <div class="menu-desc" style="margin-bottom:6px;">${item.desc}</div>
+              <div style="font-size:10px; color:var(--text-muted); margin-bottom:8px;"><strong>餐點重點：</strong>${item.planText}</div>
+              <button class="btn-apply-dinner" onclick="setAsTonightDinner('${escapeHtml(item.title)}', '${escapeHtml(item.planText)}')">
+                📌 設為今晚晚餐（帶入打卡）
+              </button>
+            </div>
+          `;
+        });
+      }
+
+      container.innerHTML = html;
     }
 
     window.addEventListener('DOMContentLoaded', init);
