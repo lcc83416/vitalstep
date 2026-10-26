@@ -110,7 +110,7 @@
       color: var(--text-muted);
     }
 
-    /* 頂部膠囊分段切換器 (一打開最上方直接看到，免滾動) */
+    /* 頂部膠囊分段切換器 */
     .top-segment-bar {
       display: flex;
       background: var(--card-bg);
@@ -139,7 +139,7 @@
       box-shadow: 0 2px 6px rgba(5,150,105,0.25);
     }
 
-    /* 底部導航欄 (雙保險，底部安全區避讓) */
+    /* 底部導航欄 */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -176,7 +176,7 @@
       margin-bottom: 2px;
     }
 
-    /* 分頁頁面容器 */
+    /* 分頁容器 */
     .tab-pane {
       display: none;
     }
@@ -285,7 +285,7 @@
       border-color: var(--primary);
     }
 
-    /* 水杯小元件 */
+    /* 水杯元件 */
     .water-cups {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
@@ -424,7 +424,7 @@
 
   <div class="container">
 
-    <!-- 🌟 頂部膠囊分段按鈕：一開螢幕直接點，完全不用往下滑！ -->
+    <!-- 頂部膠囊分段按鈕 -->
     <div class="top-segment-bar">
       <div class="segment-btn active" data-tab="today" onclick="switchTab('today')">今日打卡</div>
       <div class="segment-btn" data-tab="stats" onclick="switchTab('stats')">每週統計</div>
@@ -493,7 +493,7 @@
         </div>
       </div>
 
-      <!-- 飲食拍照 -->
+      <!-- 飲食拍照（升級：加入食材文字說明欄位） -->
       <div class="card">
         <div class="card-title">
           <span>📸 飲食拍照記錄 & NG 地雷偵測</span>
@@ -503,6 +503,16 @@
         
         <div id="photo-preview-container" style="display:none; margin-top:10px;">
           <img id="food-img-preview" src="" style="width:100%; max-height:200px; object-fit:cover; border-radius:12px; margin-bottom:8px;">
+          
+          <!-- 📝 新增：食材與餐點詳細文字說明欄位 -->
+          <div style="margin-bottom:8px;">
+            <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+              📝 這餐包含哪些食材？（打字補充，混在一起也能記錄清楚）：
+            </label>
+            <input type="text" id="food-note-input" placeholder="例如：滷味（高麗菜、白蘿蔔、非油炸豆干、瘦肉片，未加酸菜）" 
+              style="width:100%; padding:9px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;">
+          </div>
+
           <div style="font-size:11px; font-weight:700; margin-bottom:4px;">點選標記是否有隱形地雷：</div>
           <div>
             <span class="tag-chip" onclick="toggleTag(this, '不餓亂吃')">⚠️ 不餓只是嘴饞</span>
@@ -873,7 +883,7 @@
       }
     }
 
-    // 拍照
+    // 拍照上傳與標籤
     let currentTags = [];
     let currentPhotoData = null;
 
@@ -890,6 +900,7 @@
         currentPhotoData = evt.target.result;
         document.getElementById('food-img-preview').src = currentPhotoData;
         document.getElementById('photo-preview-container').style.display = 'block';
+        document.getElementById('food-note-input').value = ''; // 清空說明欄
         currentTags = [];
         document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
         updateAiAdvice();
@@ -926,10 +937,12 @@
 
     function saveFoodLog() {
       if (!currentPhotoData) return;
+      const note = document.getElementById('food-note-input').value.trim();
       state.foodLogs = state.foodLogs || [];
       state.foodLogs.unshift({
         time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
         photo: currentPhotoData,
+        note: note,
         tags: [...currentTags]
       });
       if (state.foodLogs.length > 5) state.foodLogs.pop();
@@ -943,16 +956,19 @@
     function renderFoodLogs() {
       const c = document.getElementById('food-logs-history');
       if (!state.foodLogs || state.foodLogs.length === 0) {
-        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，點擊上方按鈕記錄你的餐點吧！</div>';
+        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，點擊上方按鈕記錄你的晚餐吧！</div>';
         return;
       }
       c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px;">今日已記錄餐點：</div>' +
         state.foodLogs.map(item => `
-          <div style="display:flex; gap:10px; align-items:center; background:var(--bg); padding:8px; border-radius:10px; margin-bottom:6px;">
-            <img src="${item.photo}" style="width:48px; height:48px; object-fit:cover; border-radius:8px;">
-            <div>
-              <div style="font-size:11px; font-weight:700;">${item.time}</div>
-              <div style="font-size:10px; color:var(--text-muted);">標籤: ${item.tags.length ? item.tags.join('、') : '一般飲食'}</div>
+          <div style="display:flex; gap:10px; align-items:flex-start; background:var(--bg); padding:10px; border-radius:10px; margin-bottom:8px;">
+            <img src="${item.photo}" style="width:52px; height:52px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; font-weight:700;">${item.time}</span>
+                <span style="font-size:10px; color:var(--text-muted);">${item.tags.length ? item.tags.join('、') : '一般飲食'}</span>
+              </div>
+              ${item.note ? `<div style="font-size:11px; color:var(--text-main); margin-top:4px; background:var(--card-bg); padding:4px 8px; border-radius:6px; border:1px solid var(--border); line-height:1.4;">${item.note}</div>` : ''}
             </div>
           </div>
         `).join('');
