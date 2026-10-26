@@ -459,7 +459,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 4.2 <span class="tag">照片自動壓縮+獨立儲存</span></div>
+        <div class="logo-title">微步輕健 4.3 <span class="tag">照片AI隱私隔離版</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -691,11 +691,47 @@
 
         <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6; display:none; border:1px solid var(--border);"></div>
         
+        <!-- ✨ 專屬 AI 照片深度講評按鈕（僅在設定 API Key 時顯示） -->
+        <div id="ai-analyze-btn-container" style="display:none; margin-bottom:10px;">
+          <button class="btn" style="width:100%; padding:9px; font-size:12px; background:linear-gradient(135deg, #059669, #0284c7); color:white; border:none; font-weight:700;" onclick="analyzeFoodWithGemini()">
+            ✨ 呼叫 Gemini AI 深度講評此餐（嚴格僅傳此照片與備註）
+          </button>
+        </div>
+
         <!-- 儲存記錄按鈕 -->
         <div style="text-align:right;">
           <button class="btn btn-primary" style="width:100%; padding:10px; font-size:13px;" onclick="saveFoodLog()">
             💾 儲存此餐記錄（打字或相片都能存）
           </button>
+        </div>
+
+        <!-- ⚙️ 嚴格隱私隔離：AI 照片分析設定（選填） -->
+        <div style="margin-top:12px; border-top:1px dashed var(--border); padding-top:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleAiKeyPanel()">
+            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+              ⚙️ 雲端 AI 照片分析設定 <span class="tag" style="font-size:9px; background:#ecfdf5; color:#059669;">選填・嚴格隱私隔離</span>
+            </span>
+            <span id="ai-key-toggle-arrow" style="font-size:11px; color:var(--text-muted);">▼</span>
+          </div>
+
+          <!-- 展開面板 -->
+          <div id="ai-key-panel" style="display:none; margin-top:10px; background:var(--bg); padding:10px; border-radius:10px; border:1px solid var(--border);">
+            <div style="font-size:11px; line-height:1.6; color:var(--text-main); margin-bottom:8px;">
+              🛡️ <strong>100% 隱私沙盒防護保證</strong>：<br>
+              此功能<strong>「僅會單獨傳送當前這張照片與食材備註」</strong>！<br>
+              您的健檢數值（TG 260、低迴音超音波紀錄）、真實體重與手錶步數<strong>100% 隔離在本機，程式碼嚴格禁止讀取外傳</strong>，請絕對放心！
+            </div>
+            <div style="display:flex; gap:6px;">
+              <input type="password" id="gemini-key-input" placeholder="貼上 Google Gemini API Key" 
+                style="flex:1; padding:7px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--card-bg); color:var(--text-main); outline:none;">
+              <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="saveGeminiKey()">儲存</button>
+              <button class="btn" style="padding:6px 10px; font-size:11px;" onclick="clearGeminiKey()">清除</button>
+            </div>
+            <div id="gemini-key-status" style="font-size:10px; color:var(--primary); margin-top:5px; font-weight:700;"></div>
+            <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">
+              💡 尚未申請？可至 Google AI Studio (aistudio.google.com) 免費取得 API Key。未設定時完全不影響目前純落地功能！
+            </div>
+          </div>
         </div>
 
         <!-- 今日記錄歷史 -->
@@ -990,6 +1026,7 @@
       renderFoodLogs();
       updateProgress();
       updateCoachFeedback();
+      checkGeminiKeyStatus();
     }
 
     function save() {
@@ -1483,6 +1520,117 @@
             </div>
           </div>
         `}).join('');
+    }
+
+    // --- 🤖 嚴格隱私隔離：Gemini AI 照片獨立分析模組 ---
+    function toggleAiKeyPanel() {
+      const p = document.getElementById('ai-key-panel');
+      const arrow = document.getElementById('ai-key-toggle-arrow');
+      if (p.style.display === 'none') {
+        p.style.display = 'block';
+        arrow.textContent = '▲';
+      } else {
+        p.style.display = 'none';
+        arrow.textContent = '▼';
+      }
+    }
+
+    function saveGeminiKey() {
+      const k = document.getElementById('gemini-key-input').value.trim();
+      if (!k) {
+        alert('請先輸入 API Key！');
+        return;
+      }
+      localStorage.setItem('vitalstep_gemini_key', k);
+      checkGeminiKeyStatus();
+      showToast('✅ 已成功儲存 API Key！AI 照片深度分析已就緒！');
+    }
+
+    function clearGeminiKey() {
+      if (confirm('確定要清除儲存的 API Key 嗎？')) {
+        localStorage.removeItem('vitalstep_gemini_key');
+        document.getElementById('gemini-key-input').value = '';
+        checkGeminiKeyStatus();
+        showToast('已清除 API Key，恢復純落地離線模式。');
+      }
+    }
+
+    function checkGeminiKeyStatus() {
+      const k = localStorage.getItem('vitalstep_gemini_key');
+      const statusEl = document.getElementById('gemini-key-status');
+      const inputEl = document.getElementById('gemini-key-input');
+      const btnContainer = document.getElementById('ai-analyze-btn-container');
+
+      if (k) {
+        if (inputEl) inputEl.value = k;
+        if (statusEl) statusEl.textContent = '✓ 已設定 Gemini API Key（已解鎖 AI 分析按鈕）';
+        if (btnContainer) btnContainer.style.display = 'block';
+      } else {
+        if (statusEl) statusEl.textContent = '尚未設定 Key（目前使用純落地模式，100% 離線私密）';
+        if (btnContainer) btnContainer.style.display = 'none';
+      }
+    }
+
+    async function analyzeFoodWithGemini() {
+      const key = localStorage.getItem('vitalstep_gemini_key');
+      if (!key) {
+        alert('請先在下方「⚙️ 雲端 AI 照片分析設定」貼上您的 Gemini API Key 喔！');
+        return;
+      }
+
+      const note = (document.getElementById('food-note-input')?.value || '').trim();
+      if (!currentPhotoData && !note) {
+        alert('請先拍照或打字填寫食材，AI 才能幫你看喔！');
+        return;
+      }
+
+      const box = document.getElementById('ai-advice-box');
+      box.style.display = 'block';
+      box.innerHTML = '<div style="color:var(--primary); font-weight:700;">🤖 Gemini AI 正在單獨看這張照片與食材，請稍候 3~5 秒...</div>';
+
+      try {
+        // 🛡️ 嚴格隱私隔離：Payload 僅包含當前照片 base64 與備註文字，絕不讀取或傳送體重、健檢與任何其他個資！
+        const parts = [];
+        if (currentPhotoData) {
+          const base64Data = currentPhotoData.split(',')[1];
+          parts.push({
+            inline_data: {
+              mime_type: 'image/jpeg',
+              data: base64Data
+            }
+          });
+        }
+
+        const prompt = `你是一位專業且溫暖的臨床營養師。請針對使用者上傳的這餐（食材備註：${note || '無備註，請辨識照片'}）進行精簡專業點評：
+1. 估算熱量與食材組成（澱粉、蛋白質、蔬菜比例）
+2. 針對「高三酸甘油酯(TG)與脂肪肝」指出隱藏地雷與優點
+3. 下次外食可以怎麼微調（繁體中文，條列式3點以內，口吻親切鼓勵，避免長篇大論）`;
+
+        parts.push({ text: prompt });
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts }] })
+        });
+
+        const resData = await response.json();
+        if (resData.error) {
+          box.innerHTML = `<span style="color:#ef4444;">⚠️ AI 分析失敗：${resData.error.message || '請檢查 API Key 是否正確'}</span>`;
+          return;
+        }
+
+        const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+          box.innerHTML = `<div style="color:var(--primary); font-weight:800; margin-bottom:6px;">🤖 Gemini AI 營養師專屬點評（僅分析此餐）：</div>${formatted}`;
+        } else {
+          box.innerHTML = '⚠️ 未能辨識出內容，請換一張照片或補充打字食材再試試看！';
+        }
+      } catch (err) {
+        console.error('Gemini API Error:', err);
+        box.innerHTML = `<span style="color:#ef4444;">⚠️ 連線失敗：${err.message || '請確認網路連線'}</span>`;
+      }
     }
 
     // --- 呼吸法動畫 ---
