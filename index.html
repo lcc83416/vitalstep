@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>微步輕健 VitalStep 3.1 - 專屬健康日誌</title>
+  <title>微步輕健 VitalStep 4.0 - 專屬健康日誌</title>
   <style>
     /* 100% 離線獨立樣式，針對 iPhone 16 Pro Max 尺寸全面優化 */
     :root {
@@ -285,23 +285,34 @@
       border-color: var(--primary);
     }
 
-    /* 水杯元件 */
-    .water-cups {
+    /* 600ml 保溫杯元件 */
+    .thermos-grid {
       display: grid;
-      grid-template-columns: repeat(8, 1fr);
-      gap: 6px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
       margin: 10px 0;
     }
-    .cup {
-      height: 24px;
-      border-radius: 6px;
+    .thermos-card {
       background: var(--bg);
       border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
       transition: all 0.2s ease;
+      cursor: pointer;
     }
-    .cup.filled {
-      background: var(--accent);
+    .thermos-card.filled {
+      background: var(--accent-light);
       border-color: var(--accent);
+      color: var(--accent);
+    }
+    .thermos-icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+    .thermos-label {
+      font-size: 10px;
+      font-weight: 700;
     }
 
     /* 按鈕 */
@@ -347,25 +358,30 @@
       color: var(--danger-text);
     }
 
-    /* 食譜卡片 */
-    .recipe-card {
-      background: var(--bg);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 10px;
-      border-left: 4px solid var(--primary);
+    /* 椅子操計時面板 */
+    .chair-timer-box {
+      background: linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08));
+      border: 1px solid rgba(5,150,105,0.25);
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 10px;
+      text-align: center;
     }
-    .recipe-title {
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 4px;
-      display: flex;
-      justify-content: space-between;
+    .timer-display {
+      font-size: 38px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: var(--primary);
+      margin: 6px 0;
     }
-    .recipe-steps {
-      font-size: 11px;
-      color: var(--text-muted);
-      line-height: 1.6;
+    .chair-move-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 12px;
+      line-height: 1.5;
     }
 
     /* 健檢數據網格 */
@@ -410,12 +426,12 @@
 </head>
 <body>
 
-  <!-- 頂部標題列：明確顯示 v3.1 食材備註版 -->
+  <!-- 頂部標題列 -->
   <header>
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 3.1 <span class="tag">食材備註版</span></div>
+        <div class="logo-title">微步輕健 4.0 <span class="tag">椅子操+動態管家</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -441,6 +457,46 @@
         <div><strong>護膝防線（體重 93.5kg）：</strong>下樓梯承重逼近 400kg！<strong>通勤「下樓梯請搭手扶梯」</strong>，絕不勉強深蹲，坐姿抬腿即可保護髕骨。</div>
       </div>
 
+      <!-- 🧠 動態健康管家即時點評 -->
+      <div class="card" style="background:linear-gradient(135deg, rgba(5,150,105,0.06), rgba(2,132,199,0.06)); border-color:rgba(5,150,105,0.3);">
+        <div class="card-title" style="color:var(--primary); margin-bottom:6px;">
+          <span>🩺 專屬健康管家・即時建議</span>
+          <span style="font-size:10px; font-weight:normal; color:var(--text-muted);">動態分析</span>
+        </div>
+        <div id="coach-feedback-text" style="font-size:12px; line-height:1.6; color:var(--text-main);">
+          今天起跑！白天在公司用茶包喝足水分，晚歸 20:30 到家後停止灌水；下班洗澡前試試看 4 分鐘椅子燃脂操，身體就會很舒服！
+        </div>
+      </div>
+
+      <!-- 每日手錶與體重記錄（互動輸入） -->
+      <div class="card">
+        <div class="card-title">
+          <span>⌚ 今日手錶步數與早晨體重</span>
+          <span style="font-size:10px; color:var(--primary);">輸入即時分析</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:3px;">
+              Apple Watch 步數 (步)
+            </label>
+            <input type="number" id="input-steps" placeholder="例如: 6500" 
+              style="width:100%; padding:8px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);"
+              onchange="updateDailyStats()">
+          </div>
+          <div>
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:3px;">
+              早晨空腹體重 (kg)
+            </label>
+            <input type="number" id="input-morning-weight" step="0.1" placeholder="例如: 93.5" 
+              style="width:100%; padding:8px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);"
+              onchange="updateDailyStats()">
+          </div>
+        </div>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">
+          💡 <strong>測量小叮嚀</strong>：體重請在「早晨排尿後空腹」量最準確，晚上不要量喔！
+        </div>
+      </div>
+
       <!-- 今日進度 -->
       <div class="card">
         <div class="card-title">
@@ -452,71 +508,127 @@
         </div>
         <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
           <span id="progress-count">完成 0 / 6 個微習慣</span>
-          <span id="encouragement">明天正式起跑，跨出第一步就是勝利！</span>
+          <span id="encouragement">今天正式起跑，跨出第一步就是勝利！</span>
         </div>
       </div>
 
-      <!-- 微活動打卡 -->
+      <!-- 🪑 洗澡前：4 分鐘無膝壓椅子燃脂操（全新互動計時模組！） -->
+      <div class="card" style="border:1px solid var(--primary); background:linear-gradient(to bottom, var(--card-bg), var(--primary-light));">
+        <div class="card-title">
+          <span style="color:var(--primary);">🪑 洗澡前：4 分鐘無膝壓椅子操</span>
+          <button class="btn btn-primary" onclick="toggleChairRoutine()">
+            <span id="chair-toggle-btn-text">展開跟練計時</span>
+          </button>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5;">
+          椅子承擔 70% 體重，膝蓋零壓迫！洗澡前放一首歌的時間做完，全身暖呼呼剛好沖澡！
+        </div>
+
+        <!-- 椅子操計時面板 (可收合) -->
+        <div id="chair-routine-panel" style="display:none; margin-top:10px;">
+          <div class="chair-timer-box">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted);" id="chair-phase-title">預備開始（共 4 動作，每動 45 秒）</div>
+            <div class="timer-display" id="chair-timer-num">04:00</div>
+            <div class="chair-move-card">
+              <strong style="color:var(--primary); font-size:13px;" id="chair-move-name">動作 1/4：坐姿開合擺臂</strong>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;" id="chair-move-desc">
+                屁股坐穩椅子前半部，雙手向上拍手、雙腳向外開合踏步，像開合跳但衝擊力為 0！
+              </div>
+            </div>
+            <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+              <button class="btn btn-primary" style="padding:8px 24px; font-size:13px;" id="chair-start-btn" onclick="startChairWorkout()">
+                ▶️ 開始練習
+              </button>
+              <button class="btn" style="padding:8px 16px;" onclick="resetChairWorkout()">
+                🔄 重置
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 微活動打卡清單 -->
       <div class="card">
         <div class="card-title">
-          <span>🚶‍♂️ 零裝備・護膝微活動（不流汗）</span>
+          <span>🚶‍♂️ 零裝備・日常護膝微活動</span>
           <span style="font-size:11px; color:var(--primary);">膝蓋 0 壓力</span>
         </div>
         <div id="exercise-list"></div>
       </div>
 
-      <!-- 飲食抗發炎打卡 -->
+      <!-- 飲食抗發炎打卡清單（原則導向） -->
       <div class="card">
         <div class="card-title">
-          <span>🥗 脂肪肝與抗發炎微習慣</span>
+          <span>🥗 脂肪肝與抗發炎原則</span>
           <span style="font-size:11px; color:#ef4444;">TG 260 避雷</span>
         </div>
         <div id="diet-list"></div>
       </div>
 
-      <!-- 茶水排程 -->
+      <!-- 🍵 600ml 保溫杯茶水排程（符合個人化習慣） -->
       <div class="card">
         <div class="card-title">
-          <span>🍵 茶水排程（無糖茶 100% 算水）</span>
-          <span style="font-size:11px; color:var(--accent);" id="water-text">0 / 2000 ml</span>
+          <span>🍵 600ml 保溫杯水分排程</span>
+          <span style="font-size:11px; color:var(--accent);" id="water-text">0 / 2400 ml</span>
         </div>
-        <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">
-          💡 <strong>防夜尿黃金律</strong>：白天公司用茶包喝足 1500ml；晚上 20:30 到家後只潤喉，解決半夜頻尿！
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+          💡 <strong>科學目標</strong>：體重 93.5kg × 30ml ＝ 2800ml。初期以 <strong>4 壺保溫杯（2400ml）</strong> 為目標！白天喝滿 3 壺，晚上不夜尿！
         </div>
-        <div class="water-cups" id="cups-container">
-          <div class="cup"></div><div class="cup"></div><div class="cup"></div><div class="cup"></div>
-          <div class="cup"></div><div class="cup"></div><div class="cup"></div><div class="cup"></div>
+        
+        <!-- 4 壺保溫杯卡片 -->
+        <div class="thermos-grid" id="thermos-container">
+          <div class="thermos-card" onclick="toggleThermos(0)">
+            <div class="thermos-icon">☕</div>
+            <div class="thermos-label">第 1 壺 600ml<br><span style="font-size:9px; font-weight:normal;">晨間拿鐵/茶</span></div>
+          </div>
+          <div class="thermos-card" onclick="toggleThermos(1)">
+            <div class="thermos-icon">🍵</div>
+            <div class="thermos-label">第 2 壺 600ml<br><span style="font-size:9px; font-weight:normal;">上午公司回沖</span></div>
+          </div>
+          <div class="thermos-card" onclick="toggleThermos(2)">
+            <div class="thermos-icon">🍵</div>
+            <div class="thermos-label">第 3 壺 600ml<br><span style="font-size:9px; font-weight:normal;">下午 17:00前</span></div>
+          </div>
+          <div class="thermos-card" onclick="toggleThermos(3)">
+            <div class="thermos-icon">💧</div>
+            <div class="thermos-label">第 4 壺 600ml<br><span style="font-size:9px; font-weight:normal;">傍晚/視情況</span></div>
+          </div>
         </div>
-        <div style="display:flex; justify-content:flex-end; gap:8px;">
-          <button class="btn" onclick="addWater(-250)">- 250ml</button>
-          <button class="btn btn-accent" onclick="addWater(250)">+ 一杯茶水 (250ml)</button>
+
+        <!-- 快速微調按鈕 -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+          <span style="font-size:11px; color:var(--text-muted);" id="thermos-summary-text">已喝 0 壺保溫杯</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn" onclick="addWater(-200)">- 200ml</button>
+            <button class="btn btn-accent" onclick="addWater(200)">+ 回沖 200ml</button>
+          </div>
         </div>
       </div>
 
-      <!-- 飲食記錄卡（全新升級：打字欄位直接常駐在卡片上，一目了然！） -->
+      <!-- 飲食拍照（升級：常駐文字輸入 + 支援相簿與拍照） -->
       <div class="card">
         <div class="card-title">
           <span>📸 飲食拍照記錄 & 食材筆記</span>
           <span class="tag" style="background:#fef3c7; color:#b45309;">混在一起也能記</span>
         </div>
         
-        <!-- 📝 常駐打字輸入框：一眼就能看見！ -->
+        <!-- 常駐打字輸入框 -->
         <div style="margin-bottom:10px;">
           <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
             📝 這餐吃了什麼？打字備註（隨時可寫）：
           </label>
-          <input type="text" id="food-note-input" placeholder="例如：滷味（蘿蔔、非油炸豆干、嘴邊肉）、燙青菜" 
+          <input type="text" id="food-note-input" placeholder="例如：滷味（高麗菜、白蘿蔔、非油炸豆干、瘦肉片，未加酸菜）" 
             style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;">
         </div>
 
-        <!-- 拍照按鈕與預覽 -->
-        <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload(event)">
+        <!-- 支援從相簿選擇或拍照 (移除 capture 限制) -->
+        <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
         
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
           <button class="btn" style="flex:1; padding:8px;" onclick="triggerPhotoUpload()">
-            📷 <span id="photo-btn-text">拍照 / 上傳食物照片</span>
+            📷 <span id="photo-btn-text">拍照 / 從相簿選取食物照片</span>
           </button>
-          <span id="photo-status-text" style="font-size:11px; color:var(--text-muted); display:none;">已選取照片 ✓</span>
+          <span id="photo-status-text" style="font-size:11px; color:var(--primary); font-weight:700; display:none;">已選好相片 ✓</span>
         </div>
 
         <!-- 照片縮圖預覽 -->
@@ -538,7 +650,7 @@
         <!-- 儲存記錄按鈕 -->
         <div style="text-align:right;">
           <button class="btn btn-primary" style="width:100%; padding:9px; font-size:13px;" onclick="saveFoodLog()">
-            💾 儲存此餐記錄（打字或拍照都能存）
+            💾 儲存此餐記錄（打字或相片都能存）
           </button>
         </div>
 
@@ -604,8 +716,22 @@
           去超市買了什麼青菜、肉片或豆腐？拍下來，不用天天醬油，教你 5 分鐘熱騰騰上桌：
         </div>
         <button class="btn btn-primary" style="width:100%; padding:10px;" onclick="triggerPhotoUpload()">
-          📷 拍照上傳現有食材
+          📷 拍照/相簿上傳現有食材
         </button>
+      </div>
+
+      <!-- 椅子全身操動作圖解 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🪑 4 分鐘椅子操動作解析</span>
+          <span style="font-size:10px; color:var(--primary);">膝蓋 0 壓迫</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-main);">
+          1. <strong>坐姿開合擺臂 (45s)</strong>：雙手向上拍手，雙腳開合踏地，啟動心肺。<br>
+          2. <strong>坐姿抬膝擊掌 (45s)</strong>：單膝向上抬高，雙手膝下拍手，壓迫深層下腹脂肪。<br>
+          3. <strong>坐姿快速出拳 (45s)</strong>：核心收緊雙手交替快速前衝，放鬆久坐緊繃肩膀。<br>
+          4. <strong>坐姿水平伸腿 (45s)</strong>：單腿向前踢直停留 2 秒，強化大腿股四頭肌護膝。
+        </div>
       </div>
 
       <!-- 熱鹹燕麥專題 -->
@@ -638,17 +764,6 @@
             2. 淋入一顆打散的蛋花，加入燕麥片拌勻微滾 1 分鐘關火。<br>
             3. 調味：黑胡椒粒、少許鹽、幾滴香油。完全不用醬油，酸香清爽暖呼呼！
           </div>
-        </div>
-      </div>
-
-      <!-- 晚歸外食指南 -->
-      <div class="card">
-        <div class="card-title">
-          <span>🌙 20:30 晚歸外食「免開火避雷指南」</span>
-        </div>
-        <div style="font-size:11px; line-height:1.7;">
-          • <strong>滷味攤怎麼點</strong>：白蘿蔔、非油炸豆干、香菇、木耳、嘴邊肉/瘦肉片。<strong>避開百頁豆腐（整塊吸油）與炸豆皮</strong>，請老闆不要淋重醬膏。<br>
-          • <strong>假日吃火鍋</strong>：板豆腐、雞肉、青菜、菇類超棒！<strong>少吃魚餃燕餃等魚漿加工品</strong>，冬粉最後煮或只吃半把。
         </div>
       </div>
 
@@ -749,21 +864,25 @@
   </nav>
 
   <script>
-    const KEY_PREFIX = 'vitalstep_v3_';
+    const KEY_PREFIX = 'vitalstep_v4_';
     const TODAY = new Date().toISOString().split('T')[0];
 
+    // 全新彈性化、原則導向習慣清單（符合真實作息）
     const HABITS = [
       { id: 'commute_walk', cat: 'ex', title: '通勤平地快走 10 分鐘', desc: '捷運內加快步頻，不傷膝蓋且是脂肪肝首選有氧', icon: '👟' },
-      { id: 'seated_raise', cat: 'ex', title: '辦公室「坐姿抬腿」左右各 15 下', desc: '坐椅子水平伸直停留 3 秒，強化股四頭肌保護膝關節', icon: '🪑' },
-      { id: 'heel_raise', cat: 'ex', title: '通勤等車墊腳尖 30 下', desc: '小腿幫浦回流，消下肢水腫，膝蓋 0 負擔', icon: '🦶' },
-      { id: 'no_fructose', cat: 'diet', title: '今日無糖（不喝米漿/含糖手搖）', desc: '切斷肝臟生成三酸甘油酯(TG)的最大源頭', icon: '🥤' },
-      { id: 'no_sour_pork', cat: 'diet', title: '午餐避開油炸裹粉（如糖醋肉）', desc: '改夾蔥油雞、滷雞腿、番茄炒蛋，有肉有菜不吃水煮', icon: '🍗' },
-      { id: 'no_snack_dinner', cat: 'diet', title: '晚餐不拿零食代餐，21:00 前結束進食', desc: '晚歸吃清淡輕食，不讓肝臟在夜間超載堆油', icon: '🥗' }
+      { id: 'chair_workout', cat: 'ex', title: '洗澡前「4 分鐘無膝壓椅子操」', desc: '4 動作啟動全身心肺與核心，做完剛好沖熱水澡', icon: '🪑' },
+      { id: 'heel_raise', cat: 'ex', title: '通勤等車墊腳尖 30 下', desc: '比目魚肌幫浦直接抓血液三酸甘油酯燃燒，膝蓋 0 壓迫', icon: '🦶' },
+      { id: 'no_fructose', cat: 'diet', title: '今日無精緻果糖（不喝米漿/含糖手搖）', desc: '切斷肝臟生成三酸甘油酯(TG)的最大源頭', icon: '🥤' },
+      { id: 'no_deep_fried', cat: 'diet', title: '午晚餐避開厚裹粉油炸', desc: '改夾蔥油雞、滷雞腿、番茄炒蛋，有肉有菜不吃水煮', icon: '🍗' },
+      { id: 'bedtime_2hr_fast', cat: 'diet', title: '睡前 2 小時結束進食、不吃宵夜零食', desc: '給腸胃排空時間，不讓肝臟在夜間超載堆油', icon: '🌙' }
     ];
 
     let state = {
       habits: {},
       water: 0,
+      thermosCount: 0,
+      steps: '',
+      weight: '',
       followup: '2027-01-26',
       streak: 1,
       foodLogs: []
@@ -786,21 +905,27 @@
         localStorage.setItem(KEY_PREFIX + 'date', TODAY);
         state.habits = {};
         state.water = 0;
+        state.thermosCount = 0;
+        state.steps = '';
         save();
       }
+
+      // 載入輸入框
+      if (state.steps) document.getElementById('input-steps').value = state.steps;
+      if (state.weight) document.getElementById('input-morning-weight').value = state.weight;
 
       renderHabits();
       renderWater();
       renderCountdown();
       renderFoodLogs();
       updateProgress();
+      updateCoachFeedback();
     }
 
     function save() {
       localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
     }
 
-    // 同步切換頂部膠囊鈕與底部導航欄
     function switchTab(tabId) {
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.segment-btn').forEach(b => {
@@ -848,6 +973,7 @@
       save();
       renderHabits();
       updateProgress();
+      updateCoachFeedback();
     }
 
     function updateProgress() {
@@ -863,44 +989,180 @@
       if (pct === 100) enc.textContent = '太厲害了！今天發炎大降，肝臟滿分修復 🎉';
       else if (pct >= 50) enc.textContent = '已經完成一半了，身體正在變輕盈！💪';
       else if (pct > 0) enc.textContent = '動一動，跨出第一步就是成功！✨';
-      else enc.textContent = '明天正式起跑，跨出第一步就是勝利！';
+      else enc.textContent = '今天正式起跑，跨出第一步就是勝利！';
+    }
+
+    // --- 600ml 保溫杯水分 ---
+    function toggleThermos(idx) {
+      const card = document.querySelectorAll('.thermos-card')[idx];
+      const isFilled = card.classList.contains('filled');
+      if (isFilled) {
+        state.water = Math.max(0, state.water - 600);
+      } else {
+        state.water = Math.min(3600, state.water + 600);
+      }
+      save();
+      renderWater();
+      updateCoachFeedback();
     }
 
     function addWater(val) {
-      state.water = Math.max(0, Math.min(3000, (state.water || 0) + val));
+      state.water = Math.max(0, Math.min(3600, (state.water || 0) + val));
       save();
       renderWater();
+      updateCoachFeedback();
     }
 
     function renderWater() {
       const w = state.water || 0;
-      document.getElementById('water-text').textContent = `${w} / 2000 ml`;
-      const cups = Math.floor(w / 250);
-      document.querySelectorAll('#cups-container .cup').forEach((c, idx) => {
-        if (idx < cups) c.classList.add('filled');
-        else c.classList.remove('filled');
+      document.getElementById('water-text').textContent = `${w} / 2400 ml`;
+      const thermoses = Math.floor(w / 600);
+      
+      document.querySelectorAll('.thermos-card').forEach((card, idx) => {
+        if (idx < thermoses) card.classList.add('filled');
+        else card.classList.remove('filled');
       });
+
+      document.getElementById('thermos-summary-text').textContent = `已喝約 ${(w / 600).toFixed(1)} 壺保溫杯`;
     }
 
-    function renderCountdown() {
-      const target = new Date(state.followup || '2027-01-26');
-      const now = new Date();
-      now.setHours(0,0,0,0);
-      target.setHours(0,0,0,0);
-      const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
-      document.getElementById('countdown-days').innerHTML = `${diff > 0 ? diff : 0} <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">天後回診</span>`;
+    // --- 每日手錶與體重輸入處理 ---
+    function updateDailyStats() {
+      const steps = parseInt(document.getElementById('input-steps').value, 10);
+      const weight = parseFloat(document.getElementById('input-morning-weight').value);
+      if (!isNaN(steps)) state.steps = steps;
+      if (!isNaN(weight)) state.weight = weight;
+      save();
+      updateCoachFeedback();
     }
 
-    function editFollowup() {
-      const val = prompt('請輸入下次超音波回診預計日期 (YYYY-MM-DD)：', state.followup || '2027-01-26');
-      if (val) {
-        state.followup = val;
-        save();
-        renderCountdown();
+    // --- 🧠 動態健康管家即時反饋引擎 ---
+    function updateCoachFeedback() {
+      const fb = document.getElementById('coach-feedback-text');
+      const steps = parseInt(state.steps, 10) || 0;
+      const w = state.water || 0;
+      const doneHabits = Object.values(state.habits || {}).filter(Boolean).length;
+      let msgs = [];
+
+      // 步數反饋
+      if (steps >= 8000) {
+        msgs.push(`🏃 <strong>步數 ${steps.toLocaleString()} 步！</strong> 太強了，平地快走確實啟動全身燃脂，膝蓋也保護得很好！`);
+      } else if (steps >= 5000) {
+        msgs.push(`👟 <strong>步數 ${steps.toLocaleString()} 步</strong>，達到護膝減脂的黃金通勤步數，內臟脂肪正在持續代謝！`);
+      } else if (steps > 0) {
+        msgs.push(`🚶 <strong>目前 ${steps.toLocaleString()} 步</strong>，通勤多走幾步路，隨時都在幫肝臟減輕負擔！`);
+      }
+
+      // 水量反饋
+      if (w >= 1800) {
+        msgs.push(`💧 <strong>水分已達 ${(w/600).toFixed(1)} 壺保溫杯！</strong> 白天補水非常扎實，晚上 20:30 到家後請轉為潤喉，避免半夜夜尿！`);
+      } else if (w >= 600) {
+        msgs.push(`☕ 早上的保溫杯補水有確實啟動，下午在公司記得用茶包再回沖 1~2 次喔！`);
+      }
+
+      // 習慣綜合
+      if (doneHabits >= 4) {
+        msgs.push(`✨ 今日微習慣已完成 ${doneHabits} 項，執行力超棒，今晚帶著成就感好好放鬆睡覺！`);
+      }
+
+      if (msgs.length === 0) {
+        msgs.push('今天起跑！白天在公司用茶包喝足水分，晚歸 20:30 到家後停止灌水；下班洗澡前試試看 4 分鐘椅子燃脂操，身體就會很舒服！');
+      }
+
+      fb.innerHTML = msgs.join('<br><br>');
+    }
+
+    // --- 🪑 4分鐘無膝壓椅子燃脂操互動計時器 ---
+    const CHAIR_MOVES = [
+      { name: '動作 1/4：坐姿開合擺臂 (45s)', desc: '屁股坐穩，雙手向上拍手、雙腳向外開合踏步，像開合跳但衝擊力為 0！' },
+      { name: '動作 2/4：坐姿抬膝擊掌 (45s)', desc: '輪流將左右膝蓋往胸口抬高，雙手在膝下擊掌，壓迫燃燒下腹內臟脂肪！' },
+      { name: '動作 3/4：坐姿快速出拳 (45s)', desc: '核心收緊，雙手交替快速向前直拳，帶動肩頸背部淋巴循環！' },
+      { name: '動作 4/4：坐姿水平伸腿鎖定 (45s)', desc: '雙腳交替向前踢平停留 2 秒，感受大腿前側收緊，強化股四頭肌護膝！' }
+    ];
+
+    let chairTimer = null;
+    let chairSecondsLeft = 240; // 4分鐘 = 240秒
+    let isChairRunning = false;
+
+    function toggleChairRoutine() {
+      const p = document.getElementById('chair-routine-panel');
+      const btn = document.getElementById('chair-toggle-btn-text');
+      if (p.style.display === 'none') {
+        p.style.display = 'block';
+        btn.textContent = '收合面板';
+      } else {
+        p.style.display = 'none';
+        btn.textContent = '展開跟練計時';
       }
     }
 
-    // 拍照上傳與打字說明
+    function startChairWorkout() {
+      const btn = document.getElementById('chair-start-btn');
+      if (isChairRunning) {
+        clearInterval(chairTimer);
+        isChairRunning = false;
+        btn.textContent = '▶️ 繼續';
+        return;
+      }
+
+      isChairRunning = true;
+      btn.textContent = '⏸ 暫停';
+
+      chairTimer = setInterval(() => {
+        chairSecondsLeft--;
+        renderChairTimer();
+
+        if (chairSecondsLeft <= 0) {
+          clearInterval(chairTimer);
+          isChairRunning = false;
+          btn.textContent = '🎉 已完成！';
+          document.getElementById('chair-phase-title').textContent = '太棒了！4 分鐘燃脂完成！';
+          document.getElementById('chair-move-name').textContent = '🔥 全身代謝啟動！立刻沖澡去！';
+          document.getElementById('chair-move-desc').textContent = '今天膝蓋沒有受到任何壓迫，但核心和心肺都確實活動到了！';
+          
+          // 自動打勾椅子操習慣
+          state.habits['chair_workout'] = true;
+          save();
+          renderHabits();
+          updateProgress();
+          updateCoachFeedback();
+        }
+      }, 1000);
+    }
+
+    function resetChairWorkout() {
+      clearInterval(chairTimer);
+      isChairRunning = false;
+      chairSecondsLeft = 240;
+      document.getElementById('chair-start-btn').textContent = '▶️ 開始練習';
+      document.getElementById('chair-timer-num').textContent = '04:00';
+      document.getElementById('chair-phase-title').textContent = '預備開始（共 4 動作，每動 45 秒）';
+      document.getElementById('chair-move-name').textContent = CHAIR_MOVES[0].name;
+      document.getElementById('chair-move-desc').textContent = CHAIR_MOVES[0].desc;
+    }
+
+    function renderChairTimer() {
+      const mins = Math.floor(chairSecondsLeft / 60);
+      const secs = chairSecondsLeft % 60;
+      document.getElementById('chair-timer-num').textContent = 
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+      // 判斷目前是第幾動作 (每 60 秒換一動：45秒做 + 15秒微喘)
+      const elapsed = 240 - chairSecondsLeft;
+      const moveIdx = Math.min(3, Math.floor(elapsed / 60));
+      const moveSec = elapsed % 60;
+
+      if (moveSec < 45) {
+        document.getElementById('chair-phase-title').textContent = `🔥 進行中：${CHAIR_MOVES[moveIdx].name}`;
+        document.getElementById('chair-move-name').textContent = CHAIR_MOVES[moveIdx].name;
+        document.getElementById('chair-move-desc').textContent = CHAIR_MOVES[moveIdx].desc;
+      } else {
+        document.getElementById('chair-phase-title').textContent = `😮‍💨 調整呼吸 (15秒) ➜ 下一動即將開始`;
+        document.getElementById('chair-move-desc').textContent = '坐正深呼吸，準備進入下一個動作！';
+      }
+    }
+
+    // --- 飲食拍照與記錄 ---
     let currentTags = [];
     let currentPhotoData = null;
 
@@ -973,7 +1235,7 @@
       document.getElementById('food-note-input').value = '';
       document.getElementById('photo-preview-container').style.display = 'none';
       document.getElementById('photo-status-text').style.display = 'none';
-      document.getElementById('photo-btn-text').textContent = '拍照 / 上傳食物照片';
+      document.getElementById('photo-btn-text').textContent = '拍照 / 從相簿選取食物照片';
       document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
       document.getElementById('ai-advice-box').style.display = 'none';
       currentPhotoData = null;
@@ -1001,7 +1263,7 @@
         `).join('');
     }
 
-    // 呼吸動畫
+    // --- 呼吸法動畫 ---
     function startBreathing() {
       const circle = document.getElementById('breath-circle');
       const text = document.getElementById('breath-instruction');
@@ -1018,6 +1280,25 @@
           text.textContent = '慢慢吐氣 6 秒鐘，釋放血管壓力...';
         }, 4000);
       }, 4000);
+    }
+
+    // --- 倒數 ---
+    function renderCountdown() {
+      const target = new Date(state.followup || '2027-01-26');
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      target.setHours(0,0,0,0);
+      const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+      document.getElementById('countdown-days').innerHTML = `${diff > 0 ? diff : 0} <span style="font-size:12px; font-weight:normal; color:var(--text-muted);">天後回診</span>`;
+    }
+
+    function editFollowup() {
+      const val = prompt('請輸入下次超音波回診預計日期 (YYYY-MM-DD)：', state.followup || '2027-01-26');
+      if (val) {
+        state.followup = val;
+        save();
+        renderCountdown();
+      }
     }
 
     window.addEventListener('DOMContentLoaded', init);
