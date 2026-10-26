@@ -459,7 +459,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 4.3 <span class="tag">照片AI隱私隔離版</span></div>
+        <div class="logo-title">微步輕健 4.4 <span class="tag">明日正式啟航版</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -738,6 +738,16 @@
         <div id="food-logs-history" style="margin-top:14px; font-size:12px;"></div>
       </div>
 
+      <!-- 🔄 一鍵清空測試資料按鈕 -->
+      <div style="text-align:center; margin:16px 0 20px 0; padding:12px; border:1px dashed var(--border); border-radius:12px; background:var(--card-bg);">
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">
+          剛才測試了隨意數據？想以「一張白紙」乾淨迎接明日正式起跑？
+        </div>
+        <button class="btn" style="padding:8px 18px; font-size:11px; color:var(--text-muted); border:1px solid var(--border);" onclick="resetAllTestData()">
+          🔄 一鍵清空測試資料（全新迎接明天）
+        </button>
+      </div>
+
     </div>
 
     <!-- ==================== TAB 2: 每週統計 ==================== -->
@@ -1000,6 +1010,7 @@
         state.water = 0;
         state.thermosCount = 0;
         state.steps = '';
+        state.foodLogs = []; // 每天跨夜自動乾淨換日
         save();
       }
 
@@ -1668,6 +1679,33 @@
         state.followup = val;
         save();
         renderCountdown();
+      }
+    }
+
+    // --- 🔄 一鍵清空測試資料（全新啟航） ---
+    function resetAllTestData() {
+      if (confirm('確定要清空今天測試的所有打卡、照片與數據嗎？\n\n清空後將恢復為乾淨的一張白紙，準備明天正式出發！')) {
+        state = {
+          habits: {},
+          water: 0,
+          thermosCount: 0,
+          steps: '',
+          weight: '',
+          followup: state.followup || '2027-01-26',
+          streak: 1,
+          foodLogs: []
+        };
+        save();
+        const stepsInput = document.getElementById('input-steps');
+        const weightInput = document.getElementById('input-morning-weight');
+        if (stepsInput) stepsInput.value = '';
+        if (weightInput) weightInput.value = '';
+        renderHabits();
+        renderWater();
+        renderFoodLogs();
+        updateProgress();
+        updateCoachFeedback();
+        showToast('✨ 所有測試資料已清空！乾淨迎接明日第一天！');
       }
     }
 
