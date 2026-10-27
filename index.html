@@ -81,6 +81,7 @@
     .logo-icon {
       width: 36px;
       height: 36px;
+      flex-shrink: 0;
       background: var(--primary);
       color: white;
       border-radius: 12px;
@@ -96,6 +97,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
     }
     .tag {
       font-size: 11px;
@@ -104,6 +106,7 @@
       color: var(--primary);
       padding: 2px 7px;
       border-radius: 20px;
+      white-space: nowrap;
     }
     .date-str {
       font-size: 11px;
@@ -617,14 +620,11 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.2 <span class="tag">物理隔離・時段微動版</span></div>
+        <div class="logo-title">微步輕健 5.2 <span class="tag">智能菜單・暖胃廚房</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
-    <div style="display:flex; align-items:center; gap:6px;">
-      <button onclick="pasteFromMealAi()" style="cursor:pointer; font-size:11px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:5px 9px; border-radius:99px; border:1px solid rgba(5,150,105,0.3);">📋 貼上AI餐食</button>
-      <div style="font-size:11px; color:var(--text-muted);" id="header-streak-badge">🔥 第 1 週啟航</div>
-    </div>
+    <div style="font-size:11px; color:var(--text-muted); white-space:nowrap;" id="header-streak-badge">🔥 第 1 週啟航</div>
   </header>
 
   <div class="container">
@@ -1941,18 +1941,30 @@
       }, 2500);
     }
 
-    // 📋 跨 iPhone 雙桌面捷徑：從剪貼簿一鍵匯入 AI 餐食成績單
+    // 📋 跨 iPhone 雙桌面捷徑：從剪貼簿一鍵匯入 AI 餐食成績單（支援單筆或今日整批匯入）
     function importSyncTokenString(rawStr) {
       if (!rawStr || !rawStr.includes('【VITALSTEP_SYNC】')) return false;
       try {
         const jsonPart = rawStr.split('【VITALSTEP_SYNC】')[1].trim();
-        const syncItem = JSON.parse(jsonPart);
-        if (!syncItem || !syncItem.mealType) return false;
+        const parsed = JSON.parse(jsonPart);
+        const items = Array.isArray(parsed) ? parsed : [parsed];
+        if (items.length === 0) return false;
 
         state.foodLogs = state.foodLogs || [];
-        const exists = state.foodLogs.some(l => l.id === syncItem.id);
-        if (!exists) {
-          state.foodLogs.unshift(syncItem);
+        let added = 0;
+        items.slice().reverse().forEach(syncItem => {
+          if (!syncItem || !syncItem.mealType) return;
+          const idx = state.foodLogs.findIndex(l => l.id === syncItem.id);
+          if (idx >= 0) {
+            state.foodLogs[idx] = syncItem; // 更新既有同筆
+            added++;
+          } else {
+            state.foodLogs.unshift(syncItem);
+            added++;
+          }
+        });
+
+        if (added > 0) {
           if (state.foodLogs.length > 12) state.foodLogs = state.foodLogs.slice(0, 12);
           save();
           renderFoodLogs();
@@ -1961,7 +1973,7 @@
         }
         const input = document.getElementById('food-note-input');
         if (input && input.value.includes('【VITALSTEP_SYNC】')) input.value = '';
-        showToast(`🎉 已成功匯入【${syncItem.mealType}】AI 成績單！`);
+        showToast(items.length > 1 ? `🎉 已成功同步 ${items.length} 筆今日餐食成績單！` : `🎉 已成功匯入【${items[0].mealType}】AI 成績單！`);
         return true;
       } catch (e) {
         console.warn('Parse sync token failed:', e);
