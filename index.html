@@ -622,7 +622,7 @@
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <a href="meal-ai.html" style="text-decoration:none; font-size:11px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:5px 9px; border-radius:99px; border:1px solid rgba(5,150,105,0.3);">📸 拍餐食</a>
+      <button onclick="pasteFromMealAi()" style="cursor:pointer; font-size:11px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:5px 9px; border-radius:99px; border:1px solid rgba(5,150,105,0.3);">📋 貼上AI餐食</button>
       <div style="font-size:11px; color:var(--text-muted);" id="header-streak-badge">🔥 第 1 週啟航</div>
     </div>
   </header>
@@ -844,14 +844,14 @@
           <span class="tag" style="background:var(--primary-light); color:var(--primary);">100% 離線隔離</span>
         </div>
 
-        <!-- 📸 跳轉至獨立餐食拍照頁按鈕 -->
-        <a href="meal-ai.html" style="display:flex; align-items:center; justify-content:space-between; text-decoration:none; background:linear-gradient(135deg, #059669, #0284c7); color:white; padding:12px 14px; border-radius:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(5,150,105,0.22);">
+        <!-- 📋 跨 iPhone 桌面捷徑：一鍵貼上匯入 AI 餐食成績單（不跳出瀏覽器！） -->
+        <button onclick="pasteFromMealAi()" style="width:100%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; text-align:left; background:linear-gradient(135deg, #059669, #0284c7); color:white; padding:12px 14px; border-radius:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(5,150,105,0.22);">
           <div>
-            <div style="font-size:13px; font-weight:800;">📸 拍便當 / 外食 ➔ 看「⭕/❌ 4點成績單」</div>
-            <div style="font-size:10px; opacity:0.92; margin-top:2px;">開啟獨立拍照頁 (meal-ai.html)，算完一鍵自動同步回下方清單！</div>
+            <div style="font-size:13px; font-weight:800;">📋 一鍵貼上匯入「AI 餐食」成績單</div>
+            <div style="font-size:10px; opacity:0.92; margin-top:2px;">在桌面「AI 餐食」捷徑點複製後，回本頁點此鈕即可秒速寫入！</div>
           </div>
-          <span style="font-size:18px; font-weight:900;">➔</span>
-        </a>
+          <span style="font-size:16px; font-weight:900; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:8px;">貼上</span>
+        </button>
 
         <!-- 🍽️ 餐別與用餐時間選擇（支援直接在主頁快速打字記） -->
         <div style="margin-bottom:10px;">
@@ -1941,9 +1941,76 @@
       }, 2500);
     }
 
+    // 📋 跨 iPhone 雙桌面捷徑：從剪貼簿一鍵匯入 AI 餐食成績單
+    function importSyncTokenString(rawStr) {
+      if (!rawStr || !rawStr.includes('【VITALSTEP_SYNC】')) return false;
+      try {
+        const jsonPart = rawStr.split('【VITALSTEP_SYNC】')[1].trim();
+        const syncItem = JSON.parse(jsonPart);
+        if (!syncItem || !syncItem.mealType) return false;
+
+        state.foodLogs = state.foodLogs || [];
+        const exists = state.foodLogs.some(l => l.id === syncItem.id);
+        if (!exists) {
+          state.foodLogs.unshift(syncItem);
+          if (state.foodLogs.length > 12) state.foodLogs = state.foodLogs.slice(0, 12);
+          save();
+          renderFoodLogs();
+          renderDietAutoRadar();
+          updateCoachFeedback();
+        }
+        const input = document.getElementById('food-note-input');
+        if (input && input.value.includes('【VITALSTEP_SYNC】')) input.value = '';
+        showToast(`🎉 已成功匯入【${syncItem.mealType}】AI 成績單！`);
+        return true;
+      } catch (e) {
+        console.warn('Parse sync token failed:', e);
+        return false;
+      }
+    }
+
+    async function pasteFromMealAi() {
+      // 先檢查同源信箱是否有資料
+      checkMealSyncInbox();
+
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (importSyncTokenString(text)) {
+            return;
+          }
+          if (text && text.trim()) {
+            const input = document.getElementById('food-note-input');
+            if (input) {
+              input.value = text.trim();
+              updateAiAdvice();
+              saveFoodLog();
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('Clipboard read permission or fallback:', err);
+        }
+      }
+
+      // 若 iOS 詢問權限或需手動貼上，引導聚焦至輸入框長按貼上（一貼上就會自動觸發匯入！）
+      const input = document.getElementById('food-note-input');
+      if (input) {
+        input.focus();
+        input.placeholder = '👉 請在此框「長按 ➔ 點貼上」，系統會自動秒匯入 AI 成績單！';
+      }
+      showToast('💡 若未自動貼上，請在下方的打字框「長按 ➔ 貼上」即可自動匯入！');
+    }
+
     function updateAiAdvice() {
       const box = document.getElementById('ai-advice-box');
-      const noteText = (document.getElementById('food-note-input')?.value || '').toLowerCase();
+      const rawVal = document.getElementById('food-note-input')?.value || '';
+      if (rawVal.includes('【VITALSTEP_SYNC】')) {
+        importSyncTokenString(rawVal);
+        box.style.display = 'none';
+        return;
+      }
+      const noteText = rawVal.toLowerCase();
       let tips = [];
 
       if (noteText.includes('魚') && (noteText.includes('薄粉') || noteText.includes('煎'))) {

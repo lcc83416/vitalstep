@@ -208,18 +208,18 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">餐食 AI 成績單 <span class="tag">物理隔離個資</span></div>
-        <div style="font-size:11px; color:var(--text-muted);">先吃飽再看對錯・一鍵同步回打卡</div>
+        <div class="logo-title">餐食 AI 成績單 <span class="tag">獨立隔離專用</span></div>
+        <div style="font-size:11px; color:var(--text-muted);">先吃飽再看對錯・一鍵複製回每日進度</div>
       </div>
     </div>
-    <a href="index.html" class="btn" style="padding:6px 10px; font-size:11px;">⬅️ 回今日打卡</a>
+    <button class="btn" style="padding:6px 10px; font-size:11px;" onclick="resetFormForNextMeal()">🔄 清空重拍</button>
   </header>
 
   <div class="container">
 
     <!-- 🛡️ 物理隔離與使用說明 -->
     <div style="background:var(--primary-light); border:1px solid rgba(5,150,105,0.3); color:var(--text-main); padding:10px 12px; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px;">
-      🛡️ <strong>100% 物理隔離架構</strong>：此獨立頁面<strong>完全不讀取</strong>主頁的體重、步數與健檢歷史紀錄。拍完照＋補充文字（例如：飲料是否無糖、魚皮有無薄粉），算完直接點<strong>「同步寫入今日打卡」</strong>即可，免打字兩次！
+      🛡️ <strong>100% 物理隔離（不跳轉瀏覽器）</strong>：此桌面捷徑與「每日進度」完全獨立隔離！分析完後點下方<strong>「📋 一鍵複製成績單」</strong>，再回桌面打開「每日進度」捷徑點「貼上匯入」即可，不會跳出瀏覽器、也不外洩任何個資！
     </div>
 
     <!-- 1. 選擇餐別與上傳照片/文字 -->
@@ -308,13 +308,17 @@
         </div>
       </div>
 
-      <!-- 🔗 一鍵單向同步回 index.html -->
+      <!-- 🔗 跨 iOS 桌面捷徑：一鍵複製同步（不跳轉 Safari 瀏覽器！） -->
       <div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
-        <button class="btn btn-primary" style="width:100%; padding:13px; font-size:14px; box-shadow:0 4px 12px rgba(5,150,105,0.28);" onclick="syncToIndexAndReturn()">
-          ✅ 同步寫入今日打卡（免填第 2 次！）
+        <button id="copy-sync-btn" class="btn btn-primary" style="width:100%; padding:13px; font-size:14px; box-shadow:0 4px 12px rgba(5,150,105,0.28);" onclick="syncToIndexAndReturn()">
+          📋 一鍵複製這餐成績單（回「每日進度」貼上）
         </button>
+        <div id="sync-success-guide" style="display:none; margin-top:8px; background:var(--primary-light); border:1px solid var(--primary); color:var(--text-main); padding:10px 12px; border-radius:10px; font-size:11px; line-height:1.5;">
+          🎉 <strong>已複製成功！</strong><br>
+          現在請直接按手機回桌面，點開你的<strong>「每日進度」捷徑</strong>，點一下飲食區上方的<strong>「📋 一鍵貼上匯入 AI 餐食」</strong>就會瞬間寫入，不會跳出瀏覽器！
+        </div>
         <div style="font-size:10px; color:var(--text-muted); text-align:center; margin-top:6px;">
-          點擊後會將「餐別＋時間＋餐點內容＋⭕/❌重點摘要」直接帶回主頁飲食紀錄
+          💡 專為 iPhone 雙桌面捷徑設計：不跳出 Safari 瀏覽器、兩個捷徑 100% 物理隔離！
         </div>
       </div>
     </div>
@@ -707,7 +711,40 @@
       document.getElementById('rep-swap-text').innerHTML = rep.swap;
     }
 
-    // 單向寫入獨立同步信箱，並跳轉回 index.html
+    function resetFormForNextMeal() {
+      photos = [];
+      lastReport = null;
+      document.getElementById('meal-note').value = '';
+      renderPhotos();
+      document.getElementById('report-card').style.display = 'none';
+      const guide = document.getElementById('sync-success-guide');
+      if (guide) guide.style.display = 'none';
+      const btn = document.getElementById('copy-sync-btn');
+      if (btn) btn.textContent = '📋 一鍵複製這餐成績單（回「每日進度」貼上）';
+      showToast('🔄 已清空，可繼續拍下一餐！');
+    }
+
+    function copyTextToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    // 跨 iPhone 桌面捷徑同步（寫入剪貼簿 + 本機信箱，不跳轉網址、不觸發 Safari 彈出！）
     function syncToIndexAndReturn() {
       const note = document.getElementById('meal-note').value.trim();
       const timeVal = document.getElementById('meal-time').value || new Date().toTimeString().slice(0, 5);
@@ -716,7 +753,6 @@
         lastReport = generateLocalReport(currentMeal, note, photos.length);
       }
 
-      // 只傳遞純文字與評語摘要回 index.html，不佔用主頁照片容量且 100% 乾淨快速
       const cleanWhat = (lastReport.what || note || `${currentMeal}餐點`).replace(/<[^>]*>/g, '');
       const cleanGood = (lastReport.good || '').replace(/<[^>]*>/g, '');
       const cleanNg = (lastReport.ng || '').replace(/<[^>]*>/g, '');
@@ -735,6 +771,11 @@
         tags: lastReport.autoTags || []
       };
 
+      // 1. 產生跨捷徑剪貼簿同步碼
+      const syncToken = '【VITALSTEP_SYNC】' + JSON.stringify(syncItem);
+      copyTextToClipboard(syncToken);
+
+      // 2. 同時寫入同源 localStorage 信箱（若在同瀏覽器分頁可自動讀取）
       let inbox = [];
       try {
         const raw = localStorage.getItem(SYNC_INBOX_KEY);
@@ -745,10 +786,12 @@
       inbox.push(syncItem);
       localStorage.setItem(SYNC_INBOX_KEY, JSON.stringify(inbox));
 
-      showToast('✅ 已寫入同步信箱！正在返回今日打卡...');
-      setTimeout(() => {
-        window.location.href = 'index.html?synced=1';
-      }, 400);
+      const btn = document.getElementById('copy-sync-btn');
+      if (btn) btn.textContent = `✅ 已複製【${currentMeal}】成績單！（請回每日進度貼上）`;
+      const guide = document.getElementById('sync-success-guide');
+      if (guide) guide.style.display = 'block';
+
+      showToast(`✅ 已複製【${currentMeal}】成績單！請回桌面打開「每日進度」貼上！`);
     }
 
     window.addEventListener('DOMContentLoaded', initPage);
