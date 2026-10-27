@@ -617,11 +617,14 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.1 <span class="tag">智能菜單・暖胃廚房</span></div>
+        <div class="logo-title">微步輕健 5.2 <span class="tag">物理隔離・時段微動版</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
-    <div style="font-size:11px; color:var(--text-muted);" id="header-streak-badge">🔥 第 1 週啟航</div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <a href="meal-ai.html" style="text-decoration:none; font-size:11px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:5px 9px; border-radius:99px; border:1px solid rgba(5,150,105,0.3);">📸 拍餐食</a>
+      <div style="font-size:11px; color:var(--text-muted);" id="header-streak-badge">🔥 第 1 週啟航</div>
+    </div>
   </header>
 
   <div class="container">
@@ -640,79 +643,119 @@
       <!-- 護膝鐵則警告 -->
       <div style="background:var(--warning-bg); border:1px solid var(--warning-border); color:var(--warning-text); padding:10px 12px; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px; display:flex; gap:8px;">
         <span style="font-size:16px;">⚠️</span>
-        <div><strong>護膝防線（體重 93.5kg）：</strong>下樓梯承重逼近 400kg！<strong>通勤「下樓梯請搭手扶梯」</strong>，絕不勉強深蹲，坐姿抬腿即可保護髕骨。</div>
+        <div><strong>護膝防線（體重 93.5kg）：</strong>下樓梯承重逼近 400kg！<strong>通勤「下樓梯請搭手扶梯」</strong>，絕不深蹲或跑跳；在家追劇踏步請<strong>穿厚底緩衝拖鞋、腳不離地彈跳</strong>！</div>
       </div>
 
       <!-- 🧠 動態健康管家即時點評 -->
       <div class="card" style="background:linear-gradient(135deg, rgba(5,150,105,0.06), rgba(2,132,199,0.06)); border-color:rgba(5,150,105,0.3);">
         <div class="card-title" style="color:var(--primary); margin-bottom:6px;">
           <span>🩺 專屬健康管家・即時建議</span>
-          <span style="font-size:10px; font-weight:normal; color:var(--text-muted);">動態分析</span>
+          <span style="font-size:10px; font-weight:normal; color:var(--text-muted);">100% 本機離線</span>
         </div>
         <div id="coach-feedback-text" style="font-size:12px; line-height:1.6; color:var(--text-main);">
-          今天起跑！白天在公司用茶包喝足水分，晚歸 20:30 到家後停止灌水；下班洗澡前試試看 4 分鐘椅子燃脂操，身體就會很舒服！
+          今天起跑！午休吃完便當試試散步或坐姿墊腳尖 15 分鐘，晚上追劇站起來穿厚拖鞋踏步 15 分鐘，不知不覺就能湊滿 30 分鐘消脂活動！
         </div>
       </div>
 
-      <!-- 每日手錶與體重記錄（互動輸入） -->
+      <!-- 每日手錶與體重記錄（升級 3 欄：步數 + 運動分鐘數 + 早晨體重） -->
       <div class="card">
         <div class="card-title">
-          <span>⌚ 今日手錶步數與早晨體重</span>
-          <span style="font-size:10px; color:var(--primary);">輸入即時分析</span>
+          <span>⌚ 今日手錶數據與早晨體重</span>
+          <span style="font-size:10px; color:var(--primary);">日常通勤基本盤 8~10 分</span>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
           <div>
-            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:3px;">
-              Apple Watch 步數 (步)
+            <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px; font-weight:600;">
+              👟 手錶步數
             </label>
-            <input type="number" id="input-steps" placeholder="例如: 6500" 
-              style="width:100%; padding:8px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);"
+            <input type="number" id="input-steps" placeholder="如: 6500" 
+              style="width:100%; padding:8px 8px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);"
               onchange="updateDailyStats()">
           </div>
           <div>
-            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:3px;">
-              早晨空腹體重 (kg)
+            <label style="font-size:10px; color:var(--primary); display:block; margin-bottom:3px; font-weight:700;">
+              ⏱️ 運動分鐘數
             </label>
-            <input type="number" id="input-morning-weight" step="0.1" placeholder="例如: 93.5" 
-              style="width:100%; padding:8px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);"
+            <input type="number" id="input-ex-mins" placeholder="目標 20+" 
+              style="width:100%; padding:8px 8px; font-size:12px; border:1px solid rgba(5,150,105,0.4); border-radius:8px; background:var(--bg); color:var(--text-main); font-weight:700;"
+              onchange="updateDailyStats()">
+          </div>
+          <div>
+            <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px; font-weight:600;">
+              ⚖️ 早晨體重(kg)
+            </label>
+            <input type="number" id="input-morning-weight" step="0.1" placeholder="如: 93.5" 
+              style="width:100%; padding:8px 8px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);"
               onchange="updateDailyStats()">
           </div>
         </div>
-        <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">
-          💡 <strong>測量小叮嚀</strong>：體重請在「早晨排尿後空腹」量最準確，晚上不要量喔！
+        <div style="font-size:10px; color:var(--text-muted); margin-top:7px; line-height:1.4;">
+          💡 <strong>實測基準</strong>：上下班通勤轉車原本就會計入 <strong>8～10 分鐘（基本盤）</strong>；加上飯後踏步與椅子操，手錶突破 <strong>20～25 分鐘以上</strong>代表今天有真正額外消脂！
         </div>
       </div>
 
       <!-- 今日進度 -->
       <div class="card">
         <div class="card-title">
-          <span>🎯 今日微習慣達成率</span>
+          <span>🎯 今日 4 大時段防線達成率</span>
           <span id="progress-pct" style="color:var(--primary); font-weight:800;">0%</span>
         </div>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" id="progress-bar"></div>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
-          <span id="progress-count">完成 0 / 6 個微習慣</span>
-          <span id="encouragement">今天正式起跑，跨出第一步就是勝利！</span>
+          <span id="progress-count">完成 0 / 4 個時段行動</span>
+          <span id="encouragement">綁定飯後追劇與洗澡前，零裝備動滿 30 分鐘！</span>
         </div>
       </div>
 
-      <!-- 🪑 洗澡前：4 分鐘無膝壓椅子燃脂操（全新互動計時模組！） -->
+      <!-- 📺 雙模式跟練計時器：晚餐後追劇踏步 15 分鐘 ＆ 洗澡前 4 分鐘椅子操 -->
       <div class="card" style="border:1px solid var(--primary); background:linear-gradient(to bottom, var(--card-bg), var(--primary-light));">
         <div class="card-title">
-          <span style="color:var(--primary);">🪑 洗澡前：4 分鐘無膝壓椅子操</span>
+          <span style="color:var(--primary);">⏱️ 追劇踏步 15分 ＆ 洗澡前椅子操 4分</span>
           <button class="btn btn-primary" onclick="toggleChairRoutine()">
-            <span id="chair-toggle-btn-text">展開跟練計時</span>
+            <span id="chair-toggle-btn-text">展開計時器</span>
           </button>
         </div>
         <div style="font-size:11px; color:var(--text-muted); line-height:1.5;">
-          椅子承擔 70% 體重，膝蓋零壓迫！洗澡前放一首歌的時間做完，全身暖呼呼剛好沖澡！
+          不用換運動服、不用帶裝備出門！邊看劇邊原地踏步 15 分鐘 ＋ 洗澡前椅子操 4 分鐘，計時結束<strong>自動幫你打勾</strong>！
         </div>
 
-        <!-- 椅子操計時面板 (可收合) -->
+        <!-- 計時面板 (可收合) -->
         <div id="chair-routine-panel" style="display:none; margin-top:10px;">
-          <div class="chair-timer-box">
+          <!-- 切換：晚餐後 15 分鐘踏步 vs 洗澡前 4 分鐘椅子操 -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
+            <button id="mode-btn-step" class="btn btn-primary" style="padding:7px 4px; font-size:11px;" onclick="switchWorkoutTimerMode('step15')">
+              🏠 晚餐追劇踏步 (15分)
+            </button>
+            <button id="mode-btn-chair" class="btn" style="padding:7px 4px; font-size:11px;" onclick="switchWorkoutTimerMode('chair4')">
+              🪑 洗澡前椅子操 (4分)
+            </button>
+          </div>
+
+          <!-- 模式 A：晚餐後追劇原地踏步 15 分鐘 -->
+          <div id="step-15-panel" class="chair-timer-box">
+            <div style="font-size:11px; font-weight:700; color:var(--accent);" id="step-phase-title">🏠 邊追劇邊原地微快踏步（攔截晚餐血糖轉 TG）</div>
+            <div class="timer-display" id="step-timer-num">15:00</div>
+            <div class="chair-move-card" style="text-align:left;">
+              <strong style="color:var(--primary); font-size:12px;">🛡️ 93.5kg 護膝與護胃踏步要領（取代超慢跑）：</strong>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:3px; line-height:1.5;">
+                1. <strong>必穿厚底緩衝拖鞋</strong>（或踩軟墊），嚴禁赤腳踩硬磁磚。<br>
+                2. <strong>微抬腳、輕落地、身體不上下彈跳</strong>（永遠有一隻腳在地上，避免剛吃飽胃震動或傷膝蓋）。
+              </div>
+            </div>
+            <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+              <button class="btn btn-primary" style="padding:8px 24px; font-size:13px;" id="step-start-btn" onclick="startStepWorkout()">
+                ▶️ 開始追劇踏步
+              </button>
+              <button class="btn" style="padding:8px 16px;" onclick="resetStepWorkout()">
+                🔄 重置
+              </button>
+            </div>
+          </div>
+
+          <!-- 模式 B：洗澡前 4 分鐘椅子操 -->
+          <div id="chair-4-panel" class="chair-timer-box" style="display:none;">
             <div style="font-size:11px; font-weight:700; color:var(--text-muted);" id="chair-phase-title">預備開始（共 4 動作，每動 45 秒）</div>
             <div class="timer-display" id="chair-timer-num">04:00</div>
             <div class="chair-move-card">
@@ -723,7 +766,7 @@
             </div>
             <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
               <button class="btn btn-primary" style="padding:8px 24px; font-size:13px;" id="chair-start-btn" onclick="startChairWorkout()">
-                ▶️ 開始練習
+                ▶️ 開始椅子操
               </button>
               <button class="btn" style="padding:8px 16px;" onclick="resetChairWorkout()">
                 🔄 重置
@@ -733,22 +776,25 @@
         </div>
       </div>
 
-      <!-- 微活動打卡清單 -->
+      <!-- ⏱️ 今日時段行動打卡（整合午休 + 晚餐後追劇 + 洗澡前 + 睡前 2 小時） -->
       <div class="card">
         <div class="card-title">
-          <span>🚶‍♂️ 零裝備・日常護膝微活動</span>
-          <span style="font-size:11px; color:var(--primary);">膝蓋 0 壓力</span>
+          <span>⏱️ 今日時段行動打卡（湊滿 30 分鐘微活動）</span>
+          <span style="font-size:11px; color:var(--primary);">依作息順手勾</span>
         </div>
         <div id="exercise-list"></div>
       </div>
 
-      <!-- 飲食抗發炎打卡清單（原則導向） -->
-      <div class="card">
+      <!-- 🤖 飲食原則自動健檢雷達（取代舊版籠統是非題，由三餐紀錄自動判讀） -->
+      <div class="card" style="border-left: 4px solid var(--primary);">
         <div class="card-title">
-          <span>🥗 脂肪肝與抗發炎原則</span>
-          <span style="font-size:11px; color:#ef4444;">TG 260 避雷</span>
+          <span>🤖 今日飲食自動健檢雷達</span>
+          <span style="font-size:10px; color:var(--primary);">從下方餐食紀錄自動檢查</span>
         </div>
-        <div id="diet-list"></div>
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
+          不用再自己糾結「薄粉煎魚算不算破功」！只要在下方記錄三餐或從拍照頁同步，系統會自動檢查並亮燈反饋：
+        </div>
+        <div id="diet-auto-radar-list"></div>
       </div>
 
       <!-- 🍵 600ml 保溫杯茶水排程（符合個人化習慣） -->
@@ -765,7 +811,7 @@
         <div class="thermos-grid" id="thermos-container">
           <div class="thermos-card" onclick="toggleThermos(0)">
             <div class="thermos-icon">☕</div>
-            <div class="thermos-label">第 1 壺 600ml<br><span style="font-size:9px; font-weight:normal;">晨間拿鐵/茶</span></div>
+            <div class="thermos-label">第 1 壺 600ml<br><span style="font-size:9px; font-weight:normal;">晨間拿鐵/豆漿</span></div>
           </div>
           <div class="thermos-card" onclick="toggleThermos(1)">
             <div class="thermos-icon">🍵</div>
@@ -791,17 +837,26 @@
         </div>
       </div>
 
-      <!-- 飲食拍照（升級：餐別分類 + 常駐打字 + 相簿支援 + 零食與優格避坑） -->
+      <!-- 📝 飲食純文字極速記錄 ＆ 📸 獨立 AI 成績單同步區（100% 物理隔離） -->
       <div class="card">
         <div class="card-title">
-          <span>📸 飲食拍照記錄 & 餐別筆記</span>
-          <span class="tag" style="background:#fef3c7; color:#b45309;">混在一起也能記</span>
+          <span>🍱 今日餐食文字清單 & AI 同步</span>
+          <span class="tag" style="background:var(--primary-light); color:var(--primary);">100% 離線隔離</span>
         </div>
 
-        <!-- 🍽️ 餐別與用餐時間選擇（支援漏記補登） -->
-        <div style="margin-bottom:12px;">
+        <!-- 📸 跳轉至獨立餐食拍照頁按鈕 -->
+        <a href="meal-ai.html" style="display:flex; align-items:center; justify-content:space-between; text-decoration:none; background:linear-gradient(135deg, #059669, #0284c7); color:white; padding:12px 14px; border-radius:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(5,150,105,0.22);">
+          <div>
+            <div style="font-size:13px; font-weight:800;">📸 拍便當 / 外食 ➔ 看「⭕/❌ 4點成績單」</div>
+            <div style="font-size:10px; opacity:0.92; margin-top:2px;">開啟獨立拍照頁 (meal-ai.html)，算完一鍵自動同步回下方清單！</div>
+          </div>
+          <span style="font-size:18px; font-weight:900;">➔</span>
+        </a>
+
+        <!-- 🍽️ 餐別與用餐時間選擇（支援直接在主頁快速打字記） -->
+        <div style="margin-bottom:10px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <label style="font-size:11px; font-weight:700; color:var(--text-main);">🍽️ 選擇餐別與用餐時間：</label>
+            <label style="font-size:11px; font-weight:700; color:var(--text-main);">✍️ 或直接在主頁打字速記：</label>
             <div style="display:flex; align-items:center; gap:4px;">
               <span style="font-size:10px; color:var(--text-muted);">時間:</span>
               <input type="time" id="food-time-input" style="padding:2px 6px; font-size:11px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg); color:var(--text-main); outline:none;">
@@ -816,85 +871,32 @@
         </div>
         
         <!-- 常駐打字輸入框 -->
-        <div style="margin-bottom:10px;">
-          <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
-            📝 這餐吃了什麼？打字備註（隨時可寫）：
-          </label>
-          <input type="text" id="food-note-input" placeholder="例如：拿鐵+茶葉蛋 / 滷味（高麗菜、肉片） / 餅乾2片 / 優格飲" 
+        <div style="margin-bottom:8px;">
+          <input type="text" id="food-note-input" placeholder="例如：無糖豆漿+蛋 / 煎魚便當(薄粉)+無糖綠茶 / 午餐後吃餅乾1片" 
             style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;"
             oninput="updateAiAdvice()">
         </div>
 
-        <!-- 支援相簿多選或拍照 (multiple 支援多張照片) -->
-        <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotosUpload(event)">
-        
-        <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-          <button class="btn" style="flex:1; padding:8px;" onclick="triggerPhotoUpload()">
-            📷 <span id="photo-btn-text">拍照 / 選照片（可選多張，如主菜+湯+飲品）</span>
-          </button>
-          <span id="photo-status-text" style="font-size:11px; color:var(--primary); font-weight:700; display:none;">已選好相片 ✓</span>
-        </div>
-
-        <!-- 多照片縮圖預覽列（點擊 × 可單獨移除） -->
-        <div id="photos-preview-container" style="display:none; margin-bottom:10px;">
-          <div style="font-size:10px; color:var(--text-muted); margin-bottom:5px;">已選照片（點擊 × 可移除）：</div>
-          <div id="photos-preview-grid" style="display:flex; gap:8px; overflow-x:auto; padding:4px 0;"></div>
-        </div>
-
-        <!-- 地雷標籤切換 -->
-        <div style="font-size:11px; font-weight:700; margin-bottom:4px;">點選標籤獲得即時避坑建議（選填）：</div>
+        <!-- 常用飲食快速點選膠囊（1秒填入） -->
         <div style="margin-bottom:10px;">
-          <span class="tag-chip" onclick="toggleTag(this, '餅乾零食消耗')">🍪 餅乾零食消庫存</span>
-          <span class="tag-chip" onclick="toggleTag(this, '優格飲果醬')">🍯 果醬優格/優格飲</span>
-          <span class="tag-chip" onclick="toggleTag(this, '不餓亂吃')">⚠️ 不餓只是嘴饞</span>
-          <span class="tag-chip" onclick="toggleTag(this, '晚餐零食代餐')">🍫 晚歸用零食代餐</span>
-          <span class="tag-chip" onclick="toggleTag(this, '糖醋/油炸')">🍗 糖醋肉/油炸裹粉</span>
-          <span class="tag-chip" onclick="toggleTag(this, '精緻甜食')">🍰 蛋糕/米漿/甜點</span>
+          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選一鍵填入常吃項目（會自動觸發上方健檢雷達）：</div>
+          <div>
+            <span class="pantry-chip" onclick="quickAddFoodText('無糖豆漿')">+ 無糖豆漿</span>
+            <span class="pantry-chip" onclick="quickAddFoodText('超商無糖綠茶')">+ 超商無糖綠茶</span>
+            <span class="pantry-chip" onclick="quickAddFoodText('煎魚便當(表面薄粉)')">+ 煎魚便當(薄粉)</span>
+            <span class="pantry-chip" onclick="quickAddFoodText('茶葉蛋')">+ 茶葉蛋</span>
+            <span class="pantry-chip" onclick="quickAddFoodText('滷雞腿去皮便當')">+ 滷雞腿去皮</span>
+            <span class="pantry-chip" onclick="quickAddFoodText('午餐吃飽後吃餅乾')">+ 午餐後吃餅乾</span>
+          </div>
         </div>
 
         <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6; display:none; border:1px solid var(--border);"></div>
-        
-        <!-- ✨ 專屬 AI 照片深度講評按鈕（僅在設定 API Key 時顯示） -->
-        <div id="ai-analyze-btn-container" style="display:none; margin-bottom:10px;">
-          <button class="btn" style="width:100%; padding:9px; font-size:12px; background:linear-gradient(135deg, #059669, #0284c7); color:white; border:none; font-weight:700;" onclick="analyzeFoodWithGemini()">
-            ✨ 呼叫 Gemini AI 深度講評此餐（嚴格僅傳此照片與備註）
-          </button>
-        </div>
 
-        <!-- 儲存記錄按鈕 -->
+        <!-- 儲存純文字記錄按鈕 -->
         <div style="text-align:right;">
           <button class="btn btn-primary" style="width:100%; padding:10px; font-size:13px;" onclick="saveFoodLog()">
-            💾 儲存此餐記錄（打字或相片都能存）
+            💾 儲存此餐文字記錄（並更新自動健檢雷達）
           </button>
-        </div>
-
-        <!-- ⚙️ 嚴格隱私隔離：AI 照片分析設定（選填） -->
-        <div style="margin-top:12px; border-top:1px dashed var(--border); padding-top:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleAiKeyPanel()">
-            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-              ⚙️ 雲端 AI 照片分析設定 <span class="tag" style="font-size:9px; background:#ecfdf5; color:#059669;">選填・嚴格隱私隔離</span>
-            </span>
-            <span id="ai-key-toggle-arrow" style="font-size:11px; color:var(--text-muted);">▼</span>
-          </div>
-
-          <!-- 展開面板 -->
-          <div id="ai-key-panel" style="display:none; margin-top:10px; background:var(--bg); padding:10px; border-radius:10px; border:1px solid var(--border);">
-            <div style="font-size:11px; line-height:1.6; color:var(--text-main); margin-bottom:8px;">
-              🛡️ <strong>100% 隱私沙盒防護保證</strong>：<br>
-              此功能<strong>「僅會單獨傳送當前這張照片與食材備註」</strong>！<br>
-              您的健檢數值（TG 260、低迴音超音波紀錄）、真實體重與手錶步數<strong>100% 隔離在本機，程式碼嚴格禁止讀取外傳</strong>，請絕對放心！
-            </div>
-            <div style="display:flex; gap:6px;">
-              <input type="password" id="gemini-key-input" placeholder="貼上 Google Gemini API Key" 
-                style="flex:1; padding:7px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--card-bg); color:var(--text-main); outline:none;">
-              <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="saveGeminiKey()">儲存</button>
-              <button class="btn" style="padding:6px 10px; font-size:11px;" onclick="clearGeminiKey()">清除</button>
-            </div>
-            <div id="gemini-key-status" style="font-size:10px; color:var(--primary); margin-top:5px; font-weight:700;"></div>
-            <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">
-              💡 尚未申請？可至 Google AI Studio (aistudio.google.com) 免費取得 API Key。未設定時完全不影響目前純落地功能！
-            </div>
-          </div>
         </div>
 
         <!-- 今日記錄歷史 -->
@@ -1262,16 +1264,15 @@
 
   <script>
     const KEY_PREFIX = 'vitalstep_v4_';
+    const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
     const TODAY = new Date().toISOString().split('T')[0];
 
-    // 全新彈性化、原則導向習慣清單（符合真實作息）
+    // v5.2 全新「時段綁定」4 大黃金防線（前 3 項加總剛好湊滿每日 34 分鐘溫和消脂活動！）
     const HABITS = [
-      { id: 'commute_walk', cat: 'ex', title: '通勤平地快走 10 分鐘', desc: '捷運內加快步頻，不傷膝蓋且是脂肪肝首選有氧', icon: '👟' },
-      { id: 'chair_workout', cat: 'ex', title: '洗澡前「4 分鐘無膝壓椅子操」', desc: '4 動作啟動全身心肺與核心，做完剛好沖熱水澡', icon: '🪑' },
-      { id: 'heel_raise', cat: 'ex', title: '通勤等車墊腳尖 30 下', desc: '比目魚肌幫浦直接抓血液三酸甘油酯燃燒，膝蓋 0 壓迫', icon: '🦶' },
-      { id: 'no_fructose', cat: 'diet', title: '今日無精緻果糖（不喝米漿/含糖手搖）', desc: '切斷肝臟生成三酸甘油酯(TG)的最大源頭', icon: '🥤' },
-      { id: 'no_deep_fried', cat: 'diet', title: '午晚餐避開厚裹粉油炸', desc: '改夾蔥油雞、滷雞腿、番茄炒蛋，有肉有菜不吃水煮', icon: '🍗' },
-      { id: 'bedtime_2hr_fast', cat: 'diet', title: '睡前 2 小時結束進食、不吃宵夜零食', desc: '給腸胃排空時間，不讓肝臟在夜間超載堆油', icon: '🌙' }
+      { id: 'lunch_move_15m', cat: 'ex', title: '【午餐後】黃金 15 分鐘微活動', desc: '公司午休散步買無糖茶、繞遠路，或座位追劇「連續墊腳尖 15 分鐘」攔截飯後血糖', icon: '🍱' },
+      { id: 'dinner_step_15m', cat: 'ex', title: '【晚餐後】追劇原地踏步 15 分鐘', desc: '穿厚底緩衝拖鞋邊看劇邊微快踏步（腳不離地彈跳），直接消耗晚餐熱量防囤積 TG', icon: '🏠' },
+      { id: 'chair_workout', cat: 'ex', title: '【洗澡前】4 分鐘無膝壓坐姿椅子操', desc: '訓練走路與踏步練不到的大腿前側股四頭肌與核心，幫膝蓋裝上天然護膝', icon: '🪑' },
+      { id: 'bedtime_2hr_fast', cat: 'ex', title: '【睡前防線】睡前 2 小時結束進食（零宵夜）', desc: '晚餐後不偷吃零食或宵夜（餅乾嚴格限午餐吃飽後立刻吃），讓肝臟夜間專心燃脂', icon: '🌙' }
     ];
 
     let state = {
@@ -1279,6 +1280,7 @@
       water: 0,
       thermosCount: 0,
       steps: '',
+      exMins: '',
       weight: '',
       followup: '2027-01-26',
       streak: 0,
@@ -1306,12 +1308,14 @@
         state.water = 0;
         state.thermosCount = 0;
         state.steps = '';
+        state.exMins = '';
         state.foodLogs = []; // 每天跨夜自動乾淨換日
         save();
       }
 
       // 載入輸入框
       if (state.steps) document.getElementById('input-steps').value = state.steps;
+      if (state.exMins) document.getElementById('input-ex-mins').value = state.exMins;
       if (state.weight) document.getElementById('input-morning-weight').value = state.weight;
 
       // 歷史記錄向下相容與防爆容量清理
@@ -1319,7 +1323,6 @@
         state.foodLogs.forEach((item, idx) => {
           if (!item.id) item.id = Date.now() - idx * 1000;
           if (!item.mealType) item.mealType = '晚餐';
-          // 若之前曾存入未壓縮的超大相片 (>300KB)，自動移除相片只保留文字與時間，避免卡死 5MB quota
           if (item.photo && item.photo.length > 400000) {
             item.photo = null;
           }
@@ -1327,26 +1330,63 @@
       }
 
       initMealType();
+      checkMealSyncInbox(); // 自動接收從 meal-ai.html 單向同步過來的餐點成績單
       renderHabits();
+      renderDietAutoRadar();
       renderWater();
       renderCountdown();
       renderFoodLogs();
       updateProgress();
       renderStats();
       updateCoachFeedback();
-      checkGeminiKeyStatus();
       initPantry();
+
+      // 當從 meal-ai.html 切換回本頁時，即時檢查同步信箱
+      window.addEventListener('focus', checkMealSyncInbox);
+    }
+
+    // 🔗 檢查並匯入來自獨立拍照頁 (meal-ai.html) 的單向同步信箱
+    function checkMealSyncInbox() {
+      try {
+        const raw = localStorage.getItem(SYNC_INBOX_KEY);
+        if (!raw) return;
+        const inbox = JSON.parse(raw);
+        if (!Array.isArray(inbox) || inbox.length === 0) return;
+
+        state.foodLogs = state.foodLogs || [];
+        let addedCount = 0;
+        inbox.forEach(syncItem => {
+          const exists = state.foodLogs.some(l => l.id === syncItem.id);
+          if (!exists) {
+            state.foodLogs.unshift(syncItem);
+            addedCount++;
+          }
+        });
+
+        localStorage.removeItem(SYNC_INBOX_KEY);
+
+        if (addedCount > 0) {
+          if (state.foodLogs.length > 12) state.foodLogs = state.foodLogs.slice(0, 12);
+          save();
+          renderFoodLogs();
+          renderDietAutoRadar();
+          updateCoachFeedback();
+          showToast(`✅ 已自動從 AI 拍照頁同步 ${addedCount} 筆餐點成績單！`);
+        }
+      } catch (e) {
+        console.warn('Sync inbox check error:', e);
+      }
     }
 
     function save() {
       try {
         localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
       } catch (err) {
-        console.warn('Storage quota issue, compressing or cleaning:', err);
-        // 如果空間仍滿，只保留最新 2 筆照片，確保其餘記錄安全存入
+        console.warn('Storage quota issue, cleaning:', err);
         if (state.foodLogs && state.foodLogs.length > 2) {
           for (let i = 2; i < state.foodLogs.length; i++) {
             state.foodLogs[i].photo = null;
+            state.foodLogs[i].photos = [];
           }
           try {
             localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
@@ -1375,9 +1415,8 @@
 
     function renderHabits() {
       const ex = document.getElementById('exercise-list');
-      const dt = document.getElementById('diet-list');
+      if (!ex) return;
       ex.innerHTML = '';
-      dt.innerHTML = '';
 
       HABITS.forEach(h => {
         const isDone = !!state.habits[h.id];
@@ -1394,9 +1433,121 @@
           </div>
           <div class="checkbox">${isDone ? '✓' : ''}</div>
         `;
-        if (h.cat === 'ex') ex.appendChild(el);
-        else dt.appendChild(el);
+        ex.appendChild(el);
       });
+    }
+
+    // 🤖 飲食原則自動健檢雷達（從今日三餐文字紀錄自動掃描並亮燈反饋）
+    function renderDietAutoRadar() {
+      const container = document.getElementById('diet-auto-radar-list');
+      if (!container) return;
+
+      const logs = state.foodLogs || [];
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div style="background:var(--bg); border:1px dashed var(--border); border-radius:10px; padding:10px 12px; font-size:11px; color:var(--text-muted);">
+            ⏳ <strong>等待今日第一筆餐食記錄...</strong><br>
+            只要在下方輸入今天喝了什麼、吃了什麼（例如：<code>無糖豆漿</code>、<code>超商無糖綠茶</code>、<code>煎魚便當</code>），這裡就會自動亮燈給你反饋！
+          </div>
+        `;
+        return;
+      }
+
+      const allText = logs.map(l => `${l.mealType || ''} ${l.note || ''} ${(l.tags || []).join(' ')} ${l.aiReport?.badge || ''}`).join(' ').toLowerCase();
+
+      // 1. 檢查飲品果糖防線
+      let drinkStatus = { icon: '⚪', bg: 'var(--bg)', border: 'var(--border)', title: '飲品果糖防線：尚未偵測到飲品記錄', desc: '若有喝無糖豆漿、無糖茶或黑咖啡，記上去會自動為你亮綠燈！' };
+      const hasSugarDrink = (allText.includes('優格飲') || allText.includes('果醬優格') || allText.includes('米漿') || allText.includes('含糖') || allText.includes('珍珠奶茶')) && !allText.includes('無糖');
+      const hasSugarFreeDrink = allText.includes('無糖豆漿') || allText.includes('無糖黑豆漿') || allText.includes('無糖綠茶') || allText.includes('無糖茶') || allText.includes('黑咖啡') || allText.includes('無糖') || allText.includes('氣泡水');
+
+      if (hasSugarDrink) {
+        drinkStatus = {
+          icon: '🟡',
+          bg: 'var(--warning-bg)',
+          border: 'var(--warning-border)',
+          title: '飲品果糖提醒：偵測到隱形高糖飲品',
+          desc: '液體果糖會直接由肝臟轉成三酸甘油酯 (TG)，明天改買「超商無糖綠茶」或「無糖高纖豆漿」就能輕鬆扳回一城！'
+        };
+      } else if (hasSugarFreeDrink) {
+        drinkStatus = {
+          icon: '🟢',
+          bg: 'var(--primary-light)',
+          border: 'rgba(5,150,105,0.35)',
+          title: '飲品無糖防線：✨ 成功切斷精緻果糖！',
+          desc: '太棒了！今日選擇無糖豆漿／無糖茶，完全沒有讓液體果糖進攻肝臟，對降 TG 260 超級加分！'
+        };
+      }
+
+      // 2. 檢查主菜蛋白質與烹調手法（特別處理「薄粉煎魚」正向肯定！）
+      let proteinStatus = { icon: '⚪', bg: 'var(--bg)', border: 'var(--border)', title: '護肝食材與烹調：持續記錄三餐中', desc: '選魚肉、豆腐、雞肉、蛋或蔬菜都能幫助穩定餐後血糖。' };
+      const hasFish = allText.includes('魚');
+      const hasThinFlour = allText.includes('薄粉') || allText.includes('煎魚');
+      const hasDeepFried = allText.includes('炸排骨') || allText.includes('雞排') || allText.includes('鹹酥雞') || allText.includes('糖醋') || allText.includes('百頁');
+      const hasGoodProtein = allText.includes('豆腐') || allText.includes('豆漿') || allText.includes('雞') || allText.includes('蛋') || allText.includes('瘦肉') || allText.includes('菜');
+
+      if (hasDeepFried) {
+        proteinStatus = {
+          icon: '🟡',
+          bg: 'var(--warning-bg)',
+          border: 'var(--warning-border)',
+          title: '烹調微調提醒：偵測到厚裹粉油炸／吸油加工品',
+          desc: '這餐有厚粉油炸或百頁豆腐也沒關係！記得把最吸油的外皮撥掉，並在飯後原地踏步 15 分鐘把熱量消耗掉即可！'
+        };
+      } else if (hasFish && hasThinFlour) {
+        proteinStatus = {
+          icon: '🟢',
+          bg: 'var(--primary-light)',
+          border: 'rgba(5,150,105,0.35)',
+          title: '護肝食材與烹調：🐟 選魚肉大加分（薄粉防沾 ⭕ 算過關！）',
+          desc: '捨棄肥肉改選魚類非常棒！便當店煎魚表面的一點薄粉只是防沾鍋，完全不算厚粉油炸地雷，請安心給自己滿分肯定！'
+        };
+      } else if (hasFish || hasGoodProtein) {
+        proteinStatus = {
+          icon: '🟢',
+          bg: 'var(--primary-light)',
+          border: 'rgba(5,150,105,0.35)',
+          title: '護肝食材與烹調：🥗 優質蛋白質／高纖到位！',
+          desc: '今日攝取了優質豆魚蛋肉或蔬菜，沒有踩到厚裹粉油炸地雷，肝臟修復得很順利！'
+        };
+      }
+
+      // 3. 檢查餅乾零食「午餐後鐵則」
+      let snackStatus = {
+        icon: '🟢',
+        bg: 'var(--primary-light)',
+        border: 'rgba(5,150,105,0.35)',
+        title: '零食控糖防線：✨ 今日無額外空腹甜食／零食',
+        desc: '守得很穩！若想消家裡餅乾庫存，記得放在「午餐吃飽後立刻吃」最安全。'
+      };
+      const snackLogs = logs.filter(l => l.mealType === '點心' || (l.note || '').includes('餅') || (l.note || '').includes('零食') || (l.note || '').includes('甜點'));
+      if (snackLogs.length > 0) {
+        const isAfterLunch = snackLogs.every(l => l.mealType === '午餐' || (l.note || '').includes('午餐') || (l.time && l.time >= '11:30' && l.time <= '14:15'));
+        if (isAfterLunch) {
+          snackStatus = {
+            icon: '🟢',
+            bg: 'var(--primary-light)',
+            border: 'rgba(5,150,105,0.35)',
+            title: '零食控糖防線：🍪 完美守住「午餐吃飽後立刻吃」鐵則！',
+            desc: '聰明利用午餐的蔬菜與蛋白質纖維幫餅乾擋子彈，既解了嘴饞又不會讓血糖與 TG 暴衝！'
+          };
+        } else {
+          snackStatus = {
+            icon: '🟡',
+            bg: 'var(--warning-bg)',
+            border: 'var(--warning-border)',
+            title: '零食時段提醒：🍪 下次記得移到「午餐飯後立刻吃」',
+            desc: '今天有誠實記錄很棒！明天若還想吃餅乾，帶來公司放在午餐便當吃完馬上吃，下午跟晚上就不再碰囉！'
+          };
+        }
+      }
+
+      const items = [drinkStatus, proteinStatus, snackStatus];
+      container.innerHTML = items.map(it => `
+        <div style="background:${it.bg}; border:1px solid ${it.border}; border-radius:10px; padding:9px 11px; margin-bottom:7px; font-size:11px; line-height:1.5;">
+          <div style="font-weight:800; color:var(--text-main); margin-bottom:2px;">${it.icon} ${it.title}</div>
+          <div style="color:var(--text-muted);">${it.desc}</div>
+        </div>
+      `).join('');
     }
 
     function toggleHabit(id) {
@@ -1409,18 +1560,18 @@
 
     function updateProgress() {
       const total = HABITS.length;
-      const done = Object.values(state.habits).filter(Boolean).length;
+      const done = HABITS.filter(h => !!state.habits[h.id]).length;
       const pct = Math.round((done / total) * 100);
 
       document.getElementById('progress-pct').textContent = `${pct}%`;
       document.getElementById('progress-bar').style.width = `${pct}%`;
-      document.getElementById('progress-count').textContent = `完成 ${done} / ${total} 個微習慣`;
+      document.getElementById('progress-count').textContent = `完成 ${done} / ${total} 個時段行動`;
 
       const enc = document.getElementById('encouragement');
-      if (pct === 100) enc.textContent = '太厲害了！今天發炎大降，肝臟滿分修復 🎉';
-      else if (pct >= 50) enc.textContent = '已經完成一半了，身體正在變輕盈！💪';
-      else if (pct > 0) enc.textContent = '動一動，跨出第一步就是成功！✨';
-      else enc.textContent = '今天正式起跑，跨出第一步就是勝利！';
+      if (pct === 100) enc.textContent = '滿分達成！今天動滿 34 分鐘且守住睡前防線 🎉';
+      else if (pct >= 50) enc.textContent = '已經完成一半以上！飯後微活動正在幫肝臟消脂 💪';
+      else if (pct > 0) enc.textContent = '跨出第一步了！晚上邊看劇邊踏步 15 分鐘超輕鬆 ✨';
+      else enc.textContent = '綁定飯後追劇與洗澡前，零裝備動滿 30 分鐘！';
 
       if (pct >= 50 && (state.streak === 0 || !state.streak)) {
         state.streak = 1;
@@ -1438,15 +1589,14 @@
 
       if (countEl) countEl.textContent = streak;
       if (streakSub) {
-        if (streak === 0) streakSub.textContent = '天連續執行（準備明天正式開始第 1 天！）';
+        if (streak === 0) streakSub.textContent = '天連續執行（準備正式開始第 1 天！）';
         else streakSub.textContent = '天連續執行微習慣，身體正在修復中！';
       }
       if (badge) {
-        if (streak === 0) badge.textContent = '🌱 明日正式啟程 (Day 0)';
-        else badge.textContent = `🔥 連續第 ${streak} 天`;
+        if (streak === 0) badge.textContent = '🌱 啟航中';
+        else badge.textContent = `🔥 連續 ${streak} 天`;
       }
 
-      // 7 天長條圖：重置為灰色短槓 (10px)
       const bars = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
       bars.forEach(d => {
         const el = document.getElementById('bar-' + d);
@@ -1456,14 +1606,13 @@
         }
       });
 
-      // 當天若有打卡微習慣，長條圖才動態升高並亮起綠色
-      const doneCount = Object.values(state.habits || {}).filter(Boolean).length;
+      const doneCount = HABITS.filter(h => !!state.habits[h.id]).length;
       if (doneCount > 0) {
         const dayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         const currentDay = dayMap[new Date().getDay()];
         const el = document.getElementById('bar-' + currentDay);
         if (el) {
-          const height = Math.min(80, Math.max(16, doneCount * 13));
+          const height = Math.min(80, Math.max(18, doneCount * 20));
           el.style.height = height + 'px';
           el.style.background = 'var(--primary)';
         }
@@ -1507,8 +1656,10 @@
     // --- 每日手錶與體重輸入處理 ---
     function updateDailyStats() {
       const steps = parseInt(document.getElementById('input-steps').value, 10);
+      const exMins = parseInt(document.getElementById('input-ex-mins').value, 10);
       const weight = parseFloat(document.getElementById('input-morning-weight').value);
       if (!isNaN(steps)) state.steps = steps;
+      if (!isNaN(exMins)) state.exMins = exMins;
       if (!isNaN(weight)) state.weight = weight;
       save();
       updateCoachFeedback();
@@ -1518,51 +1669,55 @@
     function updateCoachFeedback() {
       const fb = document.getElementById('coach-feedback-text');
       const steps = parseInt(state.steps, 10) || 0;
+      const exMins = parseInt(state.exMins, 10) || 0;
       const w = state.water || 0;
-      const doneHabits = Object.values(state.habits || {}).filter(Boolean).length;
+      const doneHabits = HABITS.filter(h => !!state.habits[h.id]).length;
       let msgs = [];
+
+      // 運動分鐘數反饋（對比日常通勤基本盤 8~10 分鐘）
+      if (exMins >= 25) {
+        msgs.push(`🏆 <strong>手錶運動分鐘數達 ${exMins} 分鐘！</strong> 遠遠超越日常通勤基本盤（8~10分鐘），今天額外做的飯後微活動確實幫肝臟燒掉大量三酸甘油酯！`);
+      } else if (exMins >= 15) {
+        msgs.push(`⏱️ <strong>手錶運動分鐘數 ${exMins} 分鐘</strong>，已突破日常通勤基本盤！晚上邊追劇邊原地踏步 15 分鐘就能輕鬆衝破 25 分鐘！`);
+      } else if (exMins > 0) {
+        msgs.push(`⌚ 目前運動分鐘數 <strong>${exMins} 分鐘</strong>（日常上下班通勤轉車基本盤約 8~10 分鐘），待會吃完飯記得起來踏步或墊腳尖 15 分鐘喔！`);
+      }
 
       // 步數反饋
       if (steps >= 8000) {
-        msgs.push(`🏃 <strong>步數 ${steps.toLocaleString()} 步！</strong> 太強了，平地快走確實啟動全身燃脂，膝蓋也保護得很好！`);
+        msgs.push(`🏃 <strong>步數 ${steps.toLocaleString()} 步！</strong> 平地快走與原地踏步累積超扎實，膝蓋也保護得很好！`);
       } else if (steps >= 5000) {
-        msgs.push(`👟 <strong>步數 ${steps.toLocaleString()} 步</strong>，達到護膝減脂的黃金通勤步數，內臟脂肪正在持續代謝！`);
-      } else if (steps > 0) {
-        msgs.push(`🚶 <strong>目前 ${steps.toLocaleString()} 步</strong>，通勤多走幾步路，隨時都在幫肝臟減輕負擔！`);
+        msgs.push(`👟 <strong>步數 ${steps.toLocaleString()} 步</strong>，達到護膝減脂的黃金步數！`);
       }
 
       // 水量反饋
       if (w >= 1800) {
         msgs.push(`💧 <strong>水分已達 ${(w/600).toFixed(1)} 壺保溫杯！</strong> 白天補水非常扎實，晚上 20:30 到家後請轉為潤喉，避免半夜夜尿！`);
-      } else if (w >= 600) {
-        msgs.push(`☕ 早上的保溫杯補水有確實啟動，下午在公司記得用茶包再回沖 1~2 次喔！`);
       }
 
-      // 習慣綜合
-      if (doneHabits >= 4) {
-        msgs.push(`✨ 今日微習慣已完成 ${doneHabits} 項，執行力超棒，今晚帶著成就感好好放鬆睡覺！`);
-      }
-
-      // 零食與餐點綜合反饋
-      const snacksLogged = (state.foodLogs || []).filter(item => item.mealType === '點心' || (item.tags || []).includes('餅乾零食消耗')).length;
-      if (snacksLogged > 0) {
-        msgs.push(`🍪 <strong>今日點心提醒</strong>：餅乾零食有記錄很棒！記得庫存消完就不補貨，且盡量安排在「午餐飯後」吃，晚上睡前嚴防糖分進攻肝臟喔！`);
+      // 時段行動打卡綜合
+      if (doneHabits >= 3) {
+        msgs.push(`✨ 今日時段防線已完成 ${doneHabits} / 4 項，不帶裝備去健身房也能在家穩定消脂！`);
       }
 
       if (msgs.length === 0) {
-        msgs.push('今天起跑！白天在公司用茶包喝足水分，晚歸 20:30 到家後停止灌水；下班洗澡前試試看 4 分鐘椅子燃脂操，身體就會很舒服！');
+        msgs.push('今天起跑！午休吃完便當試試散步或坐姿墊腳尖 15 分鐘，晚上追劇站起來穿厚拖鞋踏步 15 分鐘，不知不覺就能湊滿 30 分鐘消脂活動！');
       }
 
       fb.innerHTML = msgs.join('<br><br>');
     }
 
-    // --- 🪑 4分鐘無膝壓椅子燃脂操互動計時器 ---
+    // --- ⏱️ 雙模式互動計時器：晚餐追劇踏步 15 分鐘 ＆ 洗澡前 4 分鐘椅子操 ---
     const CHAIR_MOVES = [
       { name: '動作 1/4：坐姿開合擺臂 (45s)', desc: '屁股坐穩，雙手向上拍手、雙腳向外開合踏步，像開合跳但衝擊力為 0！' },
       { name: '動作 2/4：坐姿抬膝擊掌 (45s)', desc: '輪流將左右膝蓋往胸口抬高，雙手在膝下擊掌，壓迫燃燒下腹內臟脂肪！' },
       { name: '動作 3/4：坐姿快速出拳 (45s)', desc: '核心收緊，雙手交替快速向前直拳，帶動肩頸背部淋巴循環！' },
       { name: '動作 4/4：坐姿水平伸腿鎖定 (45s)', desc: '雙腳交替向前踢平停留 2 秒，感受大腿前側收緊，強化股四頭肌護膝！' }
     ];
+
+    let stepTimer = null;
+    let stepSecondsLeft = 900; // 15分鐘 = 900秒
+    let isStepRunning = false;
 
     let chairTimer = null;
     let chairSecondsLeft = 240; // 4分鐘 = 240秒
@@ -1576,8 +1731,69 @@
         btn.textContent = '收合面板';
       } else {
         p.style.display = 'none';
-        btn.textContent = '展開跟練計時';
+        btn.textContent = '展開計時器';
       }
+    }
+
+    function switchWorkoutTimerMode(mode) {
+      const stepPanel = document.getElementById('step-15-panel');
+      const chairPanel = document.getElementById('chair-4-panel');
+      const btnStep = document.getElementById('mode-btn-step');
+      const btnChair = document.getElementById('mode-btn-chair');
+
+      if (mode === 'step15') {
+        stepPanel.style.display = 'block';
+        chairPanel.style.display = 'none';
+        btnStep.className = 'btn btn-primary';
+        btnChair.className = 'btn';
+      } else {
+        stepPanel.style.display = 'none';
+        chairPanel.style.display = 'block';
+        btnStep.className = 'btn';
+        btnChair.className = 'btn btn-primary';
+      }
+    }
+
+    function startStepWorkout() {
+      const btn = document.getElementById('step-start-btn');
+      if (isStepRunning) {
+        clearInterval(stepTimer);
+        isStepRunning = false;
+        btn.textContent = '▶️ 繼續踏步';
+        return;
+      }
+      isStepRunning = true;
+      btn.textContent = '⏸ 暫停';
+
+      stepTimer = setInterval(() => {
+        stepSecondsLeft--;
+        const mins = Math.floor(stepSecondsLeft / 60);
+        const secs = stepSecondsLeft % 60;
+        document.getElementById('step-timer-num').textContent =
+          `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        if (stepSecondsLeft <= 0) {
+          clearInterval(stepTimer);
+          isStepRunning = false;
+          btn.textContent = '🎉 15分鐘達標！';
+          document.getElementById('step-phase-title').textContent = '🎉 太強了！晚餐後追劇踏步 15 分鐘完成！';
+          state.habits['dinner_step_15m'] = true;
+          save();
+          renderHabits();
+          updateProgress();
+          updateCoachFeedback();
+          showToast('🎉 晚餐後踏步 15 分鐘完成！已自動為您打勾！');
+        }
+      }, 1000);
+    }
+
+    function resetStepWorkout() {
+      clearInterval(stepTimer);
+      isStepRunning = false;
+      stepSecondsLeft = 900;
+      document.getElementById('step-start-btn').textContent = '▶️ 開始追劇踏步';
+      document.getElementById('step-timer-num').textContent = '15:00';
+      document.getElementById('step-phase-title').textContent = '🏠 邊追劇邊原地微快踏步（攔截晚餐血糖轉 TG）';
     }
 
     function startChairWorkout() {
@@ -1602,14 +1818,14 @@
           btn.textContent = '🎉 已完成！';
           document.getElementById('chair-phase-title').textContent = '太棒了！4 分鐘燃脂完成！';
           document.getElementById('chair-move-name').textContent = '🔥 全身代謝啟動！立刻沖澡去！';
-          document.getElementById('chair-move-desc').textContent = '今天膝蓋沒有受到任何壓迫，但核心和心肺都確實活動到了！';
+          document.getElementById('chair-move-desc').textContent = '今天膝蓋沒有受到任何壓迫，但核心和股四頭肌都確實強化到了！';
           
-          // 自動打勾椅子操習慣
           state.habits['chair_workout'] = true;
           save();
           renderHabits();
           updateProgress();
           updateCoachFeedback();
+          showToast('🎉 4分鐘椅子操完成！已自動為您打勾！');
         }
       }, 1000);
     }
@@ -1618,7 +1834,7 @@
       clearInterval(chairTimer);
       isChairRunning = false;
       chairSecondsLeft = 240;
-      document.getElementById('chair-start-btn').textContent = '▶️ 開始練習';
+      document.getElementById('chair-start-btn').textContent = '▶️ 開始椅子操';
       document.getElementById('chair-timer-num').textContent = '04:00';
       document.getElementById('chair-phase-title').textContent = '預備開始（共 4 動作，每動 45 秒）';
       document.getElementById('chair-move-name').textContent = CHAIR_MOVES[0].name;
@@ -1631,7 +1847,6 @@
       document.getElementById('chair-timer-num').textContent = 
         `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 
-      // 判斷目前是第幾動作 (每 60 秒換一動：45秒做 + 15秒微喘)
       const elapsed = 240 - chairSecondsLeft;
       const moveIdx = Math.min(3, Math.floor(elapsed / 60));
       const moveSec = elapsed % 60;
@@ -1646,9 +1861,8 @@
       }
     }
 
-    // --- 飲食拍照與餐別記錄 ---
+    // --- 飲食純文字記錄與 AI 成績單同步顯示 ---
     let currentTags = [];
-    let currentPhotos = []; // 支援多張照片陣列
     let selectedMealType = '晚餐';
 
     function initMealType() {
@@ -1682,103 +1896,37 @@
       });
     }
 
-    function triggerPhotoUpload() {
-      document.getElementById('photo-input').click();
+    function quickAddFoodText(txt) {
+      const input = document.getElementById('food-note-input');
+      if (!input) return;
+      const cur = input.value.trim();
+      input.value = cur ? `${cur}、${txt}` : txt;
+      updateAiAdvice();
     }
 
-    // 📱 手機端智慧圖片高保真壓縮技術（將 iPhone 16 Pro Max 的 10MB 照片壓縮成 40KB，完全不佔空間且秒存）
+    // 保留圖片壓縮函式供「暖胃廚房」採買照片使用
     function compressImage(base64Src, maxWidth, quality, callback) {
       const img = new Image();
       img.onload = function() {
         let width = img.width;
         let height = img.height;
-
         if (width > maxWidth) {
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
         }
-
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-
         try {
-          const compressed = canvas.toDataURL('image/jpeg', quality);
-          callback(compressed);
+          callback(canvas.toDataURL('image/jpeg', quality));
         } catch (e) {
-          console.warn('Canvas toDataURL failed, using original:', e);
           callback(base64Src);
         }
       };
-      img.onerror = function() {
-        callback(base64Src);
-      };
+      img.onerror = function() { callback(base64Src); };
       img.src = base64Src;
-    }
-
-    // 📸 支援一次選取多張照片（如：主菜+熱湯+飲品）
-    function handlePhotosUpload(e) {
-      const files = Array.from(e.target.files || []);
-      if (files.length === 0) return;
-
-      const btnText = document.getElementById('photo-btn-text');
-      btnText.textContent = `⏳ 正在優化壓縮 ${files.length} 張照片...`;
-
-      let processed = 0;
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          compressImage(evt.target.result, 720, 0.65, function(compressedData) {
-            if (currentPhotos.length < 5) {
-              currentPhotos.push(compressedData);
-            }
-            processed++;
-            if (processed === files.length) {
-              renderPhotosPreview();
-              btnText.textContent = `📷 繼續拍照/新增照片（已選 ${currentPhotos.length} 張）`;
-              updateAiAdvice();
-            }
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function renderPhotosPreview() {
-      const container = document.getElementById('photos-preview-container');
-      const grid = document.getElementById('photos-preview-grid');
-      const status = document.getElementById('photo-status-text');
-
-      if (currentPhotos.length === 0) {
-        if (container) container.style.display = 'none';
-        if (status) status.style.display = 'none';
-        const btnText = document.getElementById('photo-btn-text');
-        if (btnText) btnText.textContent = '拍照 / 選照片（可選多張，如主菜+湯+飲品）';
-        return;
-      }
-
-      if (container) container.style.display = 'block';
-      if (status) {
-        status.style.display = 'inline';
-        status.textContent = `已選 ${currentPhotos.length} 張 ✓`;
-      }
-
-      if (grid) {
-        grid.innerHTML = currentPhotos.map((p, idx) => `
-          <div style="position:relative; width:64px; height:64px; flex-shrink:0;">
-            <img src="${p}" style="width:100%; height:100%; object-fit:cover; border-radius:10px; border:1px solid var(--border);">
-            <div onclick="removeCurrentPhoto(${idx})" style="position:absolute; top:-6px; right:-6px; background:#ef4444; color:white; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,0.3);">×</div>
-          </div>
-        `).join('');
-      }
-    }
-
-    function removeCurrentPhoto(idx) {
-      currentPhotos.splice(idx, 1);
-      renderPhotosPreview();
-      updateAiAdvice();
     }
 
     function showToast(msg) {
@@ -1793,41 +1941,22 @@
       }, 2500);
     }
 
-    function toggleTag(el, tag) {
-      el.classList.toggle('active');
-      if (el.classList.contains('active')) currentTags.push(tag);
-      else currentTags = currentTags.filter(t => t !== tag);
-      updateAiAdvice();
-    }
-
     function updateAiAdvice() {
       const box = document.getElementById('ai-advice-box');
       const noteText = (document.getElementById('food-note-input')?.value || '').toLowerCase();
       let tips = [];
 
-      // 點心與餅乾零食建議
-      if (selectedMealType === '點心' || currentTags.includes('餅乾零食消耗') || noteText.includes('餅') || noteText.includes('零食') || noteText.includes('糖')) {
-        tips.push('🍪 <strong>餅乾零食「消庫存減害吃法」</strong>：想吃甜點很正常，不必感到罪惡！最重要的護肝技巧是：<strong>「放在午餐正餐吃飽後立刻吃」</strong>！利用正餐的蔬菜與蛋白質纖維延緩糖分吸收，<strong>千萬不要在下午 3、4 點空腹吃，更別在晚上當宵夜</strong>，這樣三酸甘油酯（TG）才不會飆升！');
+      if (noteText.includes('魚') && (noteText.includes('薄粉') || noteText.includes('煎'))) {
+        tips.push('🐟 <strong>薄粉煎魚 ⭕ 算過關！</strong>：選魚肉代替肥肉對降 TG 260 大加分！便當店煎魚表面的一點薄粉只是防沾鍋，完全不算厚裹粉油炸地雷，儲存後上方雷達會自動亮綠燈肯定你！');
       }
-
-      // 果醬優格與優格飲真相
-      if (currentTags.includes('優格飲果醬') || noteText.includes('優格') || noteText.includes('優酪乳')) {
-        tips.push('🍯 <strong>優格飲與果醬優格真相</strong>：市售優格飲雖然標榜助消化、有益生菌，但為了壓過酸味，每瓶常加入高達 <strong>20~30g 精緻糖（相當於 5~6 顆方糖！）</strong>，果醬也是高果糖糖漿熬煮，是三酸甘油酯飆到 260 的隱形推手！<br>👉 <strong>聰明喝法</strong>：助消化中午可改配「無糖高纖豆漿」或「無糖茶」；若想吃優格改買<strong>「無糖希臘優格」</strong>加幾顆藍莓或堅果，既補蛋白質又完全不傷肝！');
+      if (noteText.includes('無糖豆漿') || noteText.includes('無糖綠茶') || noteText.includes('無糖')) {
+        tips.push('🥤 <strong>無糖飲品大加分</strong>：選擇無糖豆漿／無糖茶，成功切斷果糖進入肝臟合成三酸甘油酯的源頭！');
       }
-
-      // 代餐地雷
-      if (currentTags.includes('不餓亂吃') || currentTags.includes('晚餐零食代餐')) {
-        tips.push('⚠️ <strong>代餐地雷</strong>：晚歸不餓時拿零食充飢，劣質油與糖分會在睡眠時直接堆進肝臟！如果太晚回家不餓，改喝一杯「溫無糖豆漿」或「茶葉蛋+小黃瓜」最安撫嘴饞。');
+      if (selectedMealType === '點心' || noteText.includes('餅') || noteText.includes('零食')) {
+        tips.push('🍪 <strong>餅乾零食「消庫存減害吃法」</strong>：最重要的護肝技巧是<strong>「放在午餐正餐吃飽後立刻吃」</strong>！利用正餐蔬菜與蛋白質延緩糖分吸收，下午空腹與晚上宵夜不碰，TG 才不會飆升！');
       }
-
-      // 糖醋油炸
-      if (currentTags.includes('糖醋/油炸') || noteText.includes('炸') || noteText.includes('糖醋')) {
-        tips.push('🍗 <strong>外食換菜建議</strong>：糖醋肉含「厚裹粉油炸 + 黏稠砂糖醬汁」，下次自助餐改挑「滷雞腿去皮」、「蒜泥白肉」或「番茄炒蛋」，美味又完全不傷肝！');
-      }
-
-      // 精緻甜食
-      if (currentTags.includes('精緻甜食') || noteText.includes('蛋糕') || noteText.includes('米漿') || noteText.includes('手搖')) {
-        tips.push('🍰 <strong>控糖叮嚀</strong>：精緻液體糖（如米漿、含糖手搖）會直接轉化為肝臟脂肪滴。想喝冰飲建議用「無糖氣泡水 + 檸檬片」替代！');
+      if ((noteText.includes('優格') || noteText.includes('優酪乳')) && !noteText.includes('無糖')) {
+        tips.push('🍯 <strong>優格飲與果醬優格提醒</strong>：市售含糖優格飲每瓶常含 5~6 顆方糖，建議改配「無糖高纖豆漿」、「無糖綠茶」或「無糖希臘優格」！');
       }
 
       if (tips.length === 0) {
@@ -1840,8 +1969,8 @@
 
     function saveFoodLog() {
       const note = (document.getElementById('food-note-input')?.value || '').trim();
-      if (currentPhotos.length === 0 && !note) {
-        alert('請至少打字填寫「餐點食材」或「拍照」一張照片喔！');
+      if (!note) {
+        alert('請先打字填寫這餐吃了什麼（或點選上方按鈕去拍照分析）喔！');
         return;
       }
 
@@ -1852,33 +1981,23 @@
         id: Date.now(),
         mealType: meal,
         time: timeVal,
-        photos: [...currentPhotos],
-        photo: currentPhotos[0] || null, // 向下相容
         note: note,
         tags: [...currentTags]
       };
 
       state.foodLogs = state.foodLogs || [];
       state.foodLogs.unshift(newLog);
-      if (state.foodLogs.length > 10) state.foodLogs.pop(); // 保留當日最多 10 筆
+      if (state.foodLogs.length > 12) state.foodLogs.pop();
       save();
       renderFoodLogs();
+      renderDietAutoRadar();
       updateCoachFeedback();
       
-      // 重置輸入區
       document.getElementById('food-note-input').value = '';
-      currentPhotos = [];
-      renderPhotosPreview();
-      document.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('active'));
       document.getElementById('ai-advice-box').style.display = 'none';
-      
-      const fileInput = document.getElementById('photo-input');
-      if (fileInput) fileInput.value = '';
-      
       currentTags = [];
 
-      // 彈出優雅的綠色成功 Toast 提示
-      showToast(`✅ 已成功儲存【${meal}】記錄！`);
+      showToast(`✅ 已儲存【${meal}】並更新飲食自動健檢雷達！`);
     }
 
     function deleteFoodLog(id) {
@@ -1886,12 +2005,12 @@
         state.foodLogs = (state.foodLogs || []).filter(item => item.id !== id);
         save();
         renderFoodLogs();
+        renderDietAutoRadar();
         updateCoachFeedback();
         showToast('已刪除該筆記錄。');
       }
     }
 
-    // ✏️ 彈窗編輯餐點記錄
     function openEditModal(id) {
       const item = (state.foodLogs || []).find(l => l.id === id);
       if (!item) return;
@@ -1920,6 +2039,7 @@
 
       save();
       renderFoodLogs();
+      renderDietAutoRadar();
       updateCoachFeedback();
       closeEditModal();
       showToast('✅ 餐點記錄修改成功！');
@@ -1928,7 +2048,7 @@
     function renderFoodLogs() {
       const c = document.getElementById('food-logs-history');
       if (!state.foodLogs || state.foodLogs.length === 0) {
-        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無飲食記錄，今天吃了什麼？打字或拍照記錄一下吧！</div>';
+        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無今日飲食記錄，打字速記或點上方「📸 拍便當」同步過來吧！</div>';
         return;
       }
 
@@ -1939,149 +2059,34 @@
         '點心': { bg: '#ffe4e6', color: '#9f1239', icon: '🍪 點心零食' }
       };
 
-      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">今日已記錄餐點（依時間排序）：</div>' +
+      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">今日已記錄餐點（自動連動上方健檢雷達）：</div>' +
         state.foodLogs.map(item => {
           const badge = mealBadgeMap[item.mealType] || mealBadgeMap['晚餐'];
-          const photosList = item.photos && item.photos.length ? item.photos : (item.photo ? [item.photo] : []);
+          const aiRep = item.aiReport;
 
           return `
           <div style="background:var(--bg); padding:11px; border-radius:12px; margin-bottom:9px; border:1px solid var(--border);">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div style="display:flex; align-items:center; gap:6px;">
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 <span style="background:${badge.bg}; color:${badge.color}; padding:2px 7px; border-radius:6px; font-weight:700; font-size:10px;">${badge.icon}</span>
                 <span style="font-size:11px; font-weight:600; color:var(--text-muted);">${item.time}</span>
+                ${aiRep?.badge ? `<span style="font-size:10px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:1px 6px; border-radius:6px;">${aiRep.badge}</span>` : ''}
               </div>
               <div style="display:flex; gap:8px; align-items:center;">
-                <button onclick="openEditModal(${item.id})" style="background:none; border:none; color:var(--accent); font-size:11px; cursor:pointer; font-weight:700;" title="修改內容或時間">✏️ 編輯</button>
-                <button onclick="deleteFoodLog(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;" title="刪除記錄">🗑️</button>
+                <button onclick="openEditModal(${item.id})" style="background:none; border:none; color:var(--accent); font-size:11px; cursor:pointer; font-weight:700;">✏️ 編輯</button>
+                <button onclick="deleteFoodLog(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;">🗑️</button>
               </div>
             </div>
 
-            ${photosList.length > 0 ? `
-              <div style="display:flex; gap:6px; margin-top:8px; overflow-x:auto; padding-bottom:2px;">
-                ${photosList.map(p => `
-                  <img src="${p}" style="width:62px; height:62px; object-fit:cover; border-radius:8px; flex-shrink:0; border:1px solid var(--border);">
-                `).join('')}
+            ${item.note ? `<div style="font-size:12px; color:var(--text-main); margin-top:6px; background:var(--card-bg); padding:7px 9px; border-radius:8px; border:1px solid var(--border); line-height:1.4; word-break:break-word;">${item.note}</div>` : ''}
+            ${aiRep ? `
+              <div style="margin-top:6px; font-size:11px; line-height:1.5; background:var(--card-bg); padding:7px 9px; border-radius:8px; border-left:3px solid var(--primary);">
+                ${aiRep.good ? `<div style="color:var(--primary);"><strong>⭕ 亮點：</strong>${aiRep.good}</div>` : ''}
+                ${aiRep.ng ? `<div style="color:var(--text-muted); margin-top:2px;"><strong>💡 判定：</strong>${aiRep.ng}</div>` : ''}
               </div>
             ` : ''}
-
-            ${item.note ? `<div style="font-size:12px; color:var(--text-main); margin-top:6px; background:var(--card-bg); padding:7px 9px; border-radius:8px; border:1px solid var(--border); line-height:1.4; word-break:break-word;">${item.note}</div>` : ''}
-            ${item.tags && item.tags.length ? `<div style="font-size:10px; color:var(--danger-text); margin-top:5px;">🏷️ ${item.tags.join('、')}</div>` : ''}
           </div>
         `}).join('');
-    }
-
-    // --- 🤖 嚴格隱私隔離：Gemini AI 照片獨立分析模組 ---
-    function toggleAiKeyPanel() {
-      const p = document.getElementById('ai-key-panel');
-      const arrow = document.getElementById('ai-key-toggle-arrow');
-      if (p.style.display === 'none') {
-        p.style.display = 'block';
-        arrow.textContent = '▲';
-      } else {
-        p.style.display = 'none';
-        arrow.textContent = '▼';
-      }
-    }
-
-    function saveGeminiKey() {
-      const k = document.getElementById('gemini-key-input').value.trim();
-      if (!k) {
-        alert('請先輸入 API Key！');
-        return;
-      }
-      localStorage.setItem('vitalstep_gemini_key', k);
-      checkGeminiKeyStatus();
-      showToast('✅ 已成功儲存 API Key！AI 照片深度分析已就緒！');
-    }
-
-    function clearGeminiKey() {
-      if (confirm('確定要清除儲存的 API Key 嗎？')) {
-        localStorage.removeItem('vitalstep_gemini_key');
-        document.getElementById('gemini-key-input').value = '';
-        checkGeminiKeyStatus();
-        showToast('已清除 API Key，恢復純落地離線模式。');
-      }
-    }
-
-    function checkGeminiKeyStatus() {
-      const k = localStorage.getItem('vitalstep_gemini_key');
-      const statusEl = document.getElementById('gemini-key-status');
-      const inputEl = document.getElementById('gemini-key-input');
-      const btnContainer = document.getElementById('ai-analyze-btn-container');
-
-      if (k) {
-        if (inputEl) inputEl.value = k;
-        if (statusEl) statusEl.textContent = '✓ 已設定 Gemini API Key（已解鎖 AI 分析按鈕）';
-        if (btnContainer) btnContainer.style.display = 'block';
-      } else {
-        if (statusEl) statusEl.textContent = '尚未設定 Key（目前使用純落地模式，100% 離線私密）';
-        if (btnContainer) btnContainer.style.display = 'none';
-      }
-    }
-
-    async function analyzeFoodWithGemini() {
-      const key = localStorage.getItem('vitalstep_gemini_key');
-      if (!key) {
-        alert('請先在下方「⚙️ 雲端 AI 照片分析設定」貼上您的 Gemini API Key 喔！');
-        return;
-      }
-
-      const note = (document.getElementById('food-note-input')?.value || '').trim();
-      if (currentPhotos.length === 0 && !note) {
-        alert('請先拍照或打字填寫食材，AI 才能幫你看喔！');
-        return;
-      }
-
-      const box = document.getElementById('ai-advice-box');
-      box.style.display = 'block';
-      box.innerHTML = '<div style="color:var(--primary); font-weight:700;">🤖 Gemini AI 正在單獨看您上傳的照片與食材，請稍候 3~5 秒...</div>';
-
-      try {
-        // 🛡️ 嚴格隱私隔離：Payload 僅包含當前照片 base64 與備註文字，絕不讀取或傳送體重、健檢與任何其他個資！
-        const parts = [];
-        if (currentPhotos.length > 0) {
-          currentPhotos.forEach(p => {
-            const base64Data = p.split(',')[1];
-            parts.push({
-              inline_data: {
-                mime_type: 'image/jpeg',
-                data: base64Data
-              }
-            });
-          });
-        }
-
-        const prompt = `你是一位專業且溫暖的臨床營養師。請針對使用者上傳的這餐（食材備註：${note || '無備註，請辨識照片'}）進行精簡專業點評：
-1. 估算熱量與食材組成（澱粉、蛋白質、蔬菜比例）
-2. 針對高纖維、低精緻糖、清爽護胃給予專業點評
-3. 下次外食可以怎麼微調更均衡（繁體中文，條列式3點以內，口吻親切鼓勵，避免長篇大論）`;
-
-        parts.push({ text: prompt });
-
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts }] })
-        });
-
-        const resData = await response.json();
-        if (resData.error) {
-          box.innerHTML = `<span style="color:#ef4444;">⚠️ AI 分析失敗：${resData.error.message || '請檢查 API Key 是否正確'}</span>`;
-          return;
-        }
-
-        const text = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-          box.innerHTML = `<div style="color:var(--primary); font-weight:800; margin-bottom:6px;">🤖 Gemini AI 營養師專屬點評（僅分析此餐）：</div>${formatted}`;
-        } else {
-          box.innerHTML = '⚠️ 未能辨識出內容，請換一張照片或補充打字食材再試試看！';
-        }
-      } catch (err) {
-        console.error('Gemini API Error:', err);
-        box.innerHTML = `<span style="color:#ef4444;">⚠️ 連線失敗：${err.message || '請確認網路連線'}</span>`;
-      }
     }
 
     // --- 呼吸法動畫 ---
@@ -2124,12 +2129,13 @@
 
     // --- 🔄 一鍵清空測試資料（全新啟航） ---
     function resetAllTestData() {
-      if (confirm('確定要清空今天測試的所有打卡、照片與數據嗎？\n\n清空後將恢復為乾淨的一張白紙，準備明天正式出發！')) {
+      if (confirm('確定要清空今天測試的所有打卡與數據嗎？\n\n清空後將恢復為乾淨的一張白紙！')) {
         state = {
           habits: {},
           water: 0,
           thermosCount: 0,
           steps: '',
+          exMins: '',
           weight: '',
           followup: state.followup || '2027-01-26',
           streak: 0,
@@ -2137,16 +2143,19 @@
         };
         save();
         const stepsInput = document.getElementById('input-steps');
+        const exMinsInput = document.getElementById('input-ex-mins');
         const weightInput = document.getElementById('input-morning-weight');
         if (stepsInput) stepsInput.value = '';
+        if (exMinsInput) exMinsInput.value = '';
         if (weightInput) weightInput.value = '';
         renderHabits();
+        renderDietAutoRadar();
         renderWater();
         renderFoodLogs();
         updateProgress();
         renderStats();
         updateCoachFeedback();
-        showToast('✨ 所有測試資料已清空！乾淨迎接明日第一天！');
+        showToast('✨ 所有測試資料已清空！');
       }
     }
 

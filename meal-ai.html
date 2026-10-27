@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="餐食AI成績單">
+  <title>📸 餐食 AI 成績單 - 微步輕健獨立模組</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #059669;
+      --primary-light: #ecfdf5;
+      --accent: #0284c7;
+      --accent-light: #f0f9ff;
+      --warning-bg: #fffbeb;
+      --warning-border: #fde68a;
+      --warning-text: #b45309;
+      --danger-bg: #fef2f2;
+      --danger-text: #b91c1c;
+      --radius: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card-bg: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --primary: #10b981;
+        --primary-light: #064e3b;
+        --accent: #38bdf8;
+        --accent-light: #0c4a6e;
+        --warning-bg: #451a03;
+        --warning-border: #78350f;
+        --warning-text: #fcd34d;
+        --danger-bg: #450a0a;
+        --danger-text: #fca5a5;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      padding-bottom: calc(40px + env(safe-area-inset-bottom, 24px));
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 440px;
+      margin: 0 auto;
+      padding: 14px 16px;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      padding-top: calc(12px + env(safe-area-inset-top, 0px));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #059669, #0284c7);
+      color: white;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .logo-title {
+      font-size: 15px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tag {
+      font-size: 10px;
+      font-weight: 700;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+    .meal-type-chip {
+      text-align: center;
+      padding: 9px 4px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .meal-type-chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(5,150,105,0.25);
+    }
+    .quick-chip {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-main);
+      margin: 2px;
+      user-select: none;
+    }
+    .quick-chip:active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .report-section {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--border);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .report-what { border-left-color: #0284c7; }
+    .report-good { border-left-color: #10b981; background: rgba(16,185,129,0.06); }
+    .report-ng { border-left-color: #f59e0b; background: rgba(245,158,11,0.06); }
+    .report-swap { border-left-color: #6366f1; }
+  </style>
+</head>
+<body>
+
+  <div id="toast" style="position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(15,23,42,0.92); color:#ffffff; padding:10px 22px; border-radius:99px; font-size:12px; font-weight:700; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,0.2); display:none; white-space:nowrap;"></div>
+
+  <header>
+    <div class="logo-badge">
+      <div class="logo-icon">📸</div>
+      <div>
+        <div class="logo-title">餐食 AI 成績單 <span class="tag">物理隔離個資</span></div>
+        <div style="font-size:11px; color:var(--text-muted);">先吃飽再看對錯・一鍵同步回打卡</div>
+      </div>
+    </div>
+    <a href="index.html" class="btn" style="padding:6px 10px; font-size:11px;">⬅️ 回今日打卡</a>
+  </header>
+
+  <div class="container">
+
+    <!-- 🛡️ 物理隔離與使用說明 -->
+    <div style="background:var(--primary-light); border:1px solid rgba(5,150,105,0.3); color:var(--text-main); padding:10px 12px; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px;">
+      🛡️ <strong>100% 物理隔離架構</strong>：此獨立頁面<strong>完全不讀取</strong>主頁的體重、步數與健檢歷史紀錄。拍完照＋補充文字（例如：飲料是否無糖、魚皮有無薄粉），算完直接點<strong>「同步寫入今日打卡」</strong>即可，免打字兩次！
+    </div>
+
+    <!-- 1. 選擇餐別與上傳照片/文字 -->
+    <div class="card">
+      <div class="card-title">
+        <span>🍽️ 步驟 1：選擇餐別與時間</span>
+        <input type="time" id="meal-time" style="padding:3px 8px; font-size:11px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text-main);">
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom:14px;">
+        <div class="meal-type-chip" onclick="selectMeal('早餐')">🌅 早餐</div>
+        <div class="meal-type-chip" onclick="selectMeal('午餐')">🍱 午餐</div>
+        <div class="meal-type-chip" onclick="selectMeal('晚餐')">🌙 晚餐</div>
+        <div class="meal-type-chip" onclick="selectMeal('點心')">🍪 點心零食</div>
+      </div>
+
+      <!-- 📷 拍照上傳（可多張） -->
+      <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotos(event)">
+      <button class="btn" style="width:100%; padding:12px; font-size:13px; border:2px dashed var(--primary); background:var(--primary-light); color:var(--primary); margin-bottom:10px;" onclick="document.getElementById('photo-input').click()">
+        📷 <span id="photo-btn-label">拍照 / 選取餐點照片（可選多張：便當+湯+飲料）</span>
+      </button>
+
+      <div id="photo-preview-wrap" style="display:none; margin-bottom:12px;">
+        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">已選照片（點 × 可移除）：</div>
+        <div id="photo-preview-list" style="display:flex; gap:8px; overflow-x:auto; padding:4px 0;"></div>
+      </div>
+
+      <!-- 📝 打字補充框 -->
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
+          📝 打字補充照片看不出來的細節（隨時可寫）：
+        </label>
+        <textarea id="meal-note" rows="3" placeholder="例如：午餐便當主菜選煎魚（表面有一點防沾薄粉）、配菜高麗菜與滷蛋、白飯吃一半；下午會議買超商無糖綠茶..."
+          style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"></textarea>
+      </div>
+
+      <!-- 快速補充小標籤 -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選快速補充說明：</div>
+        <div>
+          <span class="quick-chip" onclick="appendNote('無糖豆漿')">+ 無糖豆漿</span>
+          <span class="quick-chip" onclick="appendNote('超商無糖綠茶')">+ 超商無糖綠茶</span>
+          <span class="quick-chip" onclick="appendNote('煎魚(表面薄粉防沾)')">+ 煎魚(表面薄粉)</span>
+          <span class="quick-chip" onclick="appendNote('滷雞腿去皮')">+ 滷雞腿去皮</span>
+          <span class="quick-chip" onclick="appendNote('白飯減半')">+ 白飯減半</span>
+          <span class="quick-chip" onclick="appendNote('去酸菜少醬膏')">+ 滷味去酸菜少醬</span>
+          <span class="quick-chip" onclick="appendNote('午餐吃飽後立刻吃餅乾')">+ 午餐後立刻吃餅乾</span>
+        </div>
+      </div>
+
+      <!-- 產生 4 點成績單按鈕 -->
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn btn-primary" style="width:100%; padding:12px; font-size:13px; background:linear-gradient(135deg, #059669, #0284c7);" onclick="runMealAnalysis()">
+          🔍 產生這餐的「⭕ / ❌ 4 點成績單」
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. 分析結果與一鍵同步卡片 -->
+    <div id="report-card" class="card" style="display:none; border:2px solid var(--primary);">
+      <div class="card-title" style="color:var(--primary);">
+        <span>📊 這餐的事後對 / NG 成績單</span>
+        <span id="report-mode-badge" class="tag">分析完成</span>
+      </div>
+
+      <div id="report-loading" style="display:none; padding:16px 0; text-align:center; font-size:12px; color:var(--primary); font-weight:700;">
+        🤖 正在結合「照片＋文字補充」判讀餐點亮點與地雷...
+      </div>
+
+      <div id="report-content">
+        <div class="report-section report-what">
+          <div style="font-weight:800; color:#0284c7; margin-bottom:3px;">1️⃣ 🍱 這餐吃了什麼（完整菜色整理）</div>
+          <div id="rep-what-text">-</div>
+        </div>
+        <div class="report-section report-good">
+          <div style="font-weight:800; color:#059669; margin-bottom:3px;">2️⃣ ⭕ 這次選對的亮點（下次繼續保持！）</div>
+          <div id="rep-good-text">-</div>
+        </div>
+        <div class="report-section report-ng">
+          <div style="font-weight:800; color:#b45309; margin-bottom:3px;">3️⃣ ❌ 這餐的 NG 地雷 / 烹調判定</div>
+          <div id="rep-ng-text">-</div>
+        </div>
+        <div class="report-section report-swap">
+          <div style="font-weight:800; color:#4f46e5; margin-bottom:3px;">4️⃣ 🔄 下次買同類餐點怎麼換</div>
+          <div id="rep-swap-text">-</div>
+        </div>
+      </div>
+
+      <!-- 🔗 一鍵單向同步回 index.html -->
+      <div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--border);">
+        <button class="btn btn-primary" style="width:100%; padding:13px; font-size:14px; box-shadow:0 4px 12px rgba(5,150,105,0.28);" onclick="syncToIndexAndReturn()">
+          ✅ 同步寫入今日打卡（免填第 2 次！）
+        </button>
+        <div style="font-size:10px; color:var(--text-muted); text-align:center; margin-top:6px;">
+          點擊後會將「餐別＋時間＋餐點內容＋⭕/❌重點摘要」直接帶回主頁飲食紀錄
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Gemini API Key 設定（獨立儲存） -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleKeyBox()">
+        <span style="font-size:12px; font-weight:700; color:var(--text-muted);">
+          ⚙️ 雲端 Gemini AI 視覺金鑰設定 <span class="tag">選填・未填可用本機判讀</span>
+        </span>
+        <span id="key-arrow" style="font-size:11px; color:var(--text-muted);">▼</span>
+      </div>
+
+      <div id="key-box" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
+          貼上 Google Gemini API Key 後，系統會將照片與補充文字交由 Gemini 視覺模型辨識（內建匿名化護肝降三酸甘油酯標準，不附帶任何個人身分數據）。若未設定金鑰，亦可使用本機關鍵字營養師引擎分析並同步！
+        </div>
+        <div style="display:flex; gap:6px;">
+          <input type="password" id="isolated-gemini-key" placeholder="貼上 Gemini API Key"
+            style="flex:1; padding:8px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
+          <button class="btn btn-primary" onclick="saveKey()">儲存</button>
+          <button class="btn" onclick="clearKey()">清除</button>
+        </div>
+        <div id="key-status" style="font-size:10px; color:var(--primary); font-weight:700; margin-top:6px;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
+    const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
+
+    let currentMeal = '午餐';
+    let photos = [];
+    let lastReport = null;
+
+    function initPage() {
+      const now = new Date();
+      const h = now.getHours();
+      if (h < 10) currentMeal = '早餐';
+      else if (h < 14) currentMeal = '午餐';
+      else if (h < 17) currentMeal = '點心';
+      else currentMeal = '晚餐';
+      selectMeal(currentMeal);
+
+      document.getElementById('meal-time').value = now.toTimeString().slice(0, 5);
+
+      // 若舊版曾存過 vitalstep_gemini_key，單向遷移至獨立 key
+      const existing = localStorage.getItem(ISOLATED_KEY_NAME) || localStorage.getItem('vitalstep_gemini_key');
+      if (existing) {
+        localStorage.setItem(ISOLATED_KEY_NAME, existing);
+      }
+      updateKeyStatus();
+    }
+
+    function selectMeal(m) {
+      currentMeal = m;
+      document.querySelectorAll('.meal-type-chip').forEach(el => {
+        if (el.textContent.includes(m)) el.classList.add('active');
+        else el.classList.remove('active');
+      });
+    }
+
+    function appendNote(txt) {
+      const input = document.getElementById('meal-note');
+      const val = input.value.trim();
+      input.value = val ? `${val}、${txt}` : txt;
+      showToast(`已加入：${txt}`);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2400);
+    }
+
+    // 圖片高保真壓縮
+    function compressImage(base64Src, maxWidth, quality, cb) {
+      const img = new Image();
+      img.onload = function() {
+        let w = img.width;
+        let h = img.height;
+        if (w > maxWidth) {
+          h = Math.round((h * maxWidth) / w);
+          w = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          cb(canvas.toDataURL('image/jpeg', quality));
+        } catch (e) {
+          cb(base64Src);
+        }
+      };
+      img.onerror = () => cb(base64Src);
+      img.src = base64Src;
+    }
+
+    function handlePhotos(e) {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      const lbl = document.getElementById('photo-btn-label');
+      lbl.textContent = `⏳ 正在壓縮處理 ${files.length} 張照片...`;
+
+      let done = 0;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          compressImage(evt.target.result, 800, 0.68, function(compressed) {
+            if (photos.length < 5) photos.push(compressed);
+            done++;
+            if (done === files.length) {
+              renderPhotos();
+              lbl.textContent = `📷 繼續新增照片（目前已選 ${photos.length} 張）`;
+            }
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+
+    function renderPhotos() {
+      const wrap = document.getElementById('photo-preview-wrap');
+      const list = document.getElementById('photo-preview-list');
+      if (!photos.length) {
+        wrap.style.display = 'none';
+        document.getElementById('photo-btn-label').textContent = '拍照 / 選取餐點照片（可選多張：便當+湯+飲料）';
+        return;
+      }
+      wrap.style.display = 'block';
+      list.innerHTML = photos.map((p, idx) => `
+        <div style="position:relative; width:72px; height:72px; flex-shrink:0;">
+          <img src="${p}" style="width:100%; height:100%; object-fit:cover; border-radius:10px; border:1px solid var(--border);">
+          <div onclick="removePhoto(${idx})" style="position:absolute; top:-6px; right:-6px; background:#ef4444; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; cursor:pointer;">×</div>
+        </div>
+      `).join('');
+    }
+
+    function removePhoto(idx) {
+      photos.splice(idx, 1);
+      renderPhotos();
+    }
+
+    function toggleKeyBox() {
+      const box = document.getElementById('key-box');
+      const arr = document.getElementById('key-arrow');
+      if (box.style.display === 'none') {
+        box.style.display = 'block';
+        arr.textContent = '▲';
+      } else {
+        box.style.display = 'none';
+        arr.textContent = '▼';
+      }
+    }
+
+    function saveKey() {
+      const v = document.getElementById('isolated-gemini-key').value.trim();
+      if (!v) {
+        alert('請先貼上 Gemini API Key');
+        return;
+      }
+      localStorage.setItem(ISOLATED_KEY_NAME, v);
+      updateKeyStatus();
+      showToast('✅ 獨立 API Key 已儲存！');
+    }
+
+    function clearKey() {
+      localStorage.removeItem(ISOLATED_KEY_NAME);
+      document.getElementById('isolated-gemini-key').value = '';
+      updateKeyStatus();
+      showToast('已清除 API Key，切換為本機離線判讀模式');
+    }
+
+    function updateKeyStatus() {
+      const k = localStorage.getItem(ISOLATED_KEY_NAME);
+      const st = document.getElementById('key-status');
+      const inp = document.getElementById('isolated-gemini-key');
+      if (k) {
+        if (inp) inp.value = k;
+        st.textContent = '✓ 已設定雲端 Gemini API Key（將使用 AI 視覺＋文字綜合判讀）';
+      } else {
+        st.textContent = '目前未設定金鑰（將使用 100% 本機營養師規則判讀）';
+      }
+    }
+
+    // 本機智慧判讀引擎（當無 API Key 或網路異常時，依然能給出精準 4 點成績單）
+    function generateLocalReport(mealType, note, photoCount) {
+      const t = (note || '').toLowerCase();
+      const whatText = note
+        ? `${mealType}：${note}${photoCount > 0 ? `（附 ${photoCount} 張餐點照）` : ''}`
+        : `${mealType}餐點照片記錄（共 ${photoCount} 張照片）`;
+
+      const goods = [];
+      const ngs = [];
+      const swaps = [];
+      const autoTags = [];
+
+      // 1. 檢查無糖飲品
+      if (t.includes('無糖豆漿') || t.includes('無糖黑豆漿') || t.includes('無糖綠茶') || t.includes('無糖茶') || t.includes('黑咖啡') || t.includes('無糖')) {
+        goods.push('🥤 <strong>飲品守住無糖防線</strong>：選擇無糖豆漿／無糖茶，成功切斷果糖直入肝臟合成三酸甘油酯 (TG) 的源頭！');
+        autoTags.push('✅無糖飲品');
+      }
+
+      // 2. 檢查魚類與薄粉烹調判定
+      if (t.includes('魚')) {
+        if (t.includes('薄粉') || t.includes('煎')) {
+          goods.push('🐟 <strong>主菜選魚肉大加分</strong>：捨棄高飽和脂肪的肥肉改選魚類，富含優質蛋白與好油脂，非常有助於降低三酸甘油酯！');
+          ngs.push('💡 <strong>烹調判定（薄粉乾煎 ⭕ 算過關！）</strong>：便當店煎魚表面的一點點薄粉只是為了防沾鍋，<strong>完全不等於厚裹粉深炸排骨</strong>，不必糾結自責！若覺得邊角魚皮較油，撥掉邊角麵衣即可安心享用。');
+          autoTags.push('✅優質魚肉(薄粉過關)');
+        } else {
+          goods.push('🐟 <strong>優質魚類蛋白</strong>：選魚肉代替加工肉或炸肉，對改善脂肪肝與降 TG 非常有幫助！');
+          autoTags.push('✅優質魚肉');
+        }
+      }
+
+      // 3. 檢查其他優質蛋白質與蔬菜
+      if (t.includes('豆腐') || t.includes('豆漿') || t.includes('蛋') || t.includes('雞胸') || t.includes('雞腿去皮') || t.includes('瘦肉')) {
+        goods.push('🥚 <strong>優質蛋白質到位</strong>：攝取豆魚蛋肉類幫助穩定餐後血糖，保護肌肉量並延緩飢餓感。');
+        autoTags.push('✅優質蛋白');
+      }
+      if (t.includes('菜') || t.includes('菇') || t.includes('番茄') || t.includes('蘿蔔') || t.includes('沙拉')) {
+        goods.push('🥬 <strong>膳食纖維護欄</strong>：蔬菜纖維能在腸道形成保護網，減少油脂與糖分被肝臟快速吸收。');
+        autoTags.push('✅高纖蔬菜');
+      }
+      if (t.includes('飯減半') || t.includes('半碗飯') || t.includes('燕麥')) {
+        goods.push('🍚 <strong>聰明控管精緻澱粉</strong>：主動減少白飯份量或替換為高纖燕麥，直接減輕胰島素負擔！');
+      }
+
+      // 4. 檢查真正的高危地雷
+      if (t.includes('炸排骨') || t.includes('雞排') || t.includes('鹹酥雞') || t.includes('糖醋') || t.includes('厚粉')) {
+        ngs.push('🍗 <strong>厚裹粉油炸／糖醋陷阱</strong>：厚麵衣會吸飽高溫反覆油炸的油脂，搭配高糖醬汁容易讓三酸甘油酯飆升。');
+        swaps.push('下次主菜可改挑「煎魚（薄粉可）、滷雞腿（吃時去皮）、蒜泥白肉或烤雞腿」。');
+        autoTags.push('⚠️厚粉油炸');
+      }
+      if (t.includes('百頁') || t.includes('火鍋料') || t.includes('甜不辣') || t.includes('貢丸')) {
+        ngs.push('⚠️ <strong>隱形高油加工品（如百頁豆腐／火鍋料）</strong>：百頁豆腐高達 50% 以上是沙拉油製成，不是純豆腐喔！');
+        swaps.push('下次滷味或火鍋改選「傳統板豆腐、嫩豆腐、大豆干或嘴邊肉」。');
+        autoTags.push('⚠️加工吸油陷阱');
+      }
+      if (t.includes('羹') || t.includes('勾芡') || t.includes('燴') || t.includes('冬粉') || t.includes('王子麵')) {
+        ngs.push('🥣 <strong>勾芡／吸油雙重澱粉</strong>：太白粉勾芡湯汁與吸滿滷汁的冬粉／泡麵會讓飯後血糖快速衝高。');
+        swaps.push('湯品改選清湯（蛋花湯、味噌豆腐湯），主食若已有白飯就避開冬粉與玉米。');
+      }
+      if ((t.includes('優格飲') || t.includes('果醬優格') || t.includes('米漿') || t.includes('奶茶') || t.includes('含糖')) && !t.includes('無糖')) {
+        ngs.push('🍯 <strong>液體精緻果糖地雷</strong>：含糖飲品或市售含糖優格飲每瓶含 5~6 顆方糖，會直接轉成肝臟脂肪。');
+        swaps.push('下午或早餐改選「超商無糖綠茶、無糖高纖豆漿、無糖希臘優格」。');
+        autoTags.push('⚠️含糖飲品');
+      }
+      if (t.includes('餅乾') || t.includes('零食') || t.includes('蛋糕') || mealType === '點心') {
+        if (t.includes('午餐') || mealType === '午餐') {
+          goods.push('🍪 <strong>零食守住「午餐後鐵則」</strong>：把想吃的餅乾放在午餐正餐吃飽後立刻吃，利用正餐菜肉纖維減緩糖分吸收，非常聰明！');
+          autoTags.push('✅零食守住午餐後鐵則');
+        } else {
+          ngs.push('🍪 <strong>單獨吃零食／點心提醒</strong>：下午空腹或晚上吃餅乾甜食，容易引起胰島素與 TG 波動。');
+          swaps.push('想消庫存的餅乾，明天起請嚴格移到「午餐便當剛吃飽後立刻吃」，下午配無糖綠茶解嘴饞！');
+          autoTags.push('⚠️非午餐後零食');
+        }
+      }
+
+      if (goods.length === 0) {
+        goods.push('👍 有誠實記錄這餐內容就是改善脂肪肝的第一步！只要把握「先吃菜肉、後吃澱粉」就能穩住血糖。');
+      }
+      if (ngs.length === 0) {
+        ngs.push('🎉 <strong>這餐沒有明顯的高糖或厚粉油炸地雷！</strong>食材選擇非常穩健，肝臟負擔很輕！');
+      }
+      if (swaps.length === 0) {
+        swaps.push('✨ 目前這套點餐組合很棒！唯一下一步關鍵：<strong>如果是午餐或晚餐，吃完後記得起身散步或追劇原地踏步 15 分鐘</strong>，直接把剛吃進去的血糖燒掉！');
+      }
+
+      return {
+        what: whatText,
+        good: goods.join('<br>'),
+        ng: ngs.join('<br>'),
+        swap: swaps.join('<br>'),
+        autoTags: autoTags,
+        summaryBadge: autoTags.length > 0 ? autoTags.join(' ') : '✅ 已完成餐後健檢'
+      };
+    }
+
+    async function runMealAnalysis() {
+      const note = document.getElementById('meal-note').value.trim();
+      if (!note && photos.length === 0) {
+        alert('請先「拍照」或「打字補充這餐吃了什麼」喔！');
+        return;
+      }
+
+      const card = document.getElementById('report-card');
+      const loading = document.getElementById('report-loading');
+      const content = document.getElementById('report-content');
+      const badge = document.getElementById('report-mode-badge');
+
+      card.style.display = 'block';
+      loading.style.display = 'block';
+      content.style.opacity = '0.4';
+
+      const key = localStorage.getItem(ISOLATED_KEY_NAME);
+
+      // 若未設定 Key，直接秒跑本機智慧判讀
+      if (!key) {
+        const localRes = generateLocalReport(currentMeal, note, photos.length);
+        lastReport = localRes;
+        renderReportUI(localRes, '本機智慧判讀');
+        loading.style.display = 'none';
+        content.style.opacity = '1';
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      // 若有設定 Key，呼叫 Gemini API 產生 4 點 JSON 成績單
+      try {
+        const parts = [];
+        photos.forEach(p => {
+          const base64Data = p.split(',')[1];
+          parts.push({
+            inline_data: { mime_type: 'image/jpeg', data: base64Data }
+          });
+        });
+
+        const prompt = `你是一位溫暖且務實的臨床減脂護肝營養師。
+使用者的匿名健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、溫和護胃防逆流」。
+重要判讀原則：
+1. 外食沒有 100% 完美，請抓大放小！例如使用者若捨棄肥肉改選「煎魚」，即使魚皮表面有一層防沾鍋的薄粉，這依然是 90 分的「⭕ 選對亮點」，請明確告訴他薄粉防沾不算破功（頂多撥掉最油的邊角即可），不要讓他有罪惡感。
+2. 若使用者選擇無糖豆漿、超商無糖綠茶，或將餅乾放在午餐剛吃飽後吃，請大力肯定！
+3. 請結合「照片」與使用者的「文字補充（${currentMeal}：${note || '無文字補充，請直接辨識照片'}）」給出事後 4 點成績單。
+
+請嚴格以純 JSON 格式回覆（不要加 markdown 語法）：
+{
+  "what": "結合照片與文字補充，條列整理這餐實際吃了什麼",
+  "good": "⭕ 這次選對的亮點（肯定好選擇，例如選魚肉、無糖茶、薄粉乾煎可接受等）",
+  "ng": "❌ 這餐的 NG 地雷或烹調判定（抓出雙重澱粉、百頁豆腐、厚粉深炸或高糖醬汁；若無地雷請寫『🎉 這餐無明顯地雷，非常穩健！』）",
+  "swap": "🔄 下次買同類餐點怎麼換（給出 1~2 句具體好執行的下次微調建議，並提醒午晚餐後可踏步或走動 15 分鐘）",
+  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕無糖飲+優質煎魚(薄粉過關)"
+}`;
+
+        parts.push({ text: prompt });
+
+        // 優先嘗試 gemini-2.5-flash，若不支援則自動 fallback 至 gemini-1.5-flash
+        let resData = null;
+        const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+        for (const m of models) {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts }] })
+          });
+          resData = await resp.json();
+          if (!resData.error) break;
+        }
+
+        if (resData && !resData.error) {
+          let raw = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          raw = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(raw);
+          const localFallback = generateLocalReport(currentMeal, note, photos.length);
+          lastReport = {
+            what: parsed.what || localFallback.what,
+            good: parsed.good || localFallback.good,
+            ng: parsed.ng || localFallback.ng,
+            swap: parsed.swap || localFallback.swap,
+            autoTags: localFallback.autoTags,
+            summaryBadge: parsed.summaryBadge || localFallback.summaryBadge
+          };
+          renderReportUI(lastReport, '✨ Gemini AI 視覺判讀');
+        } else {
+          throw new Error(resData?.error?.message || 'API 呼叫失敗');
+        }
+      } catch (err) {
+        console.warn('Gemini fallback to local report:', err);
+        const localRes = generateLocalReport(currentMeal, note, photos.length);
+        lastReport = localRes;
+        renderReportUI(localRes, '本機智慧判讀 (離線備援)');
+      } finally {
+        loading.style.display = 'none';
+        content.style.opacity = '1';
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function renderReportUI(rep, modeText) {
+      document.getElementById('report-mode-badge').textContent = modeText;
+      document.getElementById('rep-what-text').innerHTML = rep.what;
+      document.getElementById('rep-good-text').innerHTML = rep.good;
+      document.getElementById('rep-ng-text').innerHTML = rep.ng;
+      document.getElementById('rep-swap-text').innerHTML = rep.swap;
+    }
+
+    // 單向寫入獨立同步信箱，並跳轉回 index.html
+    function syncToIndexAndReturn() {
+      const note = document.getElementById('meal-note').value.trim();
+      const timeVal = document.getElementById('meal-time').value || new Date().toTimeString().slice(0, 5);
+
+      if (!lastReport) {
+        lastReport = generateLocalReport(currentMeal, note, photos.length);
+      }
+
+      // 只傳遞純文字與評語摘要回 index.html，不佔用主頁照片容量且 100% 乾淨快速
+      const cleanWhat = (lastReport.what || note || `${currentMeal}餐點`).replace(/<[^>]*>/g, '');
+      const cleanGood = (lastReport.good || '').replace(/<[^>]*>/g, '');
+      const cleanNg = (lastReport.ng || '').replace(/<[^>]*>/g, '');
+
+      const syncItem = {
+        id: Date.now(),
+        mealType: currentMeal,
+        time: timeVal,
+        note: note || cleanWhat,
+        aiReport: {
+          what: cleanWhat,
+          good: cleanGood,
+          ng: cleanNg,
+          badge: lastReport.summaryBadge || '✅ AI 成績單已同步'
+        },
+        tags: lastReport.autoTags || []
+      };
+
+      let inbox = [];
+      try {
+        const raw = localStorage.getItem(SYNC_INBOX_KEY);
+        if (raw) inbox = JSON.parse(raw);
+      } catch (e) {
+        inbox = [];
+      }
+      inbox.push(syncItem);
+      localStorage.setItem(SYNC_INBOX_KEY, JSON.stringify(inbox));
+
+      showToast('✅ 已寫入同步信箱！正在返回今日打卡...');
+      setTimeout(() => {
+        window.location.href = 'index.html?synced=1';
+      }, 400);
+    }
+
+    window.addEventListener('DOMContentLoaded', initPage);
+  </script>
+</body>
+</html>
