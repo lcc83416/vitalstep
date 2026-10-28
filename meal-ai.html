@@ -353,7 +353,7 @@
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleKeyBox()">
         <span style="font-size:12px; font-weight:700; color:var(--text-muted);">
-          ⚙️ 雲端 Gemini AI 視覺金鑰設定 <span class="tag">選填・未填可用本機判讀</span>
+          ⚙️ 雲端 Gemini AI 視覺金鑰設定 <span id="key-header-tag" class="tag">⚪ 未填金鑰（本機判讀）</span>
         </span>
         <span id="key-arrow" style="font-size:11px; color:var(--text-muted);">▼</span>
       </div>
@@ -362,10 +362,11 @@
         <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
           貼上 Google Gemini API Key 後，系統會將照片與補充文字交由 Gemini 視覺模型辨識（內建匿名化護肝降三酸甘油酯標準，不附帶任何個人身分數據）。若未設定金鑰，亦可使用本機關鍵字營養師引擎分析並同步！
         </div>
-        <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <input type="password" id="isolated-gemini-key" placeholder="貼上 Gemini API Key"
-            style="flex:1; padding:8px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
+            style="flex:1; min-width:160px; padding:8px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
           <button class="btn btn-primary" onclick="saveKey()">儲存</button>
+          <button class="btn" style="border-color:var(--primary); color:var(--primary);" onclick="testGeminiKey()">🔌 測試連線</button>
           <button class="btn" onclick="clearKey()">清除</button>
         </div>
         <div id="key-status" style="font-size:10px; color:var(--primary); font-weight:700; margin-top:6px;"></div>
@@ -679,11 +680,45 @@
       const k = localStorage.getItem(ISOLATED_KEY_NAME);
       const st = document.getElementById('key-status');
       const inp = document.getElementById('isolated-gemini-key');
+      const hdrTag = document.getElementById('key-header-tag');
       if (k) {
         if (inp) inp.value = k;
         st.textContent = '✓ 已設定雲端 Gemini API Key（將使用 AI 視覺＋文字綜合判讀）';
+        if (hdrTag) {
+          hdrTag.textContent = '🟢 AI 金鑰已設定';
+          hdrTag.style.background = '#ecfdf5';
+          hdrTag.style.color = '#059669';
+        }
       } else {
         st.textContent = '目前未設定金鑰（將使用 100% 本機營養師規則判讀）';
+        if (hdrTag) {
+          hdrTag.textContent = '⚪ 未填金鑰（本機判讀）';
+          hdrTag.style.background = 'var(--bg)';
+          hdrTag.style.color = 'var(--text-muted)';
+        }
+      }
+    }
+
+    async function testGeminiKey() {
+      const inpVal = document.getElementById('isolated-gemini-key')?.value?.trim();
+      if (inpVal) {
+        localStorage.setItem(ISOLATED_KEY_NAME, inpVal);
+        updateKeyStatus();
+      }
+      const k = localStorage.getItem(ISOLATED_KEY_NAME);
+      if (!k) {
+        alert('請先在格子裡貼上 Gemini API Key 再點測試喔！');
+        return;
+      }
+      const st = document.getElementById('key-status');
+      if (st) st.textContent = '⏳ 正在測試雲端 Gemini AI 連線...';
+      const res = await callGeminiVisionAndOcr('午餐', '無糖綠茶、煎魚便當', [], k);
+      if (res.ok) {
+        if (st) st.textContent = '🎉 測試成功！您的 Gemini API Key 連線正常，拍照與截圖都會由 AI 辨識！';
+        showToast('🎉 Gemini AI 金鑰連線成功！');
+      } else {
+        if (st) st.textContent = `❌ 連線失敗：${res.error || '請檢查金鑰是否正確'}`;
+        alert(`❌ API Key 連線測試失敗：\n${res.error || '請確認金鑰是否有效'}`);
       }
     }
 
@@ -867,6 +902,11 @@
       const mealToSave = currentMeal;
       const timeToSave = document.getElementById('meal-time').value || new Date().toTimeString().slice(0, 5);
       const photosToSave = [...photos];
+      const typedKey = document.getElementById('isolated-gemini-key')?.value?.trim();
+      if (typedKey) {
+        localStorage.setItem(ISOLATED_KEY_NAME, typedKey);
+        updateKeyStatus();
+      }
       const key = localStorage.getItem(ISOLATED_KEY_NAME);
 
       let finalReport = generateLocalReport(mealToSave, note, photosToSave.length);
