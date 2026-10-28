@@ -925,53 +925,83 @@
 
       parts.push({ text: prompt });
 
-      let primaryErrMsg = '';
-      // 僅使用目前官方穩定支援的 2.5 與 2.0 模型（徹底移除已停用的 gemini-1.5-flash 避免 404 報錯！）
-      const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+      let lastErrMsg = '';
+      // Google 最新要求新金鑰使用 gemini-3.8-flash！同時內建自動偵測可用模型 (ListModels) 永不過期機制
+      let models = ['gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-2.5-flash'];
+
+      async function tryGenerateWithModel(modelName) {
+        const cleanName = modelName.replace(/^models\//, '');
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  extractedItems: { type: 'STRING' },
+                  what: { type: 'STRING' },
+                  good: { type: 'STRING' },
+                  ng: { type: 'STRING' },
+                  swap: { type: 'STRING' },
+                  summaryBadge: { type: 'STRING' }
+                },
+                required: ['what', 'good', 'ng', 'swap', 'summaryBadge']
+              }
+            }
+          })
+        });
+        return await resp.json();
+      }
+
       for (const m of models) {
         try {
-          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts }],
-              generationConfig: {
-                responseMimeType: 'application/json',
-                responseSchema: {
-                  type: 'OBJECT',
-                  properties: {
-                    extractedItems: { type: 'STRING' },
-                    what: { type: 'STRING' },
-                    good: { type: 'STRING' },
-                    ng: { type: 'STRING' },
-                    swap: { type: 'STRING' },
-                    summaryBadge: { type: 'STRING' }
-                  },
-                  required: ['what', 'good', 'ng', 'swap', 'summaryBadge']
-                }
-              }
-            })
-          });
-          const resData = await resp.json();
+          const resData = await tryGenerateWithModel(m);
           if (resData && !resData.error) {
             const partsArr = resData.candidates?.[0]?.content?.parts || [];
-            // 排除 gemini-2.5-flash 的 thought 思考區塊，只取正式輸出文字
             const nonThought = partsArr.filter(p => !p.thought && p.text).map(p => p.text).join('\n');
             const raw = nonThought || partsArr.map(p => p.text || '').join('\n');
             const parsed = robustParseGeminiJson(raw);
             if (parsed && (parsed.what || parsed.good)) {
-              return { ok: true, parsed };
-            } else {
-              if (!primaryErrMsg) primaryErrMsg = 'AI 回傳格式解析異常';
+              return { ok: true, parsed, usedModel: m };
             }
           } else if (resData?.error?.message) {
-            if (!primaryErrMsg) primaryErrMsg = resData.error.message;
+            lastErrMsg = resData.error.message;
           }
         } catch (err) {
-          if (!primaryErrMsg) primaryErrMsg = err.message || '連線或解析錯誤';
+          lastErrMsg = err.message || '連線或解析錯誤';
         }
       }
-      return { ok: false, error: primaryErrMsg || 'API 呼叫失敗，請檢查網路或金鑰額度' };
+
+      // 🔄 自動保底機制：若 Google 未來又改模型版號，自動呼叫 ListModels 查詢該金鑰目前支援的最新 Flash 模型！
+      try {
+        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const listData = await listResp.json();
+        if (listData && Array.isArray(listData.models)) {
+          const availableFlash = listData.models
+            .filter(x => x.name && x.name.includes('gemini') && (x.supportedGenerationMethods || []).includes('generateContent'))
+            .map(x => x.name.replace(/^models\//, ''))
+            .sort((a, b) => (b.includes('flash') ? 1 : 0) - (a.includes('flash') ? 1 : 0));
+
+          for (const dynModel of availableFlash.slice(0, 3)) {
+            if (models.includes(dynModel)) continue;
+            const resData = await tryGenerateWithModel(dynModel);
+            if (resData && !resData.error) {
+              const partsArr = resData.candidates?.[0]?.content?.parts || [];
+              const nonThought = partsArr.filter(p => !p.thought && p.text).map(p => p.text).join('\n');
+              const raw = nonThought || partsArr.map(p => p.text || '').join('\n');
+              const parsed = robustParseGeminiJson(raw);
+              if (parsed && (parsed.what || parsed.good)) {
+                return { ok: true, parsed, usedModel: dynModel };
+              }
+            }
+          }
+        }
+      } catch (e) {}
+
+      return { ok: false, error: lastErrMsg || 'API 呼叫失敗，請檢查網路或金鑰額度' };
     }
 
     // 🔍 分析此餐並自動存入下方「今日已拍餐食紀錄」（100% 保留手打文字，同時清空上方輸入框供下一餐使用！）
