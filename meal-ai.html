@@ -581,16 +581,15 @@
       setTimeout(() => { t.style.display = 'none'; }, 2500);
     }
 
-    // 圖片高保真壓縮（針對外送長截圖與文字特別提高解析度，確保小字 OCR 清晰可讀）
+    // 圖片極速輕量壓縮（兼顧清晰度與秒傳速度，避免手機大圖上傳卡住）
     function compressImage(base64Src, maxWidth, quality, cb) {
       const img = new Image();
       img.onload = function() {
         let w = img.width;
         let h = img.height;
-        // 若是手機直向長截圖（如 UberEats / foodpanda 訂單畫面），放寬高度與畫質以保留小字清晰度
-        const isTallScreenshot = (h > w * 1.4);
-        const targetMaxW = isTallScreenshot ? Math.max(maxWidth, 1080) : maxWidth;
-        const targetQual = isTallScreenshot ? Math.max(quality, 0.85) : quality;
+        const isTallScreenshot = (h > w * 1.5);
+        const targetMaxW = isTallScreenshot ? 900 : Math.min(maxWidth, 768);
+        const targetQual = isTallScreenshot ? 0.80 : 0.72;
 
         if (w > targetMaxW) {
           h = Math.round((h * targetMaxW) / w);
@@ -615,13 +614,13 @@
       const files = Array.from(e.target.files || []);
       if (!files.length) return;
       const lbl = document.getElementById('photo-btn-label');
-      lbl.textContent = `⏳ 正在高畫質處理 ${files.length} 張照片/截圖...`;
+      lbl.textContent = `⏳ 正在快速處理 ${files.length} 張照片...`;
 
       let done = 0;
       files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(evt) {
-          compressImage(evt.target.result, 960, 0.80, function(compressed) {
+          compressImage(evt.target.result, 768, 0.72, function(compressed) {
             if (photos.length < 5) photos.push(compressed);
             done++;
             if (done === files.length) {
@@ -926,37 +925,41 @@
       parts.push({ text: prompt });
 
       let lastErrMsg = '';
-      // Google 最新要求新金鑰使用 gemini-3.8-flash！同時內建自動偵測可用模型 (ListModels) 永不過期機制
-      let models = ['gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-2.5-flash'];
-
+      // 極速呼叫單一主力模型 gemini-3.8-flash（拿掉會拖慢速度的 responseSchema 編譯，並加上 15 秒超時保護，絕不卡住 5 分鐘！）
       async function tryGenerateWithModel(modelName) {
         const cleanName = modelName.replace(/^models\//, '');
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${key}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts }],
-            generationConfig: {
-              responseMimeType: 'application/json',
-              responseSchema: {
-                type: 'OBJECT',
-                properties: {
-                  extractedItems: { type: 'STRING' },
-                  what: { type: 'STRING' },
-                  good: { type: 'STRING' },
-                  ng: { type: 'STRING' },
-                  swap: { type: 'STRING' },
-                  summaryBadge: { type: 'STRING' }
-                },
-                required: ['what', 'good', 'ng', 'swap', 'summaryBadge']
+        const controller = new AbortController();
+        const timerId = setTimeout(() => controller.abort(), 15000);
+        try {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{ parts }],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.2
               }
-            }
-          })
-        });
-        return await resp.json();
+            })
+          });
+          clearTimeout(timerId);
+          return await resp.json();
+        } catch (err) {
+          clearTimeout(timerId);
+          if (err && err.name === 'AbortError') {
+            throw new Error('網路回應超過 15 秒自動中斷，請再點一次重試');
+          }
+          throw err;
+        }
       }
 
-      for (const m of models) {
+      const cachedModel = localStorage.getItem('vitalstep_working_gemini_model');
+      const primaryModels = cachedModel && cachedModel !== 'gemini-3.8-flash'
+        ? [cachedModel, 'gemini-3.8-flash']
+        : ['gemini-3.8-flash'];
+
+      for (const m of primaryModels) {
         try {
           const resData = await tryGenerateWithModel(m);
           if (resData && !resData.error) {
@@ -965,6 +968,7 @@
             const raw = nonThought || partsArr.map(p => p.text || '').join('\n');
             const parsed = robustParseGeminiJson(raw);
             if (parsed && (parsed.what || parsed.good)) {
+              localStorage.setItem('vitalstep_working_gemini_model', m);
               return { ok: true, parsed, usedModel: m };
             }
           } else if (resData?.error?.message) {
@@ -975,7 +979,7 @@
         }
       }
 
-      // 🔄 自動保底機制：若 Google 未來又改模型版號，自動呼叫 ListModels 查詢該金鑰目前支援的最新 Flash 模型！
+      // 🔄 自動保底機制：若 Google 未來又改模型版號，自動呼叫 ListModels 查詢該金鑰目前支援的最新 Flash 模型並記住！
       try {
         const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
         const listData = await listResp.json();
@@ -985,8 +989,8 @@
             .map(x => x.name.replace(/^models\//, ''))
             .sort((a, b) => (b.includes('flash') ? 1 : 0) - (a.includes('flash') ? 1 : 0));
 
-          for (const dynModel of availableFlash.slice(0, 3)) {
-            if (models.includes(dynModel)) continue;
+          for (const dynModel of availableFlash.slice(0, 2)) {
+            if (primaryModels.includes(dynModel)) continue;
             const resData = await tryGenerateWithModel(dynModel);
             if (resData && !resData.error) {
               const partsArr = resData.candidates?.[0]?.content?.parts || [];
@@ -994,6 +998,7 @@
               const raw = nonThought || partsArr.map(p => p.text || '').join('\n');
               const parsed = robustParseGeminiJson(raw);
               if (parsed && (parsed.what || parsed.good)) {
+                localStorage.setItem('vitalstep_working_gemini_model', dynModel);
                 return { ok: true, parsed, usedModel: dynModel };
               }
             }
@@ -1015,7 +1020,7 @@
 
       const btn = document.getElementById('analyze-save-btn');
       const origBtnText = btn.innerHTML;
-      btn.innerHTML = '🤖 正在結合照片與文字分析「補了什麼／缺了什麼」...';
+      btn.innerHTML = '⏳ AI 極速分析中（約 3～6 秒）...';
       btn.disabled = true;
 
       const mealToSave = currentMeal;
@@ -1089,8 +1094,8 @@
       btn.disabled = false;
     }
 
-    // 🔍 針對已儲存的餐食卡片，一鍵重新呼叫 AI 辨識（100% 保留手打 note 不覆蓋！）
-    async function reAnalyzeSavedMeal(id) {
+    // 🔍 針對已儲存的餐食卡片，一鍵重新呼叫 AI 辨識（按鈕顯示即時進度，100% 保留手打 note 不覆蓋！）
+    async function reAnalyzeSavedMeal(id, btnEl) {
       const item = dailyMealLogs.find(l => l.id === id);
       if (!item) return;
       const key = localStorage.getItem(ISOLATED_KEY_NAME);
@@ -1104,8 +1109,17 @@
         return;
       }
 
-      showToast('🤖 正在進行 Gemini 2.5 視覺與營養拼圖判讀...');
+      const origText = btnEl ? btnEl.textContent : '🔍 重新AI辨識';
+      if (btnEl) {
+        btnEl.textContent = '⏳ AI 辨識中(約3~6秒)...';
+        btnEl.disabled = true;
+      }
+      showToast('🤖 正在進行 Gemini 3.8 極速視覺與營養判讀...');
       const aiRes = await callGeminiVisionAndOcr(item.mealType, item.note || '', item.photos || [], key);
+      if (btnEl) {
+        btnEl.textContent = origText;
+        btnEl.disabled = false;
+      }
       if (aiRes.ok && aiRes.parsed) {
         const parsed = aiRes.parsed;
         // 若原本完全沒打字才填入辨識文字；若原本已有手打文字則 100% 保留！
@@ -1164,7 +1178,7 @@
                 <span class="tag" style="font-size:9px;">${rep.modeText || '已分析'}</span>
               </div>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                <button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="reAnalyzeSavedMeal(${item.id})">🔍 重新AI辨識</button>
+                <button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="reAnalyzeSavedMeal(${item.id}, this)">🔍 重新AI辨識</button>
                 <button class="btn btn-primary" style="padding:4px 9px; font-size:10px;" onclick="copySingleMealSync(${item.id}, false)">📋 複製同步此餐</button>
                 <button onclick="openEditModal(${item.id})" style="background:none; border:none; color:var(--accent); font-size:11px; cursor:pointer; font-weight:700;">✏️ 編輯</button>
                 <button onclick="deleteMealLog(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;">🗑️</button>
