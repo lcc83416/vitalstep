@@ -253,20 +253,21 @@
 
   <div class="container">
 
-    <!-- 📅 跨日選擇與歷史餐食檢視列 -->
+    <!-- 📅 跨日選擇與歷史餐食檢視列（雙排防斷行設計） -->
     <div class="card" style="padding:11px 14px; border:1.5px solid var(--primary); background:linear-gradient(180deg, var(--card-bg), var(--primary-light));">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
-        <button class="btn" style="padding:5px 10px; font-size:11px;" onclick="shiftMealDate(-1)">◀ 前一天</button>
-        <div style="text-align:center;">
-          <div id="meal-selected-date-label" style="font-size:12px; font-weight:800; color:var(--primary);">📅 今天</div>
-          <input type="date" id="meal-date-picker" onchange="selectMealDate(this.value)"
-            style="margin-top:2px; font-size:11px; font-weight:700; color:var(--text-main); background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:2px 8px; outline:none;">
-        </div>
-        <button class="btn" id="meal-next-day-btn" style="padding:5px 10px; font-size:11px;" onclick="shiftMealDate(1)">後一天 ▶</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:7px;">
+        <div id="meal-selected-date-label" style="font-size:13px; font-weight:800; color:var(--primary); white-space:nowrap;">📅 今天</div>
+        <span style="font-size:10px; color:var(--text-muted); font-weight:700; white-space:nowrap;">跨日相簿留存</span>
       </div>
-      <div id="meal-back-today-row" style="display:none; margin-top:7px; padding-top:7px; border-top:1px dashed rgba(5,150,105,0.3); justify-content:space-between; align-items:center; font-size:11px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <button class="btn" style="padding:6px 11px; font-size:11px; white-space:nowrap;" onclick="shiftMealDate(-1)">◀ 前一天</button>
+        <input type="date" id="meal-date-picker" onchange="selectMealDate(this.value)"
+          style="flex:1; text-align:center; font-size:11px; font-weight:700; color:var(--text-main); background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:5px 8px; outline:none;">
+        <button class="btn" id="meal-next-day-btn" style="padding:6px 11px; font-size:11px; white-space:nowrap;" onclick="shiftMealDate(1)">後一天 ▶</button>
+      </div>
+      <div id="meal-back-today-row" style="display:none; margin-top:8px; padding-top:7px; border-top:1px dashed rgba(5,150,105,0.3); justify-content:space-between; align-items:center; font-size:11px;">
         <span style="color:var(--text-main); font-weight:600;">📂 正在檢視過去日期的餐食與成績單</span>
-        <button class="btn btn-primary" style="padding:3px 10px; font-size:10px;" onclick="selectMealDate(TODAY)">⚡ 回到今天</button>
+        <button class="btn btn-primary" style="padding:4px 10px; font-size:10px; white-space:nowrap;" onclick="selectMealDate(TODAY)">⚡ 回到今天</button>
       </div>
     </div>
 
@@ -314,13 +315,16 @@
 
       <!-- 快速補充小標籤 -->
       <div style="margin-bottom:12px;">
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選快速加入補充：</div>
+        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選快速加入補充（含照片看不出的真實份量）：</div>
         <div>
+          <span class="quick-chip" onclick="appendNote('剩1/3沒吃完')">+ 剩1/3沒吃完</span>
+          <span class="quick-chip" onclick="appendNote('剩一半沒吃完')">+ 剩一半沒吃完</span>
+          <span class="quick-chip" onclick="appendNote('有加麵/飯多')">+ 有加麵/飯多</span>
+          <span class="quick-chip" onclick="appendNote('白飯減半')">+ 白飯減半</span>
           <span class="quick-chip" onclick="appendNote('無糖豆漿')">+ 無糖豆漿</span>
           <span class="quick-chip" onclick="appendNote('超商無糖綠茶')">+ 超商無糖綠茶</span>
           <span class="quick-chip" onclick="appendNote('煎魚(表面薄粉防沾)')">+ 煎魚(表面薄粉)</span>
           <span class="quick-chip" onclick="appendNote('滷雞腿去皮')">+ 滷雞腿去皮</span>
-          <span class="quick-chip" onclick="appendNote('白飯減半')">+ 白飯減半</span>
           <span class="quick-chip" onclick="appendNote('去酸菜少醬膏')">+ 滷味去酸菜少醬</span>
           <span class="quick-chip" onclick="appendNote('午餐吃飽後立刻吃餅乾')">+ 午餐後立刻吃餅乾</span>
         </div>
@@ -437,7 +441,7 @@
         } catch (e) {}
       }
 
-      // 3. 預先救回 2026-10-27（週二）昨日餐食成績單紀錄
+      // 3. 預先救回 2026-10-27（週二）昨日餐食成績單紀錄（含完整早餐：無糖豆漿+茶葉蛋+草莓吐司）
       if (!mealHistoryByDate['2026-10-27'] || mealHistoryByDate['2026-10-27'].length === 0) {
         mealHistoryByDate['2026-10-27'] = [
           {
@@ -453,10 +457,17 @@
             mealType: '早餐',
             time: '08:15',
             photos: [],
-            note: '無糖豆漿',
-            report: generateLocalReport('早餐', '無糖豆漿', 0)
+            note: '無糖豆漿+茶葉蛋+草莓吐司',
+            report: generateLocalReport('早餐', '無糖豆漿+茶葉蛋+草莓吐司', 0)
           }
         ];
+      } else {
+        // 若舊救援資料中 10/27 早餐只有寫「無糖豆漿」，自動補齊為「無糖豆漿+茶葉蛋+草莓吐司」
+        const bf = mealHistoryByDate['2026-10-27'].find(x => x.id === 1761568800001 || (x.mealType === '早餐' && x.note === '無糖豆漿'));
+        if (bf && bf.note === '無糖豆漿') {
+          bf.note = '無糖豆漿+茶葉蛋+草莓吐司';
+          bf.report = generateLocalReport('早餐', bf.note, (bf.photos || []).length);
+        }
       }
 
       selectMealDate(TODAY);
@@ -722,7 +733,7 @@
       }
     }
 
-    // 本機智慧判讀引擎
+    // 本機智慧判讀引擎（完整保留使用者輸入文字 + 分析補了什麼 / 缺了什麼）
     function generateLocalReport(mealType, note, photoCount) {
       const t = (note || '').toLowerCase();
       const whatText = note
@@ -734,6 +745,12 @@
       const swaps = [];
       const autoTags = [];
 
+      // 份量覺察（剩1/3、剩一半、沒吃完）大加分！
+      if (t.includes('剩1/3') || t.includes('剩 1/3') || t.includes('剩一半') || t.includes('沒吃完') || t.includes('不硬撐')) {
+        goods.push('🌟 <strong>黃金飽足感覺察（沒硬撐吃完大加分！）</strong>：即使外食份量較大或有加麵，能聽身體的聲音「吃到飽就停、剩下 1/3 不硬塞」，直接幫肝臟擋下過量澱粉轉化為三酸甘油酯！');
+        autoTags.push('✅飽足停筷不硬撐');
+      }
+
       if (t.includes('無糖豆漿') || t.includes('無糖黑豆漿') || t.includes('無糖綠茶') || t.includes('無糖茶') || t.includes('黑咖啡') || t.includes('無糖')) {
         goods.push('🥤 <strong>飲品守住無糖防線</strong>：選擇無糖豆漿／無糖茶，成功切斷果糖直入肝臟合成三酸甘油酯 (TG) 的源頭！');
         autoTags.push('✅無糖飲品');
@@ -741,25 +758,40 @@
 
       if (t.includes('魚')) {
         if (t.includes('薄粉') || t.includes('煎')) {
-          goods.push('🐟 <strong>主菜選魚肉大加分</strong>：捨棄高飽和脂肪的肥肉改選魚類，富含優質蛋白與好油脂，非常有助於降低三酸甘油酯！');
+          goods.push('🐟 <strong>主菜補足優質魚類蛋白</strong>：捨棄高飽和脂肪的肥肉改選魚類，富含優質蛋白與好油脂，非常有助於降低三酸甘油酯！');
           ngs.push('💡 <strong>烹調判定（薄粉乾煎 ⭕ 算過關！）</strong>：便當店煎魚表面的一點點薄粉只是為了防沾鍋，<strong>完全不等於厚裹粉深炸排骨</strong>，不必糾結自責！');
           autoTags.push('✅優質魚肉(薄粉過關)');
         } else {
-          goods.push('🐟 <strong>優質魚類蛋白</strong>：選魚肉代替加工肉或炸肉，對改善脂肪肝與降 TG 非常有幫助！');
+          goods.push('🐟 <strong>補足優質魚類蛋白</strong>：選魚肉代替加工肉或炸肉，對改善脂肪肝與降 TG 非常有幫助！');
           autoTags.push('✅優質魚肉');
         }
       }
 
-      if (t.includes('豆腐') || t.includes('豆漿') || t.includes('蛋') || t.includes('雞胸') || t.includes('雞腿去皮') || t.includes('瘦肉')) {
-        goods.push('🥚 <strong>優質蛋白質到位</strong>：攝取豆魚蛋肉類幫助穩定餐後血糖，保護肌肉量並延緩飢餓感。');
+      if (t.includes('豆腐') || t.includes('豆漿') || t.includes('蛋') || t.includes('雞') || t.includes('瘦肉') || t.includes('肉')) {
+        goods.push('🥚 <strong>補足優質蛋白質</strong>：攝取豆魚蛋肉類（如豆漿、茶葉蛋、雞肉）幫助穩定餐後血糖，保護肌肉量並延緩飢餓感。');
         autoTags.push('✅優質蛋白');
       }
       if (t.includes('菜') || t.includes('菇') || t.includes('番茄') || t.includes('蘿蔔') || t.includes('沙拉')) {
-        goods.push('🥬 <strong>膳食纖維護欄</strong>：蔬菜纖維能在腸道形成保護網，減少油脂與糖分被肝臟快速吸收。');
-        autoTags.push('✅高纖蔬菜');
+        goods.push('🥬 <strong>補足植化素／膳食纖維</strong>：蔬菜或番茄茄紅素能在腸道形成保護網，減少油脂與糖分被肝臟快速吸收。');
+        autoTags.push('✅高纖/植化素');
       }
       if (t.includes('飯減半') || t.includes('半碗飯') || t.includes('燕麥')) {
         goods.push('🍚 <strong>聰明控管精緻澱粉</strong>：主動減少白飯份量或替換為高纖燕麥，直接減輕胰島素負擔！');
+      }
+
+      // 吐司 / 果醬 / 麵包
+      if (t.includes('草莓吐司') || t.includes('果醬') || t.includes('奶酥') || t.includes('花生吐司')) {
+        ngs.push('🍓 <strong>精緻澱粉＋甜果醬提醒</strong>：白吐司抹草莓果醬屬於吸收較快的糖分與碳水；不過若同餐有搭配「無糖豆漿＋茶葉蛋」雙重蛋白質墊胃，能大幅緩和血糖衝擊！');
+        swaps.push('下次早餐若想吃吐司，可先喝幾口無糖豆漿、吃完茶葉蛋再吃吐司，或偶爾換成「起司蛋吐司（去美乃滋）」。');
+      }
+
+      // 義大利麵 / 麵食（檢查是否缺少葉菜類纖維）
+      if (t.includes('義大利麵') || t.includes('麵') || t.includes('水餃') || t.includes('鍋貼')) {
+        const hasLeafyVeg = t.includes('燙青菜') || t.includes('沙拉') || t.includes('花椰菜') || t.includes('高麗菜') || t.includes('菠菜');
+        if (!hasLeafyVeg) {
+          ngs.push('🧩 <strong>這餐缺了什麼：缺少「葉菜類膳食纖維」</strong>：單點義大利麵或麵食通常只有麵條與醬汁肉塊，綠色蔬菜量偏少。');
+          swaps.push('下一餐（例如明天午餐便當）記得多夾 1～2 格深綠色青菜補回纖維；這餐吃完後原地踏步 15 分鐘就能把麵條澱粉穩穩代謝掉！');
+        }
       }
 
       if (t.includes('炸排骨') || t.includes('雞排') || t.includes('鹹酥雞') || t.includes('糖醋') || t.includes('厚粉')) {
@@ -796,10 +828,10 @@
         goods.push('👍 有誠實記錄這餐內容就是改善脂肪肝的第一步！只要把握「先吃菜肉、後吃澱粉」就能穩住血糖。');
       }
       if (ngs.length === 0) {
-        ngs.push('🎉 <strong>這餐沒有明顯的高糖或厚粉油炸地雷！</strong>食材選擇非常穩健，肝臟負擔很輕！');
+        ngs.push('🎉 <strong>這餐營養均衡、沒有明顯的高糖或厚粉油炸地雷！</strong>肝臟負擔很輕！');
       }
       if (swaps.length === 0) {
-        swaps.push('✨ 目前這套點餐組合很棒！如果是午餐或晚餐，吃完後記得起身散步或追劇原地踏步 15 分鐘，直接把剛吃進去的血糖燒掉！');
+        swaps.push('✨ 目前這套點餐組合很棒！如果是午餐或晚餐，吃完後記得散步或追劇微活動 15 分鐘，直接把剛吃進去的血糖燒掉！');
       }
 
       return {
@@ -813,40 +845,89 @@
       };
     }
 
-    // 🤖 呼叫雲端 Gemini 視覺與外送截圖 OCR 判讀引擎
+    // 🛡️ 防爆 JSON 解析器：就算 AI 回傳含有未跳脫雙引號、換行或格式微瑕，也能用正則精準抽出 4 點成績單！
+    function robustParseGeminiJson(rawText) {
+      if (!rawText) return null;
+      let raw = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) raw = jsonMatch[0];
+
+      // 1. 直接嘗試標準 JSON.parse
+      try {
+        return JSON.parse(raw);
+      } catch (e1) {}
+
+      // 2. 清理換行與控制字元後再試一次
+      try {
+        const cleaned = raw.replace(/[\r\n\t]+/g, ' ');
+        return JSON.parse(cleaned);
+      } catch (e2) {}
+
+      // 3. 正則欄位保底抽取（防止 AI 在中文內容裡夾帶未跳脫雙引號導致 JSON.parse 崩潰）
+      const keys = ['extractedItems', 'what', 'good', 'ng', 'swap', 'summaryBadge'];
+      const extracted = {};
+      let foundCount = 0;
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        const nextKeysPattern = keys.slice(i + 1).map(nk => `"${nk}"\\s*:`).join('|');
+        const regex = nextKeysPattern
+          ? new RegExp(`"${k}"\\s*:\\s*"([\\s\\S]*?)"\\s*,?\\s*(?=${nextKeysPattern}|\\}\\s*$)`, 'i')
+          : new RegExp(`"${k}"\\s*:\\s*"([\\s\\S]*?)"\\s*\\}?\\s*$`, 'i');
+        const m = raw.match(regex);
+        if (m && m[1]) {
+          extracted[k] = m[1].replace(/\\"/g, '"').replace(/\\n/g, '<br>').trim();
+          foundCount++;
+        }
+      }
+      if (foundCount >= 2) return extracted;
+      return null;
+    }
+
+    // 🤖 呼叫雲端 Gemini 視覺與外送截圖 OCR 判讀引擎（徹底移除已停用的 1.5-flash，加入雙重防爆解析）
     async function callGeminiVisionAndOcr(mealToSave, note, photosToSave, key) {
       const parts = [];
       photosToSave.forEach(p => {
-        const base64Data = p.split(',')[1];
-        if (base64Data) {
+        const mimeMatch = p.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+        if (mimeMatch) {
           parts.push({
-            inline_data: { mime_type: 'image/jpeg', data: base64Data }
+            inline_data: { mime_type: mimeMatch[1], data: mimeMatch[2] }
           });
+        } else {
+          const base64Data = p.split(',')[1];
+          if (base64Data) {
+            parts.push({
+              inline_data: { mime_type: 'image/jpeg', data: base64Data }
+            });
+          }
         }
       });
 
       const prompt = `你是一位溫暖且務實的臨床減脂護肝營養師，同時具備高精準度的繁體中文 OCR 文字辨識能力。
 使用者的匿名健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、溫和護胃防逆流」。
 重要判讀原則：
-1. 【支援外送訂單截圖 / 結帳明細 / 菜單文字 OCR】：若使用者上傳的是「外送平台訂單截圖（如 UberEats、foodpanda）、點餐明細、發票或菜單文字圖片」，請務必仔細進行 OCR 文字辨識，把圖片裡寫的所有餐點名稱、主菜、配菜、飲料甜度冰塊與份量完整讀出來，填入 extractedItems 與 what 欄位！（注意忽略無關的系統按鈕文字如「再點一次」「客服」「外送費」）。
-2. 外食沒有 100% 完美，請抓大放小！例如使用者若捨棄肥肉改選「煎魚」，即使魚皮表面有一層防沾鍋的薄粉，這依然是 90 分的「⭕ 選對亮點」，請明確告訴他薄粉防沾不算破功（頂多撥掉最油的邊角即可），不要讓他有罪惡感。
-3. 若使用者選擇無糖豆漿、超商無糖綠茶，或將餅乾放在午餐剛吃飽後吃，請大力肯定！
-4. 請結合「照片/外送訂單截圖」與使用者的「文字補充（${mealToSave}：${note || '無打字補充，請直接從照片或外送訂單截圖辨識所有餐點文字與內容'}）」給出事後 4 點成績單。
+1. 【保留使用者手打內容＋結合照片/外送截圖 OCR】：使用者手打補充為「${mealToSave}：${note || '（未打字，請從圖片辨識）'}」。若使用者有打字（例如寫了「無糖豆漿+茶葉蛋+草莓吐司」或「義大利麵加麵但剩1/3沒吃完」），請務必 100% 完整納入判讀，絕對不要漏掉使用者寫的任何一項食材或份量說明！若上傳的是外送訂單截圖或餐點照，請一併辨識圖片中的餐點品項。
+2. 【真實份量覺察肯定（不瞎猜卡路里數字）】：照片看不出碗深或吃剩多少，因此請不要憑空捏造精確卡路里數字！若使用者主動補充「剩1/3沒吃完」、「白飯減半」，請大力肯定他「覺察飽足感、不硬撐吃完」的控糖好習慣！
+3. 【明確分析：✅ 這餐補足了什麼 ＆ 🧩 缺了什麼（下一餐怎麼補）】：
+   - 外食沒有 100% 完美，請抓大放小（如便當煎魚表面的防沾薄粉算 90 分過關；早餐有豆漿+蛋搭配甜吐司時，肯定雙重蛋白質能緩衝血糖）。
+   - 在 good 欄位明確指出「⭕ 選對亮點 & 這餐補足了什麼營養（如優質蛋白質、茄紅素、無糖飲品）」。
+   - 在 ng 欄位明確指出「🧩 這餐缺了什麼（例如單點義大利麵缺少深綠色葉菜纖維）或有哪些烹調/糖分注意事項」。
+   - 在 swap 欄位給出「🔄 下一餐怎麼補齊（如明天午餐多夾一格青菜）＋ 餐後微運動建議」。
 
-請嚴格以純 JSON 格式回覆（不要加 markdown 語法）：
+請以純 JSON 格式回覆（字串內部請使用「」代替雙引號）：
 {
-  "extractedItems": "從照片或外送訂單截圖中辨識出的純餐點名稱清單（例如：滷雞腿便當、燙青菜、無糖綠茶）",
-  "what": "結合照片/截圖OCR與文字補充，清楚列出這餐實際點了/吃了什麼",
-  "good": "⭕ 這次選對的亮點（肯定好選擇，例如選魚肉、無糖茶、薄粉乾煎可接受、點了青菜或優質蛋白質等）",
-  "ng": "❌ 這餐的 NG 地雷或烹調判定（抓出雙重澱粉、百頁豆腐、厚粉深炸或高糖醬汁；若無地雷請寫『🎉 這餐無明顯地雷，非常穩健！』）",
-  "swap": "🔄 下次買同類餐點怎麼換（給出 1~2 句具體好執行的下次微調建議，並提醒午晚餐後可踏步或走動 15 分鐘）",
-  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕外送健康選+優質蛋白"
+  "extractedItems": "餐點完整品項清單（結合使用者手打文字與圖片辨識結果）",
+  "what": "結合使用者手打文字、份量說明（如剩1/3）與照片/截圖，清楚列出這餐實際吃了什麼",
+  "good": "⭕ 選對亮點 & 這餐補足了什麼營養（如：補足雞肉/魚肉/豆漿/蛋蛋白質、無糖防線、剩1/3不硬撐等）",
+  "ng": "🧩 這餐缺了什麼營養（如缺葉菜纖維）或烹調判定（若很均衡無地雷也請明確說明）",
+  "swap": "🔄 下一餐怎麼補 / 下次怎麼換（給出 1~2 句具體好執行的下一餐補齊建議與餐後活動提醒）",
+  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕補足蛋白+飽足停筷"
 }`;
 
       parts.push({ text: prompt });
 
-      let lastErrMsg = '';
-      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      let primaryErrMsg = '';
+      // 僅使用目前官方穩定支援的 2.5 與 2.0 模型（徹底移除已停用的 gemini-1.5-flash 避免 404 報錯！）
+      const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
       for (const m of models) {
         try {
           const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
@@ -854,7 +935,21 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts }],
-              generationConfig: { responseMimeType: 'application/json' }
+              generationConfig: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                  type: 'OBJECT',
+                  properties: {
+                    extractedItems: { type: 'STRING' },
+                    what: { type: 'STRING' },
+                    good: { type: 'STRING' },
+                    ng: { type: 'STRING' },
+                    swap: { type: 'STRING' },
+                    summaryBadge: { type: 'STRING' }
+                  },
+                  required: ['what', 'good', 'ng', 'swap', 'summaryBadge']
+                }
+              }
             })
           });
           const resData = await resp.json();
@@ -862,33 +957,27 @@
             const partsArr = resData.candidates?.[0]?.content?.parts || [];
             // 排除 gemini-2.5-flash 的 thought 思考區塊，只取正式輸出文字
             const nonThought = partsArr.filter(p => !p.thought && p.text).map(p => p.text).join('\n');
-            let raw = nonThought || partsArr.map(p => p.text || '').join('\n');
-            raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-            const jsonMatch = raw.match(/\{[\s\S]*\}/);
-            if (jsonMatch) raw = jsonMatch[0];
-
-            let parsed = null;
-            try {
-              parsed = JSON.parse(raw);
-            } catch (parseErr) {
-              // 若 JSON 字串內有未跳脫換行，自動清理後再解析
-              const cleaned = raw.replace(/\r?\n/g, ' ');
-              parsed = JSON.parse(cleaned);
+            const raw = nonThought || partsArr.map(p => p.text || '').join('\n');
+            const parsed = robustParseGeminiJson(raw);
+            if (parsed && (parsed.what || parsed.good)) {
+              return { ok: true, parsed };
+            } else {
+              if (!primaryErrMsg) primaryErrMsg = 'AI 回傳格式解析異常';
             }
-            return { ok: true, parsed };
           } else if (resData?.error?.message) {
-            lastErrMsg = resData.error.message;
+            if (!primaryErrMsg) primaryErrMsg = resData.error.message;
           }
         } catch (err) {
-          lastErrMsg = err.message || '連線或解析錯誤';
+          if (!primaryErrMsg) primaryErrMsg = err.message || '連線或解析錯誤';
         }
       }
-      return { ok: false, error: lastErrMsg || 'API 呼叫失敗' };
+      return { ok: false, error: primaryErrMsg || 'API 呼叫失敗，請檢查網路或金鑰額度' };
     }
 
-    // 🔍 分析此餐並自動存入下方「今日已拍餐食紀錄」（同時清空上方輸入框供下一餐使用！）
+    // 🔍 分析此餐並自動存入下方「今日已拍餐食紀錄」（100% 保留手打文字，同時清空上方輸入框供下一餐使用！）
     async function runMealAnalysisAndSave() {
-      let note = document.getElementById('meal-note').value.trim();
+      const userTypedNote = document.getElementById('meal-note').value.trim();
+      let note = userTypedNote;
       if (!note && photos.length === 0) {
         alert('請先「拍照／上傳外送訂單截圖」或「打字補充這餐吃了什麼」喔！');
         return;
@@ -896,7 +985,7 @@
 
       const btn = document.getElementById('analyze-save-btn');
       const origBtnText = btn.innerHTML;
-      btn.innerHTML = '🤖 正在辨識照片/外送截圖文字與分析中...';
+      btn.innerHTML = '🤖 正在結合照片與文字分析「補了什麼／缺了什麼」...';
       btn.disabled = true;
 
       const mealToSave = currentMeal;
@@ -915,8 +1004,8 @@
         const aiRes = await callGeminiVisionAndOcr(mealToSave, note, photosToSave, key);
         if (aiRes.ok && aiRes.parsed) {
           const parsed = aiRes.parsed;
-          // 若使用者沒打字（例如只傳外送訂單截圖），自動把 OCR 讀出的餐點品項填入 note，確保同步回主頁也能觸發健檢雷達！
-          if (!note && (parsed.extractedItems || parsed.what)) {
+          // 重要：只有在使用者完全沒打字時，才用 AI 辨識出的品項填入 note；若使用者有自己打字，100% 保留使用者手打原文！
+          if (!userTypedNote && (parsed.extractedItems || parsed.what)) {
             note = (parsed.extractedItems || parsed.what).replace(/<[^>]*>/g, '').trim();
           }
           const combinedForTags = generateLocalReport(mealToSave, `${note} ${parsed.what || ''} ${parsed.good || ''}`, photosToSave.length);
@@ -927,12 +1016,12 @@
             swap: parsed.swap || finalReport.swap,
             autoTags: combinedForTags.autoTags,
             summaryBadge: parsed.summaryBadge || combinedForTags.summaryBadge,
-            modeText: '✨ Gemini 視覺+截圖OCR'
+            modeText: '✨ Gemini 視覺+營養判讀'
           };
         } else {
           finalReport.what = `⚠️ <strong>雲端 AI 辨識未成功（${aiRes.error || '請檢查金鑰或網路'}）</strong><br>` + finalReport.what;
           finalReport.modeText = '⚠️ 金鑰連線異常（改用本機）';
-          showToast('⚠️ 雲端 AI 連線異常，請檢查下方 API Key 設定或點「重新AI辨識」');
+          showToast('⚠️ 雲端 AI 連線異常，已先使用本機營養師判讀，可點「重新AI辨識」重試');
         }
       } else if (photosToSave.length > 0 && !note) {
         // 使用者沒填 API Key 且只傳了截圖/照片沒打字！明確告知原因並自動展開金鑰設定框
@@ -970,13 +1059,13 @@
       btn.disabled = false;
     }
 
-    // 🔍 針對已儲存的餐食卡片（例如昨天傳的外送截圖），一鍵重新呼叫 AI OCR 辨識
+    // 🔍 針對已儲存的餐食卡片，一鍵重新呼叫 AI 辨識（100% 保留手打 note 不覆蓋！）
     async function reAnalyzeSavedMeal(id) {
       const item = dailyMealLogs.find(l => l.id === id);
       if (!item) return;
       const key = localStorage.getItem(ISOLATED_KEY_NAME);
       if (!key) {
-        alert('請先在頁面最下方「⚙️ 雲端 Gemini AI 視覺金鑰設定」貼上您的 Gemini API Key，就能辨識外送訂單截圖囉！');
+        alert('請先在頁面最下方「⚙️ 雲端 Gemini AI 視覺金鑰設定」貼上您的 Gemini API Key，就能進行 AI 視覺與截圖辨識囉！');
         const box = document.getElementById('key-box');
         if (box) {
           box.style.display = 'block';
@@ -985,10 +1074,11 @@
         return;
       }
 
-      showToast('🤖 正在重新進行外送截圖 OCR 與營養判讀...');
+      showToast('🤖 正在進行 Gemini 2.5 視覺與營養拼圖判讀...');
       const aiRes = await callGeminiVisionAndOcr(item.mealType, item.note || '', item.photos || [], key);
       if (aiRes.ok && aiRes.parsed) {
         const parsed = aiRes.parsed;
+        // 若原本完全沒打字才填入辨識文字；若原本已有手打文字則 100% 保留！
         if (!item.note && (parsed.extractedItems || parsed.what)) {
           item.note = (parsed.extractedItems || parsed.what).replace(/<[^>]*>/g, '').trim();
         }
@@ -1000,14 +1090,14 @@
           swap: parsed.swap || item.report?.swap,
           autoTags: combinedForTags.autoTags,
           summaryBadge: parsed.summaryBadge || combinedForTags.summaryBadge,
-          modeText: '✨ Gemini 視覺+截圖OCR'
+          modeText: '✨ Gemini 視覺+營養判讀'
         };
         saveDailyMealLogs();
         renderMealHistory();
         copySingleMealSync(item.id, false);
-        showToast('🎉 外送截圖/照片重新辨識成功，並已複製同步碼！');
+        showToast('🎉 AI 視覺與營養判讀成功，並已複製同步碼！');
       } else {
-        alert(`雲端 AI 辨識失敗：${aiRes.error || '請確認 API Key 是否正確'}`);
+        alert(`雲端 AI 辨識失敗：${aiRes.error || '請確認 API Key 是否正確或稍後再試'}`);
       }
     }
 
@@ -1044,7 +1134,7 @@
                 <span class="tag" style="font-size:9px;">${rep.modeText || '已分析'}</span>
               </div>
               <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-                ${photosList.length > 0 ? `<button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="reAnalyzeSavedMeal(${item.id})">🔍 重新AI辨識</button>` : ''}
+                <button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="reAnalyzeSavedMeal(${item.id})">🔍 重新AI辨識</button>
                 <button class="btn btn-primary" style="padding:4px 9px; font-size:10px;" onclick="copySingleMealSync(${item.id}, false)">📋 複製同步此餐</button>
                 <button onclick="openEditModal(${item.id})" style="background:none; border:none; color:var(--accent); font-size:11px; cursor:pointer; font-weight:700;">✏️ 編輯</button>
                 <button onclick="deleteMealLog(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;">🗑️</button>
@@ -1060,24 +1150,24 @@
               </div>
             ` : ''}
 
-            <!-- 📝 補充文字 -->
-            ${item.note ? `<div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:8px; background:var(--card-bg); padding:7px 10px; border-radius:8px; border:1px solid var(--border);">${item.note}</div>` : ''}
+            <!-- 📝 補充文字（100% 保留手打原文） -->
+            ${item.note ? `<div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:8px; background:var(--card-bg); padding:7px 10px; border-radius:8px; border:1px solid var(--border);">📝 ${item.note}</div>` : ''}
 
-            <!-- 📊 4 點 ⭕ / ❌ 成績單 -->
+            <!-- 📊 4 點 ⭕ / 🧩 營養拼圖成績單 -->
             <div class="report-section report-what">
-              <div style="font-weight:800; color:#0284c7; margin-bottom:2px;">1️⃣ 🍱 這餐吃了什麼</div>
+              <div style="font-weight:800; color:#0284c7; margin-bottom:2px;">1️⃣ 🍱 這餐吃了什麼（含份量補充）</div>
               <div>${rep.what || '-'}</div>
             </div>
             <div class="report-section report-good">
-              <div style="font-weight:800; color:#059669; margin-bottom:2px;">2️⃣ ⭕ 這次選對的亮點</div>
+              <div style="font-weight:800; color:#059669; margin-bottom:2px;">2️⃣ ⭕ 選對亮點 & 這餐補足了什麼</div>
               <div>${rep.good || '-'}</div>
             </div>
             <div class="report-section report-ng">
-              <div style="font-weight:800; color:#b45309; margin-bottom:2px;">3️⃣ ❌ 這餐的 NG 地雷 / 烹調判定</div>
+              <div style="font-weight:800; color:#b45309; margin-bottom:2px;">3️⃣ 🧩 這餐缺了什麼 / 烹調與 NG 判定</div>
               <div>${rep.ng || '-'}</div>
             </div>
             <div class="report-section report-swap" style="margin-bottom:0;">
-              <div style="font-weight:800; color:#4f46e5; margin-bottom:2px;">4️⃣ 🔄 下次買同類餐點怎麼換</div>
+              <div style="font-weight:800; color:#4f46e5; margin-bottom:2px;">4️⃣ 🔄 下一餐怎麼補 / 下次怎麼換</div>
               <div>${rep.swap || '-'}</div>
             </div>
           </div>
@@ -1106,16 +1196,17 @@
 
       item.mealType = document.getElementById('edit-meal-type').value;
       item.time = document.getElementById('edit-time').value;
-      item.note = document.getElementById('edit-note').value.trim();
+      const userEditedNote = document.getElementById('edit-note').value.trim();
+      item.note = userEditedNote;
       closeEditModal();
 
       const key = localStorage.getItem(ISOLATED_KEY_NAME);
       if (key) {
-        showToast('🤖 正在根據補充文字與截圖重新呼叫 AI 判讀...');
+        showToast('🤖 正在根據補充文字與照片重新呼叫 AI 判讀...');
         const aiRes = await callGeminiVisionAndOcr(item.mealType, item.note, item.photos || [], key);
         if (aiRes.ok && aiRes.parsed) {
           const parsed = aiRes.parsed;
-          if (!item.note && (parsed.extractedItems || parsed.what)) {
+          if (!userEditedNote && (parsed.extractedItems || parsed.what)) {
             item.note = (parsed.extractedItems || parsed.what).replace(/<[^>]*>/g, '').trim();
           }
           const combinedForTags = generateLocalReport(item.mealType, `${item.note} ${parsed.what || ''} ${parsed.good || ''}`, (item.photos || []).length);
@@ -1126,7 +1217,7 @@
             swap: parsed.swap || combinedForTags.swap,
             autoTags: combinedForTags.autoTags,
             summaryBadge: parsed.summaryBadge || combinedForTags.summaryBadge,
-            modeText: '✨ Gemini 視覺+截圖OCR'
+            modeText: '✨ Gemini 視覺+營養判讀'
           };
           saveDailyMealLogs();
           renderMealHistory();
