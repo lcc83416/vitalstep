@@ -569,15 +569,20 @@
       setTimeout(() => { t.style.display = 'none'; }, 2500);
     }
 
-    // 圖片高保真壓縮（確保整天拍 4~6 餐照片都能輕鬆存在本機）
+    // 圖片高保真壓縮（針對外送長截圖與文字特別提高解析度，確保小字 OCR 清晰可讀）
     function compressImage(base64Src, maxWidth, quality, cb) {
       const img = new Image();
       img.onload = function() {
         let w = img.width;
         let h = img.height;
-        if (w > maxWidth) {
-          h = Math.round((h * maxWidth) / w);
-          w = maxWidth;
+        // 若是手機直向長截圖（如 UberEats / foodpanda 訂單畫面），放寬高度與畫質以保留小字清晰度
+        const isTallScreenshot = (h > w * 1.4);
+        const targetMaxW = isTallScreenshot ? Math.max(maxWidth, 1080) : maxWidth;
+        const targetQual = isTallScreenshot ? Math.max(quality, 0.85) : quality;
+
+        if (w > targetMaxW) {
+          h = Math.round((h * targetMaxW) / w);
+          w = targetMaxW;
         }
         const canvas = document.createElement('canvas');
         canvas.width = w;
@@ -585,7 +590,7 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
         try {
-          cb(canvas.toDataURL('image/jpeg', quality));
+          cb(canvas.toDataURL('image/jpeg', targetQual));
         } catch (e) {
           cb(base64Src);
         }
@@ -598,18 +603,18 @@
       const files = Array.from(e.target.files || []);
       if (!files.length) return;
       const lbl = document.getElementById('photo-btn-label');
-      lbl.textContent = `⏳ 正在壓縮處理 ${files.length} 張照片...`;
+      lbl.textContent = `⏳ 正在高畫質處理 ${files.length} 張照片/截圖...`;
 
       let done = 0;
       files.forEach(file => {
         const reader = new FileReader();
         reader.onload = function(evt) {
-          compressImage(evt.target.result, 720, 0.65, function(compressed) {
+          compressImage(evt.target.result, 960, 0.80, function(compressed) {
             if (photos.length < 5) photos.push(compressed);
             done++;
             if (done === files.length) {
               renderPhotos();
-              lbl.textContent = `📷 繼續加選照片（目前已選 ${photos.length} 張）`;
+              lbl.textContent = `📷 繼續加選照片/外送截圖（目前已選 ${photos.length} 張）`;
             }
           });
         };
@@ -773,17 +778,90 @@
       };
     }
 
+    // 🤖 呼叫雲端 Gemini 視覺與外送截圖 OCR 判讀引擎
+    async function callGeminiVisionAndOcr(mealToSave, note, photosToSave, key) {
+      const parts = [];
+      photosToSave.forEach(p => {
+        const base64Data = p.split(',')[1];
+        if (base64Data) {
+          parts.push({
+            inline_data: { mime_type: 'image/jpeg', data: base64Data }
+          });
+        }
+      });
+
+      const prompt = `你是一位溫暖且務實的臨床減脂護肝營養師，同時具備高精準度的繁體中文 OCR 文字辨識能力。
+使用者的匿名健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、溫和護胃防逆流」。
+重要判讀原則：
+1. 【支援外送訂單截圖 / 結帳明細 / 菜單文字 OCR】：若使用者上傳的是「外送平台訂單截圖（如 UberEats、foodpanda）、點餐明細、發票或菜單文字圖片」，請務必仔細進行 OCR 文字辨識，把圖片裡寫的所有餐點名稱、主菜、配菜、飲料甜度冰塊與份量完整讀出來，填入 extractedItems 與 what 欄位！（注意忽略無關的系統按鈕文字如「再點一次」「客服」「外送費」）。
+2. 外食沒有 100% 完美，請抓大放小！例如使用者若捨棄肥肉改選「煎魚」，即使魚皮表面有一層防沾鍋的薄粉，這依然是 90 分的「⭕ 選對亮點」，請明確告訴他薄粉防沾不算破功（頂多撥掉最油的邊角即可），不要讓他有罪惡感。
+3. 若使用者選擇無糖豆漿、超商無糖綠茶，或將餅乾放在午餐剛吃飽後吃，請大力肯定！
+4. 請結合「照片/外送訂單截圖」與使用者的「文字補充（${mealToSave}：${note || '無打字補充，請直接從照片或外送訂單截圖辨識所有餐點文字與內容'}）」給出事後 4 點成績單。
+
+請嚴格以純 JSON 格式回覆（不要加 markdown 語法）：
+{
+  "extractedItems": "從照片或外送訂單截圖中辨識出的純餐點名稱清單（例如：滷雞腿便當、燙青菜、無糖綠茶）",
+  "what": "結合照片/截圖OCR與文字補充，清楚列出這餐實際點了/吃了什麼",
+  "good": "⭕ 這次選對的亮點（肯定好選擇，例如選魚肉、無糖茶、薄粉乾煎可接受、點了青菜或優質蛋白質等）",
+  "ng": "❌ 這餐的 NG 地雷或烹調判定（抓出雙重澱粉、百頁豆腐、厚粉深炸或高糖醬汁；若無地雷請寫『🎉 這餐無明顯地雷，非常穩健！』）",
+  "swap": "🔄 下次買同類餐點怎麼換（給出 1~2 句具體好執行的下次微調建議，並提醒午晚餐後可踏步或走動 15 分鐘）",
+  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕外送健康選+優質蛋白"
+}`;
+
+      parts.push({ text: prompt });
+
+      let lastErrMsg = '';
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      for (const m of models) {
+        try {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts }],
+              generationConfig: { responseMimeType: 'application/json' }
+            })
+          });
+          const resData = await resp.json();
+          if (resData && !resData.error) {
+            const partsArr = resData.candidates?.[0]?.content?.parts || [];
+            // 排除 gemini-2.5-flash 的 thought 思考區塊，只取正式輸出文字
+            const nonThought = partsArr.filter(p => !p.thought && p.text).map(p => p.text).join('\n');
+            let raw = nonThought || partsArr.map(p => p.text || '').join('\n');
+            raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+            const jsonMatch = raw.match(/\{[\s\S]*\}/);
+            if (jsonMatch) raw = jsonMatch[0];
+
+            let parsed = null;
+            try {
+              parsed = JSON.parse(raw);
+            } catch (parseErr) {
+              // 若 JSON 字串內有未跳脫換行，自動清理後再解析
+              const cleaned = raw.replace(/\r?\n/g, ' ');
+              parsed = JSON.parse(cleaned);
+            }
+            return { ok: true, parsed };
+          } else if (resData?.error?.message) {
+            lastErrMsg = resData.error.message;
+          }
+        } catch (err) {
+          lastErrMsg = err.message || '連線或解析錯誤';
+        }
+      }
+      return { ok: false, error: lastErrMsg || 'API 呼叫失敗' };
+    }
+
     // 🔍 分析此餐並自動存入下方「今日已拍餐食紀錄」（同時清空上方輸入框供下一餐使用！）
     async function runMealAnalysisAndSave() {
-      const note = document.getElementById('meal-note').value.trim();
+      let note = document.getElementById('meal-note').value.trim();
       if (!note && photos.length === 0) {
-        alert('請先「拍照」或「打字補充這餐吃了什麼」喔！');
+        alert('請先「拍照／上傳外送訂單截圖」或「打字補充這餐吃了什麼」喔！');
         return;
       }
 
       const btn = document.getElementById('analyze-save-btn');
       const origBtnText = btn.innerHTML;
-      btn.innerHTML = '🤖 正在判讀這餐的亮點與地雷...';
+      btn.innerHTML = '🤖 正在辨識照片/外送截圖文字與分析中...';
       btn.disabled = true;
 
       const mealToSave = currentMeal;
@@ -794,65 +872,38 @@
       let finalReport = generateLocalReport(mealToSave, note, photosToSave.length);
 
       if (key) {
-        try {
-          const parts = [];
-          photosToSave.forEach(p => {
-            const base64Data = p.split(',')[1];
-            parts.push({
-              inline_data: { mime_type: 'image/jpeg', data: base64Data }
-            });
-          });
-
-          const prompt = `你是一位溫暖且務實的臨床減脂護肝營養師。
-使用者的匿名健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、溫和護胃防逆流」。
-重要判讀原則：
-1. 外食沒有 100% 完美，請抓大放小！例如使用者若捨棄肥肉改選「煎魚」，即使魚皮表面有一層防沾鍋的薄粉，這依然是 90 分的「⭕ 選對亮點」，請明確告訴他薄粉防沾不算破功（頂多撥掉最油的邊角即可），不要讓他有罪惡感。
-2. 若使用者選擇無糖豆漿、超商無糖綠茶，或將餅乾放在午餐剛吃飽後吃，請大力肯定！
-3. 請結合「照片」與使用者的「文字補充（${mealToSave}：${note || '無文字補充，請直接辨識照片'}）」給出事後 4 點成績單。
-
-請嚴格以純 JSON 格式回覆（不要加 markdown 語法）：
-{
-  "what": "結合照片與文字補充，條列整理這餐實際吃了什麼",
-  "good": "⭕ 這次選對的亮點（肯定好選擇，例如選魚肉、無糖茶、薄粉乾煎可接受等）",
-  "ng": "❌ 這餐的 NG 地雷或烹調判定（抓出雙重澱粉、百頁豆腐、厚粉深炸或高糖醬汁；若無地雷請寫『🎉 這餐無明顯地雷，非常穩健！』）",
-  "swap": "🔄 下次買同類餐點怎麼換（給出 1~2 句具體好執行的下次微調建議，並提醒午晚餐後可踏步或走動 15 分鐘）",
-  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕無糖飲+優質煎魚(薄粉過關)"
-}`;
-
-          parts.push({ text: prompt });
-
-          let resData = null;
-          const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
-          for (const m of models) {
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: [{ parts }] })
-            });
-            resData = await resp.json();
-            if (!resData.error) break;
+        const aiRes = await callGeminiVisionAndOcr(mealToSave, note, photosToSave, key);
+        if (aiRes.ok && aiRes.parsed) {
+          const parsed = aiRes.parsed;
+          // 若使用者沒打字（例如只傳外送訂單截圖），自動把 OCR 讀出的餐點品項填入 note，確保同步回主頁也能觸發健檢雷達！
+          if (!note && (parsed.extractedItems || parsed.what)) {
+            note = (parsed.extractedItems || parsed.what).replace(/<[^>]*>/g, '').trim();
           }
-
-          if (resData && !resData.error) {
-            let raw = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            raw = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-            const parsed = JSON.parse(raw);
-            finalReport = {
-              what: parsed.what || finalReport.what,
-              good: parsed.good || finalReport.good,
-              ng: parsed.ng || finalReport.ng,
-              swap: parsed.swap || finalReport.swap,
-              autoTags: finalReport.autoTags,
-              summaryBadge: parsed.summaryBadge || finalReport.summaryBadge,
-              modeText: '✨ Gemini AI 視覺判讀'
-            };
-          }
-        } catch (err) {
-          console.warn('Gemini fallback to local report:', err);
+          const combinedForTags = generateLocalReport(mealToSave, `${note} ${parsed.what || ''} ${parsed.good || ''}`, photosToSave.length);
+          finalReport = {
+            what: parsed.what || finalReport.what,
+            good: parsed.good || finalReport.good,
+            ng: parsed.ng || finalReport.ng,
+            swap: parsed.swap || finalReport.swap,
+            autoTags: combinedForTags.autoTags,
+            summaryBadge: parsed.summaryBadge || combinedForTags.summaryBadge,
+            modeText: '✨ Gemini 視覺+截圖OCR'
+          };
+        } else {
+          finalReport.what = `⚠️ <strong>雲端 AI 辨識未成功（${aiRes.error || '請檢查金鑰或網路'}）</strong><br>` + finalReport.what;
+          finalReport.modeText = '⚠️ 金鑰連線異常（改用本機）';
+          showToast('⚠️ 雲端 AI 連線異常，請檢查下方 API Key 設定或點「重新AI辨識」');
         }
+      } else if (photosToSave.length > 0 && !note) {
+        // 使用者沒填 API Key 且只傳了截圖/照片沒打字！明確告知原因並自動展開金鑰設定框
+        finalReport.what = `⚠️ <strong>目前尚未設定「雲端 Gemini API Key」，本機離線模式無法直接讀取照片或外送訂單截圖內的文字喔！</strong><br>👉 <strong>解決方式 A</strong>：請在最下方「⚙️ 雲端 Gemini AI 視覺金鑰設定」貼上金鑰，再點此卡片右上角的<strong>「🔍 重新AI辨識」</strong>即可讀出外送截圖！<br>👉 <strong>解決方式 B（免金鑰）</strong>：點右上角「✏️ 編輯」，用 iPhone 鍵盤內建的「掃描文字／原況文字」或打字輸入外送餐點名稱！`;
+        finalReport.modeText = '⚠️ 需設定金鑰或補打字';
+        const box = document.getElementById('key-box');
+        if (box) box.style.display = 'block';
+        showToast('💡 只傳截圖未打字時，需設定下方 Gemini API Key 才能自動辨識圖片文字喔！');
       }
 
-      // 建立完整餐食紀錄（包含照片陣列 + 文字 + 4點成績單）並存入今日歷史清單
+      // 建立完整餐食紀錄（包含照片陣列 + 文字 + 4點成績單）並存入本日歷史清單
       const newEntry = {
         id: Date.now(),
         mealType: mealToSave,
@@ -870,7 +921,7 @@
       // 自動複製最新這筆同步碼到剪貼簿，方便隨時去「每日進度」貼上
       copySingleMealSync(newEntry.id, true);
 
-      // 自動清空上方輸入框與待傳照片預覽，讓下一餐（例如午餐）打開就能直接拍，且舊照片完整留在下方歷史清單！
+      // 自動清空上方輸入框與待傳照片預覽，讓下一餐打開就能直接拍，且舊照片完整留在下方歷史清單！
       photos = [];
       document.getElementById('meal-note').value = '';
       renderPhotos();
@@ -879,14 +930,55 @@
       btn.disabled = false;
     }
 
+    // 🔍 針對已儲存的餐食卡片（例如昨天傳的外送截圖），一鍵重新呼叫 AI OCR 辨識
+    async function reAnalyzeSavedMeal(id) {
+      const item = dailyMealLogs.find(l => l.id === id);
+      if (!item) return;
+      const key = localStorage.getItem(ISOLATED_KEY_NAME);
+      if (!key) {
+        alert('請先在頁面最下方「⚙️ 雲端 Gemini AI 視覺金鑰設定」貼上您的 Gemini API Key，就能辨識外送訂單截圖囉！');
+        const box = document.getElementById('key-box');
+        if (box) {
+          box.style.display = 'block';
+          box.scrollIntoView({ behavior: 'smooth' });
+        }
+        return;
+      }
+
+      showToast('🤖 正在重新進行外送截圖 OCR 與營養判讀...');
+      const aiRes = await callGeminiVisionAndOcr(item.mealType, item.note || '', item.photos || [], key);
+      if (aiRes.ok && aiRes.parsed) {
+        const parsed = aiRes.parsed;
+        if (!item.note && (parsed.extractedItems || parsed.what)) {
+          item.note = (parsed.extractedItems || parsed.what).replace(/<[^>]*>/g, '').trim();
+        }
+        const combinedForTags = generateLocalReport(item.mealType, `${item.note} ${parsed.what || ''} ${parsed.good || ''}`, (item.photos || []).length);
+        item.report = {
+          what: parsed.what || item.report?.what,
+          good: parsed.good || item.report?.good,
+          ng: parsed.ng || item.report?.ng,
+          swap: parsed.swap || item.report?.swap,
+          autoTags: combinedForTags.autoTags,
+          summaryBadge: parsed.summaryBadge || combinedForTags.summaryBadge,
+          modeText: '✨ Gemini 視覺+截圖OCR'
+        };
+        saveDailyMealLogs();
+        renderMealHistory();
+        copySingleMealSync(item.id, false);
+        showToast('🎉 外送截圖/照片重新辨識成功，並已複製同步碼！');
+      } else {
+        alert(`雲端 AI 辨識失敗：${aiRes.error || '請確認 API Key 是否正確'}`);
+      }
+    }
+
     // 渲染下方「📚 今日已拍餐食 & AI 成績單紀錄」（保留照片與完整 4 點分析）
     function renderMealHistory() {
       const listEl = document.getElementById('meal-history-list');
       const countBadge = document.getElementById('header-count-badge');
-      if (countBadge) countBadge.textContent = `今日 ${dailyMealLogs.length} 餐`;
+      if (countBadge) countBadge.textContent = `本日 ${dailyMealLogs.length} 餐`;
 
       if (!dailyMealLogs.length) {
-        listEl.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:14px 0;">尚無今日餐食照片紀錄，在上方選餐別拍照或打字後，就會連同照片一起保存在這裡喔！</div>';
+        listEl.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:14px 0;">尚無本日餐食照片／外送截圖紀錄，在上方選餐別拍照或打字後，就會連同照片一起保存在這裡喔！</div>';
         return;
       }
 
@@ -911,7 +1003,8 @@
                 <span style="font-size:11px; font-weight:700; color:var(--text-muted);">${item.time}</span>
                 <span class="tag" style="font-size:9px;">${rep.modeText || '已分析'}</span>
               </div>
-              <div style="display:flex; gap:6px; align-items:center;">
+              <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                ${photosList.length > 0 ? `<button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="reAnalyzeSavedMeal(${item.id})">🔍 重新AI辨識</button>` : ''}
                 <button class="btn btn-primary" style="padding:4px 9px; font-size:10px;" onclick="copySingleMealSync(${item.id}, false)">📋 複製同步此餐</button>
                 <button onclick="openEditModal(${item.id})" style="background:none; border:none; color:var(--accent); font-size:11px; cursor:pointer; font-weight:700;">✏️ 編輯</button>
                 <button onclick="deleteMealLog(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;">🗑️</button>
@@ -966,7 +1059,7 @@
       document.getElementById('edit-modal').style.display = 'none';
     }
 
-    function saveEditedMealLog() {
+    async function saveEditedMealLog() {
       const id = parseInt(document.getElementById('edit-log-id').value, 10);
       const item = dailyMealLogs.find(l => l.id === id);
       if (!item) return;
@@ -974,12 +1067,38 @@
       item.mealType = document.getElementById('edit-meal-type').value;
       item.time = document.getElementById('edit-time').value;
       item.note = document.getElementById('edit-note').value.trim();
-      // 重新依修改後文字更新本機判讀亮點
-      item.report = generateLocalReport(item.mealType, item.note, (item.photos || []).length);
+      closeEditModal();
 
+      const key = localStorage.getItem(ISOLATED_KEY_NAME);
+      if (key) {
+        showToast('🤖 正在根據補充文字與截圖重新呼叫 AI 判讀...');
+        const aiRes = await callGeminiVisionAndOcr(item.mealType, item.note, item.photos || [], key);
+        if (aiRes.ok && aiRes.parsed) {
+          const parsed = aiRes.parsed;
+          if (!item.note && (parsed.extractedItems || parsed.what)) {
+            item.note = (parsed.extractedItems || parsed.what).replace(/<[^>]*>/g, '').trim();
+          }
+          const combinedForTags = generateLocalReport(item.mealType, `${item.note} ${parsed.what || ''} ${parsed.good || ''}`, (item.photos || []).length);
+          item.report = {
+            what: parsed.what || combinedForTags.what,
+            good: parsed.good || combinedForTags.good,
+            ng: parsed.ng || combinedForTags.ng,
+            swap: parsed.swap || combinedForTags.swap,
+            autoTags: combinedForTags.autoTags,
+            summaryBadge: parsed.summaryBadge || combinedForTags.summaryBadge,
+            modeText: '✨ Gemini 視覺+截圖OCR'
+          };
+          saveDailyMealLogs();
+          renderMealHistory();
+          copySingleMealSync(item.id, false);
+          return;
+        }
+      }
+
+      // 若無金鑰則使用本機判讀更新
+      item.report = generateLocalReport(item.mealType, item.note, (item.photos || []).length);
       saveDailyMealLogs();
       renderMealHistory();
-      closeEditModal();
       copySingleMealSync(item.id, false);
     }
 
