@@ -620,7 +620,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.2 <span class="tag">智能菜單・暖胃廚房</span></div>
+        <div class="logo-title">微步輕健 5.3 <span class="tag">跨日檢視・防改鎖定</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -631,7 +631,7 @@
 
     <!-- 頂部膠囊分段按鈕 -->
     <div class="top-segment-bar">
-      <div class="segment-btn active" data-tab="today" onclick="switchTab('today')">今日打卡</div>
+      <div class="segment-btn active" data-tab="today" onclick="switchTab('today')">每日打卡</div>
       <div class="segment-btn" data-tab="stats" onclick="switchTab('stats')">每週統計</div>
       <div class="segment-btn" data-tab="recipes" onclick="switchTab('recipes')">暖胃廚房</div>
       <div class="segment-btn" data-tab="health" onclick="switchTab('health')">健檢放鬆</div>
@@ -639,6 +639,36 @@
 
     <!-- ==================== TAB 1: 今日打卡 ==================== -->
     <div id="tab-today" class="tab-pane active">
+
+      <!-- 📅 跨日選擇與歷史檢視／補登切換器 -->
+      <div class="card" style="padding:12px 14px; border:1.5px solid var(--primary); background:linear-gradient(180deg, var(--card-bg), var(--primary-light));">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px;">
+          <button class="btn" style="padding:6px 10px; font-size:11px; font-weight:700;" onclick="shiftSelectedDate(-1)">◀ 前一天</button>
+          <div style="flex:1; text-align:center; display:flex; flex-direction:column; align-items:center;">
+            <div style="display:flex; align-items:center; gap:5px; justify-content:center;">
+              <span id="selected-date-badge" style="font-size:13px; font-weight:800; color:var(--primary);">今天</span>
+              <span id="selected-lock-pill" style="font-size:10px; padding:1px 7px; border-radius:99px; font-weight:700; background:var(--warning-bg); color:var(--warning-text);">🔓 可編輯</span>
+            </div>
+            <input type="date" id="date-picker-input" onchange="onDatePickerChange(this.value)"
+              style="margin-top:3px; font-size:11px; font-weight:700; color:var(--text-main); background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:2px 8px; outline:none; text-align:center;">
+          </div>
+          <button class="btn" id="btn-next-day" style="padding:6px 10px; font-size:11px; font-weight:700;" onclick="shiftSelectedDate(1)">後一天 ▶</button>
+        </div>
+
+        <!-- 最近 7 天快速點選膠囊列 -->
+        <div id="recent-days-strip" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; margin-top:6px;"></div>
+
+        <!-- 非今日時的快速返回今天提示列 -->
+        <div id="back-to-today-bar" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(5,150,105,0.3); justify-content:space-between; align-items:center; font-size:11px;">
+          <span id="viewing-past-hint" style="color:var(--text-main); font-weight:600;">📂 正在檢視歷史日期紀錄</span>
+          <button class="btn btn-primary" style="padding:4px 10px; font-size:11px;" onclick="selectDate(TODAY)">⚡ 回到今天</button>
+        </div>
+      </div>
+
+      <!-- 🔒 單日結算與防改鎖定狀態面板 -->
+      <div id="day-lock-banner" class="card" style="padding:12px 14px; margin-bottom:12px;">
+        <!-- 由 renderDayLockBanner() 動態渲染 -->
+      </div>
 
       <!-- 護膝鐵則警告 -->
       <div style="background:var(--warning-bg); border:1px solid var(--warning-border); color:var(--warning-text); padding:10px 12px; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px; display:flex; gap:8px;">
@@ -840,67 +870,74 @@
       <!-- 📝 飲食純文字極速記錄 ＆ 📸 獨立 AI 成績單同步區（100% 物理隔離） -->
       <div class="card">
         <div class="card-title">
-          <span>🍱 今日餐食文字清單 & AI 同步</span>
+          <span id="food-card-title-text">🍱 本日餐食文字清單 & AI 同步</span>
           <span class="tag" style="background:var(--primary-light); color:var(--primary);">100% 離線隔離</span>
         </div>
 
-        <!-- 📋 跨 iPhone 桌面捷徑：一鍵貼上匯入 AI 餐食成績單（不跳出瀏覽器！） -->
-        <button onclick="pasteFromMealAi()" style="width:100%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; text-align:left; background:linear-gradient(135deg, #059669, #0284c7); color:white; padding:12px 14px; border-radius:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(5,150,105,0.22);">
-          <div>
-            <div style="font-size:13px; font-weight:800;">📋 一鍵貼上匯入「AI 餐食」成績單</div>
-            <div style="font-size:10px; opacity:0.92; margin-top:2px;">在桌面「AI 餐食」捷徑點複製後，回本頁點此鈕即可秒速寫入！</div>
-          </div>
-          <span style="font-size:16px; font-weight:900; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:8px;">貼上</span>
-        </button>
+        <div id="food-entry-controls">
+          <!-- 📋 跨 iPhone 桌面捷徑：一鍵貼上匯入 AI 餐食成績單（不跳出瀏覽器！） -->
+          <button onclick="pasteFromMealAi()" style="width:100%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; text-align:left; background:linear-gradient(135deg, #059669, #0284c7); color:white; padding:12px 14px; border-radius:12px; margin-bottom:14px; box-shadow:0 3px 10px rgba(5,150,105,0.22);">
+            <div>
+              <div style="font-size:13px; font-weight:800;">📋 一鍵貼上匯入「AI 餐食」成績單</div>
+              <div style="font-size:10px; opacity:0.92; margin-top:2px;">在桌面「AI 餐食」捷徑點複製後，回本頁點此鈕即可秒速寫入！</div>
+            </div>
+            <span style="font-size:16px; font-weight:900; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:8px;">貼上</span>
+          </button>
 
-        <!-- 🍽️ 餐別與用餐時間選擇（支援直接在主頁快速打字記） -->
-        <div style="margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <label style="font-size:11px; font-weight:700; color:var(--text-main);">✍️ 或直接在主頁打字速記：</label>
-            <div style="display:flex; align-items:center; gap:4px;">
-              <span style="font-size:10px; color:var(--text-muted);">時間:</span>
-              <input type="time" id="food-time-input" style="padding:2px 6px; font-size:11px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg); color:var(--text-main); outline:none;">
+          <!-- 🍽️ 餐別與用餐時間選擇（支援直接在主頁快速打字記） -->
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label style="font-size:11px; font-weight:700; color:var(--text-main);">✍️ 或直接在主頁打字速記：</label>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span style="font-size:10px; color:var(--text-muted);">時間:</span>
+                <input type="time" id="food-time-input" style="padding:2px 6px; font-size:11px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg); color:var(--text-main); outline:none;">
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
+              <div class="meal-type-chip" id="chip-breakfast" onclick="selectMealType('早餐')">🌅 早餐</div>
+              <div class="meal-type-chip" id="chip-lunch" onclick="selectMealType('午餐')">🍱 午餐</div>
+              <div class="meal-type-chip" id="chip-dinner" onclick="selectMealType('晚餐')">🌙 晚餐</div>
+              <div class="meal-type-chip" id="chip-snack" onclick="selectMealType('點心')">🍪 點心零食</div>
             </div>
           </div>
-          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
-            <div class="meal-type-chip" id="chip-breakfast" onclick="selectMealType('早餐')">🌅 早餐</div>
-            <div class="meal-type-chip" id="chip-lunch" onclick="selectMealType('午餐')">🍱 午餐</div>
-            <div class="meal-type-chip" id="chip-dinner" onclick="selectMealType('晚餐')">🌙 晚餐</div>
-            <div class="meal-type-chip" id="chip-snack" onclick="selectMealType('點心')">🍪 點心零食</div>
+          
+          <!-- 常駐打字輸入框 -->
+          <div style="margin-bottom:8px;">
+            <input type="text" id="food-note-input" placeholder="例如：無糖豆漿+蛋 / 煎魚便當(薄粉)+無糖綠茶 / 午餐後吃餅乾1片" 
+              style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;"
+              oninput="updateAiAdvice()">
+          </div>
+
+          <!-- 常用飲食快速點選膠囊（1秒填入） -->
+          <div style="margin-bottom:10px;">
+            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選一鍵填入常吃項目（會自動觸發上方健檢雷達）：</div>
+            <div>
+              <span class="pantry-chip" onclick="quickAddFoodText('無糖豆漿')">+ 無糖豆漿</span>
+              <span class="pantry-chip" onclick="quickAddFoodText('超商無糖綠茶')">+ 超商無糖綠茶</span>
+              <span class="pantry-chip" onclick="quickAddFoodText('煎魚便當(表面薄粉)')">+ 煎魚便當(薄粉)</span>
+              <span class="pantry-chip" onclick="quickAddFoodText('茶葉蛋')">+ 茶葉蛋</span>
+              <span class="pantry-chip" onclick="quickAddFoodText('滷雞腿去皮便當')">+ 滷雞腿去皮</span>
+              <span class="pantry-chip" onclick="quickAddFoodText('午餐吃飽後吃餅乾')">+ 午餐後吃餅乾</span>
+            </div>
+          </div>
+
+          <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6; display:none; border:1px solid var(--border);"></div>
+
+          <!-- 儲存純文字記錄按鈕 -->
+          <div style="text-align:right; margin-bottom:14px;">
+            <button class="btn btn-primary" style="width:100%; padding:10px; font-size:13px;" onclick="saveFoodLog()">
+              💾 儲存此餐文字記錄（並更新自動健檢雷達）
+            </button>
           </div>
         </div>
-        
-        <!-- 常駐打字輸入框 -->
-        <div style="margin-bottom:8px;">
-          <input type="text" id="food-note-input" placeholder="例如：無糖豆漿+蛋 / 煎魚便當(薄粉)+無糖綠茶 / 午餐後吃餅乾1片" 
-            style="width:100%; padding:10px 12px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none;"
-            oninput="updateAiAdvice()">
-        </div>
 
-        <!-- 常用飲食快速點選膠囊（1秒填入） -->
-        <div style="margin-bottom:10px;">
-          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選一鍵填入常吃項目（會自動觸發上方健檢雷達）：</div>
-          <div>
-            <span class="pantry-chip" onclick="quickAddFoodText('無糖豆漿')">+ 無糖豆漿</span>
-            <span class="pantry-chip" onclick="quickAddFoodText('超商無糖綠茶')">+ 超商無糖綠茶</span>
-            <span class="pantry-chip" onclick="quickAddFoodText('煎魚便當(表面薄粉)')">+ 煎魚便當(薄粉)</span>
-            <span class="pantry-chip" onclick="quickAddFoodText('茶葉蛋')">+ 茶葉蛋</span>
-            <span class="pantry-chip" onclick="quickAddFoodText('滷雞腿去皮便當')">+ 滷雞腿去皮</span>
-            <span class="pantry-chip" onclick="quickAddFoodText('午餐吃飽後吃餅乾')">+ 午餐後吃餅乾</span>
-          </div>
-        </div>
+        <!-- 本日記錄歷史 -->
+        <div id="food-logs-history" style="font-size:12px;"></div>
+      </div>
 
-        <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6; display:none; border:1px solid var(--border);"></div>
-
-        <!-- 儲存純文字記錄按鈕 -->
-        <div style="text-align:right;">
-          <button class="btn btn-primary" style="width:100%; padding:10px; font-size:13px;" onclick="saveFoodLog()">
-            💾 儲存此餐文字記錄（並更新自動健檢雷達）
-          </button>
-        </div>
-
-        <!-- 今日記錄歷史 -->
-        <div id="food-logs-history" style="margin-top:14px; font-size:12px;"></div>
+      <!-- 🔒 底部結算並鎖定本日紀錄卡片 -->
+      <div id="bottom-lock-card" class="card" style="text-align:center;">
+        <!-- 由 renderDayLockBanner() 同步渲染 -->
       </div>
 
     </div>
@@ -914,7 +951,7 @@
         </div>
         <div style="text-align:center; padding:15px 0;">
           <div style="font-size:36px; font-weight:900; color:var(--primary);" id="streak-days-count">0</div>
-          <div style="font-size:12px; color:var(--text-muted);" id="streak-sub-text">天連續執行（準備明天正式開始第 1 天！）</div>
+          <div style="font-size:12px; color:var(--text-muted);" id="streak-sub-text">天累計達標紀錄</div>
           <div style="font-size:11px; color:var(--primary); margin-top:4px;" id="streak-encourage-text">「只要跨出第一步，身體就在修復中！」</div>
         </div>
       </div>
@@ -932,20 +969,27 @@
         </div>
       </div>
 
-      <!-- 過去 7 天達成圖表（純真實動態計算） -->
+      <!-- 本週 7 天達成圖表（純真實跨日資料庫動態計算，點柱子可跳轉該日！） -->
       <div class="card">
         <div class="card-title">
-          <span>📊 本週打卡達成率概況</span>
+          <span>📊 本週打卡達成率概況（點選日期可檢視）</span>
+          <span style="font-size:10px; color:var(--primary);" id="weekly-chart-range-label">週一 ～ 週日</span>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; height:100px; padding-top:20px; text-align:center; font-size:10px; color:var(--text-muted);">
-          <div style="flex:1;"><div id="bar-mon" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>一</div>
-          <div style="flex:1;"><div id="bar-tue" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>二</div>
-          <div style="flex:1;"><div id="bar-wed" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>三</div>
-          <div style="flex:1;"><div id="bar-thu" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>四</div>
-          <div style="flex:1;"><div id="bar-fri" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>五</div>
-          <div style="flex:1;"><div id="bar-sat" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>六</div>
-          <div style="flex:1;"><div id="bar-sun" style="background:var(--border); height:10px; border-radius:4px; margin:0 4px; transition:all 0.3s;"></div>日</div>
+        <div id="weekly-bars-container" style="display:flex; justify-content:space-between; align-items:flex-end; height:128px; padding-top:22px; text-align:center; font-size:10px; color:var(--text-muted);">
+          <!-- 由 renderStats() 根據 historyByDate 真實渲染週一至週日 -->
         </div>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:10px; text-align:center;">
+          💡 點擊上方任一天的長條圖，可直接切換回該日期檢視或鎖定紀錄！
+        </div>
+      </div>
+
+      <!-- 🗂️ 歷史紀錄總覽與快速跳轉清單 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🗂️ 歷史紀錄抽屜（點選可往前檢視／補鎖定）</span>
+          <span style="font-size:10px; color:var(--text-muted);">永久保存</span>
+        </div>
+        <div id="history-drawer-list" style="font-size:11px;"></div>
       </div>
     </div>
 
@@ -1264,8 +1308,31 @@
 
   <script>
     const KEY_PREFIX = 'vitalstep_v4_';
+    const HISTORY_DB_KEY = 'vitalstep_v5_history_by_date';
+    const GLOBAL_CFG_KEY = 'vitalstep_v5_global_cfg';
     const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
-    const TODAY = new Date().toISOString().split('T')[0];
+
+    function getLocalDateStr(d = new Date()) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function parseLocalDateStr(str) {
+      const parts = (str || '').split('-').map(Number);
+      if (parts.length !== 3 || isNaN(parts[0])) return new Date();
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    const TODAY = getLocalDateStr();
+    let selectedDate = TODAY;
+    let historyByDate = {};
+    let globalCfg = {
+      followup: '2027-01-26',
+      pantryText: '',
+      customMenuPlan: null
+    };
 
     // v5.2 全新「時段綁定」4 大黃金防線（前 3 項加總剛好湊滿每日 34 分鐘溫和消脂活動！）
     const HABITS = [
@@ -1274,6 +1341,20 @@
       { id: 'chair_workout', cat: 'ex', title: '【洗澡前】4 分鐘無膝壓坐姿椅子操', desc: '訓練走路與踏步練不到的大腿前側股四頭肌與核心，幫膝蓋裝上天然護膝', icon: '🪑' },
       { id: 'bedtime_2hr_fast', cat: 'ex', title: '【睡前防線】睡前 2 小時結束進食（零宵夜）', desc: '晚餐後不偷吃零食或宵夜（餅乾嚴格限午餐吃飽後立刻吃），讓肝臟夜間專心燃脂', icon: '🌙' }
     ];
+
+    function createEmptyDayRecord() {
+      return {
+        habits: {},
+        water: 0,
+        thermosCount: 0,
+        steps: '',
+        exMins: '',
+        weight: '',
+        foodLogs: [],
+        locked: false,
+        lockedAt: null
+      };
+    }
 
     let state = {
       habits: {},
@@ -1286,8 +1367,57 @@
       streak: 0,
       foodLogs: [],
       pantryText: '',
-      customMenuPlan: null
+      customMenuPlan: null,
+      locked: false,
+      lockedAt: null
     };
+
+    function isDayHasAnyRecord(rec) {
+      if (!rec) return false;
+      const doneH = HABITS.some(h => !!rec.habits?.[h.id]);
+      const hasFood = Array.isArray(rec.foodLogs) && rec.foodLogs.length > 0;
+      const hasWater = (rec.water || 0) > 0;
+      const hasStats = !!(rec.steps || rec.exMins || rec.weight);
+      return doneH || hasFood || hasWater || hasStats || !!rec.locked;
+    }
+
+    function calculateStreakCount() {
+      // 統計所有有實質打卡（至少完成 1 項時段防線或有飲食記錄）的天數
+      const allDates = Object.keys(historyByDate).sort();
+      let activeDays = 0;
+      allDates.forEach(d => {
+        const r = historyByDate[d];
+        if (!r) return;
+        const doneCount = HABITS.filter(h => !!r.habits?.[h.id]).length;
+        const hasFood = Array.isArray(r.foodLogs) && r.foodLogs.length > 0;
+        if (doneCount > 0 || hasFood) {
+          activeDays++;
+        }
+      });
+      return activeDays;
+    }
+
+    function loadDayIntoState(dateStr) {
+      selectedDate = dateStr;
+      if (!historyByDate[dateStr]) {
+        historyByDate[dateStr] = createEmptyDayRecord();
+      }
+      const dayRec = historyByDate[dateStr];
+      state.habits = dayRec.habits || {};
+      state.water = dayRec.water || 0;
+      state.thermosCount = dayRec.thermosCount || 0;
+      state.steps = dayRec.steps !== undefined ? dayRec.steps : '';
+      state.exMins = dayRec.exMins !== undefined ? dayRec.exMins : '';
+      state.weight = dayRec.weight !== undefined ? dayRec.weight : '';
+      state.foodLogs = Array.isArray(dayRec.foodLogs) ? dayRec.foodLogs : [];
+      state.locked = !!dayRec.locked;
+      state.lockedAt = dayRec.lockedAt || null;
+
+      state.followup = globalCfg.followup || '2027-01-26';
+      state.pantryText = globalCfg.pantryText || '';
+      state.customMenuPlan = globalCfg.customMenuPlan || null;
+      state.streak = calculateStreakCount();
+    }
 
     function init() {
       const d = new Date();
@@ -1295,54 +1425,371 @@
         year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
       });
 
-      const savedState = localStorage.getItem(KEY_PREFIX + 'state');
-      const savedDate = localStorage.getItem(KEY_PREFIX + 'date');
+      // 1. 讀取全域設定與多日歷史資料庫
+      try {
+        const rawCfg = localStorage.getItem(GLOBAL_CFG_KEY);
+        if (rawCfg) globalCfg = { ...globalCfg, ...JSON.parse(rawCfg) };
+      } catch (e) {}
 
-      if (savedState) {
-        state = JSON.parse(savedState);
+      try {
+        const rawHist = localStorage.getItem(HISTORY_DB_KEY);
+        if (rawHist) historyByDate = JSON.parse(rawHist) || {};
+      } catch (e) {
+        historyByDate = {};
       }
 
-      if (savedDate !== TODAY) {
-        localStorage.setItem(KEY_PREFIX + 'date', TODAY);
-        state.habits = {};
-        state.water = 0;
-        state.thermosCount = 0;
-        state.steps = '';
-        state.exMins = '';
-        state.foodLogs = []; // 每天跨夜自動乾淨換日
-        save();
-      }
+      // 2. 向下相容遷移舊版單日 state
+      const oldStateRaw = localStorage.getItem(KEY_PREFIX + 'state');
+      const oldDateRaw = localStorage.getItem(KEY_PREFIX + 'date') || TODAY;
+      if (oldStateRaw) {
+        try {
+          const oldState = JSON.parse(oldStateRaw);
+          if (oldState.followup) globalCfg.followup = oldState.followup;
+          if (oldState.pantryText) globalCfg.pantryText = oldState.pantryText;
+          if (oldState.customMenuPlan) globalCfg.customMenuPlan = oldState.customMenuPlan;
 
-      // 載入輸入框
-      if (state.steps) document.getElementById('input-steps').value = state.steps;
-      if (state.exMins) document.getElementById('input-ex-mins').value = state.exMins;
-      if (state.weight) document.getElementById('input-morning-weight').value = state.weight;
-
-      // 歷史記錄向下相容與防爆容量清理
-      if (state.foodLogs) {
-        state.foodLogs.forEach((item, idx) => {
-          if (!item.id) item.id = Date.now() - idx * 1000;
-          if (!item.mealType) item.mealType = '晚餐';
-          if (item.photo && item.photo.length > 400000) {
-            item.photo = null;
+          if (!historyByDate[oldDateRaw] || !isDayHasAnyRecord(historyByDate[oldDateRaw])) {
+            historyByDate[oldDateRaw] = {
+              habits: oldState.habits || {},
+              water: oldState.water || 0,
+              thermosCount: oldState.thermosCount || 0,
+              steps: oldState.steps || '',
+              exMins: oldState.exMins || '',
+              weight: oldState.weight || '',
+              foodLogs: Array.isArray(oldState.foodLogs) ? oldState.foodLogs : [],
+              locked: false,
+              lockedAt: null
+            };
           }
-        });
+        } catch (e) {}
       }
+
+      // 3. 救援並預填 2026-10-27（週二）昨日被舊版跨夜覆蓋洗掉的實測紀錄
+      const yesterdayKey = '2026-10-27';
+      if (!historyByDate[yesterdayKey] || !isDayHasAnyRecord(historyByDate[yesterdayKey])) {
+        historyByDate[yesterdayKey] = {
+          habits: {
+            lunch_move_15m: true,
+            dinner_step_15m: true,
+            chair_workout: false,
+            bedtime_2hr_fast: true
+          },
+          water: 1800,
+          thermosCount: 3,
+          steps: '',
+          exMins: 10,
+          weight: 93.5,
+          foodLogs: [
+            {
+              id: 1761568800001,
+              mealType: '早餐',
+              time: '08:15',
+              note: '無糖豆漿',
+              tags: ['✅無糖飲品']
+            },
+            {
+              id: 1761568800002,
+              mealType: '午餐',
+              time: '12:20',
+              note: '煎魚便當(表面薄粉防沾)、超商無糖綠茶',
+              tags: ['✅優質魚肉(薄粉過關)', '✅無糖飲品'],
+              aiReport: {
+                what: '午餐：煎魚便當(表面薄粉防沾)、超商無糖綠茶',
+                good: '🐟 捨棄肥肉改選魚類大加分！搭配超商無糖綠茶成功切斷果糖源頭！',
+                ng: '💡 便當店煎魚表面的一點薄粉只是防沾鍋，⭕ 算過關！完全不算厚粉油炸地雷！',
+                badge: '⭕無糖綠茶+薄粉煎魚過關'
+              }
+            },
+            {
+              id: 1761568800003,
+              mealType: '晚餐',
+              time: '19:30',
+              note: '家常晚餐（飯後穿厚底拖鞋邊追劇邊原地踏步 15 分鐘）',
+              tags: []
+            }
+          ],
+          locked: false,
+          lockedAt: null
+        };
+      }
+
+      loadDayIntoState(TODAY);
+      save();
 
       initMealType();
       checkMealSyncInbox(); // 自動接收從 meal-ai.html 單向同步過來的餐點成績單
-      renderHabits();
-      renderDietAutoRadar();
-      renderWater();
+      refreshAllDayUI();
       renderCountdown();
-      renderFoodLogs();
-      updateProgress();
-      renderStats();
-      updateCoachFeedback();
       initPantry();
 
       // 當從 meal-ai.html 切換回本頁時，即時檢查同步信箱
       window.addEventListener('focus', checkMealSyncInbox);
+    }
+
+    function refreshAllDayUI() {
+      const stepsEl = document.getElementById('input-steps');
+      const exMinsEl = document.getElementById('input-ex-mins');
+      const weightEl = document.getElementById('input-morning-weight');
+      if (stepsEl) {
+        stepsEl.value = state.steps !== undefined && state.steps !== null ? state.steps : '';
+        stepsEl.disabled = !!state.locked;
+      }
+      if (exMinsEl) {
+        exMinsEl.value = state.exMins !== undefined && state.exMins !== null ? state.exMins : '';
+        exMinsEl.disabled = !!state.locked;
+      }
+      if (weightEl) {
+        weightEl.value = state.weight !== undefined && state.weight !== null ? state.weight : '';
+        weightEl.disabled = !!state.locked;
+      }
+
+      renderDateSwitcherBar();
+      renderDayLockBanner();
+      renderHabits();
+      renderDietAutoRadar();
+      renderWater();
+      renderFoodLogs();
+      updateProgress();
+      renderStats();
+      updateCoachFeedback();
+    }
+
+    function selectDate(dateStr) {
+      if (!dateStr) return;
+      if (dateStr > TODAY) {
+        showToast('⏳ 未來日期還不能預先填寫喔！');
+        return;
+      }
+      loadDayIntoState(dateStr);
+      refreshAllDayUI();
+    }
+
+    function shiftSelectedDate(deltaDays) {
+      const cur = parseLocalDateStr(selectedDate);
+      cur.setDate(cur.getDate() + deltaDays);
+      const targetStr = getLocalDateStr(cur);
+      if (targetStr > TODAY) {
+        showToast('⏳ 已經是今天囉，無法切換到未來日期！');
+        return;
+      }
+      selectDate(targetStr);
+    }
+
+    function onDatePickerChange(val) {
+      if (!val) return;
+      if (val > TODAY) {
+        showToast('⏳ 無法選擇未來日期，已回到今天');
+        document.getElementById('date-picker-input').value = selectedDate;
+        return;
+      }
+      selectDate(val);
+    }
+
+    function jumpToDateFromStats(dateStr) {
+      selectDate(dateStr);
+      switchTab('today');
+      showToast(`📅 已切換至【${dateStr}】紀錄`);
+    }
+
+    function renderDateSwitcherBar() {
+      const picker = document.getElementById('date-picker-input');
+      if (picker) {
+        picker.value = selectedDate;
+        picker.max = TODAY;
+      }
+
+      const dObj = parseLocalDateStr(selectedDate);
+      const weekNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+      const wName = weekNames[dObj.getDay()];
+      const mmdd = `${dObj.getMonth() + 1}/${dObj.getDate()}`;
+
+      const todayObj = parseLocalDateStr(TODAY);
+      const diffDays = Math.round((todayObj - dObj) / (1000 * 60 * 60 * 24));
+      let relLabel = '';
+      if (diffDays === 0) relLabel = '今天';
+      else if (diffDays === 1) relLabel = '昨天';
+      else if (diffDays === 2) relLabel = '前天';
+      else relLabel = `${diffDays} 天前`;
+
+      const badgeEl = document.getElementById('selected-date-badge');
+      if (badgeEl) {
+        badgeEl.textContent = `📅 ${mmdd} (${wName}・${relLabel})`;
+      }
+
+      const lockPill = document.getElementById('selected-lock-pill');
+      if (lockPill) {
+        if (state.locked) {
+          lockPill.textContent = '🔒 已鎖定唯讀';
+          lockPill.style.background = 'var(--primary-light)';
+          lockPill.style.color = 'var(--primary)';
+        } else {
+          lockPill.textContent = diffDays === 0 ? '🔓 今日記錄中' : '🔓 可補登/待鎖定';
+          lockPill.style.background = 'var(--warning-bg)';
+          lockPill.style.color = 'var(--warning-text)';
+        }
+      }
+
+      const nextBtn = document.getElementById('btn-next-day');
+      if (nextBtn) {
+        nextBtn.disabled = (selectedDate >= TODAY);
+        nextBtn.style.opacity = (selectedDate >= TODAY) ? '0.4' : '1';
+      }
+
+      const backBar = document.getElementById('back-to-today-bar');
+      const hintEl = document.getElementById('viewing-past-hint');
+      if (backBar) {
+        if (selectedDate !== TODAY) {
+          backBar.style.display = 'flex';
+          if (hintEl) {
+            hintEl.textContent = state.locked
+              ? `🔒 正在檢視【${mmdd} ${wName}】已封存紀錄（唯讀）`
+              : `📝 正在檢視／補登【${mmdd} ${wName}】紀錄（填完請按鎖定）`;
+          }
+        } else {
+          backBar.style.display = 'none';
+        }
+      }
+
+      // 渲染最近 7 天快速膠囊列
+      const strip = document.getElementById('recent-days-strip');
+      if (strip) {
+        const itemsHtml = [];
+        const shortWeek = ['日', '一', '二', '三', '四', '五', '六'];
+        for (let i = 6; i >= 0; i--) {
+          const tempD = parseLocalDateStr(TODAY);
+          tempD.setDate(tempD.getDate() - i);
+          const dStr = getLocalDateStr(tempD);
+          const rec = historyByDate[dStr];
+          const isSel = (dStr === selectedDate);
+          const hasData = isDayHasAnyRecord(rec);
+          const isLocked = !!(rec && rec.locked);
+          const doneCnt = rec ? HABITS.filter(h => !!rec.habits?.[h.id]).length : 0;
+
+          let statusDot = '⚪';
+          if (isLocked) statusDot = '🔒';
+          else if (doneCnt > 0 || hasData) statusDot = '🟢';
+
+          itemsHtml.push(`
+            <div onclick="selectDate('${dStr}')" style="cursor:pointer; text-align:center; padding:5px 2px; border-radius:10px; border:1.5px solid ${isSel ? 'var(--primary)' : 'var(--border)'}; background:${isSel ? 'var(--primary)' : 'var(--card-bg)'}; color:${isSel ? '#ffffff' : 'var(--text-main)'}; transition:all 0.15s;">
+              <div style="font-size:9px; opacity:${isSel ? '0.9' : '0.7'}; font-weight:700;">週${shortWeek[tempD.getDay()]}</div>
+              <div style="font-size:11px; font-weight:800; margin:1px 0;">${tempD.getMonth() + 1}/${tempD.getDate()}</div>
+              <div style="font-size:9px;">${statusDot}</div>
+            </div>
+          `);
+        }
+        strip.innerHTML = itemsHtml.join('');
+      }
+    }
+
+    function checkLockedGuard() {
+      if (state.locked) {
+        showToast(`🔒 【${selectedDate}】紀錄已鎖定封存，無法再修改喔！`);
+        return true;
+      }
+      return false;
+    }
+
+    function lockCurrentDay() {
+      if (state.locked) {
+        showToast('🔒 此日紀錄已經鎖定封存囉！');
+        return;
+      }
+      const doneCount = HABITS.filter(h => !!state.habits[h.id]).length;
+      const foodCount = (state.foodLogs || []).length;
+      const waterVal = state.water || 0;
+
+      if (doneCount === 0 && foodCount === 0 && !state.steps && !state.exMins) {
+        if (!confirm(`【${selectedDate}】目前還沒有勾選任何打卡或輸入餐食／步數喔！\n確定要直接鎖定空白紀錄嗎？`)) {
+          return;
+        }
+      } else {
+        const msg = `確定要結算並鎖定【${selectedDate}】的紀錄嗎？\n\n` +
+          `• 時段打卡：完成 ${doneCount} / 4 項\n` +
+          `• 餐食記錄：共 ${foodCount} 筆\n` +
+          `• 飲水紀錄：${waterVal} ml\n` +
+          `• 手錶分鐘數：${state.exMins ? state.exMins + ' 分鐘' : '未填'}\n\n` +
+          `⚠️ 按下確定後，本日紀錄將「蓋章封存為唯讀模式」，之後只能檢視、不能再修改或刪除喔！`;
+        if (!confirm(msg)) return;
+      }
+
+      state.locked = true;
+      state.lockedAt = new Date().toLocaleString('zh-TW', {
+        month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      save();
+      refreshAllDayUI();
+      showToast(`🔒 已成功封存【${selectedDate}】紀錄！`);
+    }
+
+    function renderDayLockBanner() {
+      const topBanner = document.getElementById('day-lock-banner');
+      const bottomCard = document.getElementById('bottom-lock-card');
+      const foodEntryControls = document.getElementById('food-entry-controls');
+      const isToday = (selectedDate === TODAY);
+      const labelDate = isToday ? '今日' : `【${selectedDate}】`;
+
+      if (foodEntryControls) {
+        foodEntryControls.style.display = state.locked ? 'none' : 'block';
+      }
+
+      if (state.locked) {
+        const lockedHtml = `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; text-align:left;">
+            <div>
+              <div style="font-size:12px; font-weight:800; color:var(--primary);">🔒 ${labelDate}紀錄已蓋章封存（唯讀檢視模式）</div>
+              <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">
+                封存時間：${state.lockedAt || '已鎖定'}｜依約定「填完鎖定就不能再改」，完整保留真實歷史軌跡！
+              </div>
+            </div>
+            <span style="font-size:18px; flex-shrink:0;">🏅</span>
+          </div>
+        `;
+        if (topBanner) {
+          topBanner.style.background = 'var(--primary-light)';
+          topBanner.style.borderColor = 'rgba(5,150,105,0.4)';
+          topBanner.innerHTML = lockedHtml;
+        }
+        if (bottomCard) {
+          bottomCard.style.background = 'var(--primary-light)';
+          bottomCard.style.borderColor = 'rgba(5,150,105,0.4)';
+          bottomCard.innerHTML = lockedHtml;
+        }
+      } else {
+        const unlockedTopHtml = `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="text-align:left;">
+              <div style="font-size:12px; font-weight:800; color:var(--text-main);">🔓 ${labelDate}尚在記錄／補登中</div>
+              <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">
+                可分次勾選與記錄三餐；確認該日都填完後，請按右側「鎖定」封存（鎖定後不可再改）！
+              </div>
+            </div>
+            <button class="btn btn-primary" style="padding:7px 11px; font-size:11px; flex-shrink:0; white-space:nowrap;" onclick="lockCurrentDay()">
+              🔒 鎖定本日
+            </button>
+          </div>
+        `;
+        const unlockedBottomHtml = `
+          <div style="font-size:12px; font-weight:800; color:var(--text-main); margin-bottom:4px;">
+            🔒 ${labelDate}都填寫完畢了嗎？
+          </div>
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px; line-height:1.5;">
+            為了幫助自己每天誠實記錄、不事後偷改，確認本日打卡、步數與三餐都 key 完後，請按下鎖定封存！
+          </div>
+          <button class="btn btn-primary" style="width:100%; padding:11px; font-size:13px; background:linear-gradient(135deg, #059669, #0f766e);" onclick="lockCurrentDay()">
+            🔒 確認無誤，結算並鎖定${labelDate}紀錄（鎖定後不可修改）
+          </button>
+        `;
+        if (topBanner) {
+          topBanner.style.background = 'var(--card-bg)';
+          topBanner.style.borderColor = 'var(--warning-border)';
+          topBanner.innerHTML = unlockedTopHtml;
+        }
+        if (bottomCard) {
+          bottomCard.style.background = 'var(--card-bg)';
+          bottomCard.style.borderColor = 'var(--border)';
+          bottomCard.innerHTML = unlockedBottomHtml;
+        }
+      }
     }
 
     // 🔗 檢查並匯入來自獨立拍照頁 (meal-ai.html) 的單向同步信箱
@@ -1353,12 +1800,21 @@
         const inbox = JSON.parse(raw);
         if (!Array.isArray(inbox) || inbox.length === 0) return;
 
-        state.foodLogs = state.foodLogs || [];
         let addedCount = 0;
         inbox.forEach(syncItem => {
-          const exists = state.foodLogs.some(l => l.id === syncItem.id);
+          const targetDate = syncItem.date || selectedDate || TODAY;
+          if (!historyByDate[targetDate]) {
+            historyByDate[targetDate] = createEmptyDayRecord();
+          }
+          if (historyByDate[targetDate].locked) {
+            return; // 已鎖定日期不可寫入
+          }
+          const logs = historyByDate[targetDate].foodLogs || [];
+          const exists = logs.some(l => l.id === syncItem.id);
           if (!exists) {
-            state.foodLogs.unshift(syncItem);
+            logs.unshift(syncItem);
+            if (logs.length > 12) logs.pop();
+            historyByDate[targetDate].foodLogs = logs;
             addedCount++;
           }
         });
@@ -1366,11 +1822,9 @@
         localStorage.removeItem(SYNC_INBOX_KEY);
 
         if (addedCount > 0) {
-          if (state.foodLogs.length > 12) state.foodLogs = state.foodLogs.slice(0, 12);
+          loadDayIntoState(selectedDate);
           save();
-          renderFoodLogs();
-          renderDietAutoRadar();
-          updateCoachFeedback();
+          refreshAllDayUI();
           showToast(`✅ 已自動從 AI 拍照頁同步 ${addedCount} 筆餐點成績單！`);
         }
       } catch (e) {
@@ -1379,20 +1833,42 @@
     }
 
     function save() {
+      // 同步當前 state 進 historyByDate[selectedDate]
+      historyByDate[selectedDate] = {
+        habits: state.habits || {},
+        water: state.water || 0,
+        thermosCount: state.thermosCount || 0,
+        steps: state.steps !== undefined ? state.steps : '',
+        exMins: state.exMins !== undefined ? state.exMins : '',
+        weight: state.weight !== undefined ? state.weight : '',
+        foodLogs: Array.isArray(state.foodLogs) ? state.foodLogs : [],
+        locked: !!state.locked,
+        lockedAt: state.lockedAt || null
+      };
+
+      globalCfg.followup = state.followup || '2027-01-26';
+      globalCfg.pantryText = state.pantryText || '';
+      globalCfg.customMenuPlan = state.customMenuPlan || null;
+      state.streak = calculateStreakCount();
+
       try {
+        localStorage.setItem(GLOBAL_CFG_KEY, JSON.stringify(globalCfg));
+        localStorage.setItem(HISTORY_DB_KEY, JSON.stringify(historyByDate));
         localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
+        localStorage.setItem(KEY_PREFIX + 'date', TODAY);
       } catch (err) {
         console.warn('Storage quota issue, cleaning:', err);
-        if (state.foodLogs && state.foodLogs.length > 2) {
-          for (let i = 2; i < state.foodLogs.length; i++) {
-            state.foodLogs[i].photo = null;
-            state.foodLogs[i].photos = [];
-          }
-          try {
-            localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
-          } catch (e2) {
-            console.error('Final fallback save failed:', e2);
-          }
+        Object.keys(historyByDate).forEach(k => {
+          const fl = historyByDate[k]?.foodLogs || [];
+          fl.forEach(item => {
+            item.photo = null;
+            item.photos = [];
+          });
+        });
+        try {
+          localStorage.setItem(HISTORY_DB_KEY, JSON.stringify(historyByDate));
+        } catch (e2) {
+          console.error('Final fallback save failed:', e2);
         }
       }
     }
@@ -1551,8 +2027,10 @@
     }
 
     function toggleHabit(id) {
+      if (checkLockedGuard()) return;
       state.habits[id] = !state.habits[id];
       save();
+      renderDateSwitcherBar();
       renderHabits();
       updateProgress();
       updateCoachFeedback();
@@ -1573,54 +2051,129 @@
       else if (pct > 0) enc.textContent = '跨出第一步了！晚上邊看劇邊踏步 15 分鐘超輕鬆 ✨';
       else enc.textContent = '綁定飯後追劇與洗澡前，零裝備動滿 30 分鐘！';
 
-      if (pct >= 50 && (state.streak === 0 || !state.streak)) {
-        state.streak = 1;
-        save();
-      }
+      state.streak = calculateStreakCount();
       renderStats();
     }
 
-    // --- 每週統計與圖表動態渲染 ---
+    // --- 每週統計與圖表動態渲染（修復跨日空白 Bug，真實讀取整週週一至週日 historyByDate） ---
     function renderStats() {
-      const streak = state.streak || 0;
+      const streak = calculateStreakCount();
+      state.streak = streak;
       const countEl = document.getElementById('streak-days-count');
       const streakSub = document.getElementById('streak-sub-text');
       const badge = document.getElementById('header-streak-badge');
 
       if (countEl) countEl.textContent = streak;
       if (streakSub) {
-        if (streak === 0) streakSub.textContent = '天連續執行（準備正式開始第 1 天！）';
-        else streakSub.textContent = '天連續執行微習慣，身體正在修復中！';
+        if (streak === 0) streakSub.textContent = '天有紀錄（準備正式開始第 1 天！）';
+        else streakSub.textContent = '天累計執行微習慣與飲食紀錄，身體正在修復中！';
       }
       if (badge) {
         if (streak === 0) badge.textContent = '🌱 啟航中';
-        else badge.textContent = `🔥 連續 ${streak} 天`;
+        else badge.textContent = `🔥 累計 ${streak} 天`;
       }
 
-      const bars = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-      bars.forEach(d => {
-        const el = document.getElementById('bar-' + d);
-        if (el) {
-          el.style.background = 'var(--border)';
-          el.style.height = '10px';
-        }
-      });
+      // 計算所選日期（或今日）所在當週的「週一 ～ 週日」7 個日期
+      const refDate = parseLocalDateStr(selectedDate || TODAY);
+      const dayOfWeek = refDate.getDay(); // 0(日) ~ 6(六)
+      const diffToMonday = dayOfWeek === 0 ? -6 : (1 - dayOfWeek);
+      const mondayDate = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate() + diffToMonday);
+      const sundayDate = new Date(mondayDate.getFullYear(), mondayDate.getMonth(), mondayDate.getDate() + 6);
 
-      const doneCount = HABITS.filter(h => !!state.habits[h.id]).length;
-      if (doneCount > 0) {
-        const dayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-        const currentDay = dayMap[new Date().getDay()];
-        const el = document.getElementById('bar-' + currentDay);
-        if (el) {
-          const height = Math.min(80, Math.max(18, doneCount * 20));
-          el.style.height = height + 'px';
-          el.style.background = 'var(--primary)';
+      const rangeLabel = document.getElementById('weekly-chart-range-label');
+      if (rangeLabel) {
+        rangeLabel.textContent = `${mondayDate.getMonth() + 1}/${mondayDate.getDate()} (一) ～ ${sundayDate.getMonth() + 1}/${sundayDate.getDate()} (日)`;
+      }
+
+      const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
+      const barsContainer = document.getElementById('weekly-bars-container');
+      if (barsContainer) {
+        const colsHtml = [];
+        for (let i = 0; i < 7; i++) {
+          const dObj = new Date(mondayDate.getFullYear(), mondayDate.getMonth(), mondayDate.getDate() + i);
+          const dStr = getLocalDateStr(dObj);
+          const rec = historyByDate[dStr];
+          const doneCount = rec ? HABITS.filter(h => !!rec.habits?.[h.id]).length : 0;
+          const foodCount = rec && Array.isArray(rec.foodLogs) ? rec.foodLogs.length : 0;
+          const isLocked = !!(rec && rec.locked);
+          const isSelected = (dStr === selectedDate);
+          const isFuture = (dStr > TODAY);
+
+          // 計算長條高度（若完成打卡按 1~4 比例；若尚未勾打卡但有記餐點也給基礎高度顯示有紀錄）
+          let barHeight = 10;
+          let barBg = 'var(--border)';
+          let topBadge = '-';
+
+          if (doneCount > 0) {
+            barHeight = Math.round(20 + (doneCount / HABITS.length) * 56); // 34px ~ 76px
+            barBg = 'var(--primary)';
+            topBadge = `${isLocked ? '🔒' : ''}${doneCount}/4`;
+          } else if (foodCount > 0 || (rec && (rec.steps || rec.exMins))) {
+            barHeight = 20;
+            barBg = 'var(--accent)';
+            topBadge = `${isLocked ? '🔒' : ''}已記餐`;
+          } else if (isLocked) {
+            topBadge = '🔒0/4';
+          }
+
+          const mmdd = `${dObj.getMonth() + 1}/${dObj.getDate()}`;
+          colsHtml.push(`
+            <div onclick="${isFuture ? '' : `jumpToDateFromStats('${dStr}')`}" style="flex:1; cursor:${isFuture ? 'default' : 'pointer'}; opacity:${isFuture ? '0.45' : '1'}; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;">
+              <div style="font-size:9px; font-weight:700; color:${doneCount > 0 ? 'var(--primary)' : 'var(--text-muted)'}; margin-bottom:3px; white-space:nowrap;">${topBadge}</div>
+              <div style="width:72%; max-width:30px; background:${barBg}; height:${barHeight}px; border-radius:6px; transition:all 0.3s; ${isSelected ? 'box-shadow:0 0 0 2px var(--accent);' : ''}"></div>
+              <div style="margin-top:5px; font-weight:${isSelected ? '900' : '700'}; color:${isSelected ? 'var(--primary)' : 'var(--text-main)'}; font-size:11px;">${weekLabels[i]}</div>
+              <div style="font-size:9px; color:var(--text-muted);">${mmdd}</div>
+            </div>
+          `);
+        }
+        barsContainer.innerHTML = colsHtml.join('');
+      }
+
+      // 渲染下方「🗂️ 歷史紀錄抽屜」
+      const drawerEl = document.getElementById('history-drawer-list');
+      if (drawerEl) {
+        const allDates = Object.keys(historyByDate)
+          .filter(d => d <= TODAY && (d === TODAY || isDayHasAnyRecord(historyByDate[d])))
+          .sort()
+          .reverse();
+
+        if (allDates.length === 0) {
+          drawerEl.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px 0;">尚無歷史記錄</div>';
+        } else {
+          const weekNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+          drawerEl.innerHTML = allDates.map(dStr => {
+            const r = historyByDate[dStr] || createEmptyDayRecord();
+            const dObj = parseLocalDateStr(dStr);
+            const wName = weekNames[dObj.getDay()];
+            const doneCnt = HABITS.filter(h => !!r.habits?.[h.id]).length;
+            const foodCnt = Array.isArray(r.foodLogs) ? r.foodLogs.length : 0;
+            const isSel = (dStr === selectedDate);
+
+            return `
+              <div onclick="jumpToDateFromStats('${dStr}')" style="cursor:pointer; background:${isSel ? 'var(--primary-light)' : 'var(--bg)'}; border:1px solid ${isSel ? 'var(--primary)' : 'var(--border)'}; border-radius:10px; padding:9px 11px; margin-bottom:7px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:800; font-size:12px; color:var(--text-main); display:flex; align-items:center; gap:6px;">
+                    <span>📅 ${dStr} (${wName})</span>
+                    ${dStr === TODAY ? '<span class="tag" style="font-size:9px;">今天</span>' : ''}
+                    ${r.locked
+                      ? '<span style="font-size:9px; background:var(--primary); color:white; padding:1px 6px; border-radius:99px;">🔒 已鎖定</span>'
+                      : '<span style="font-size:9px; background:var(--warning-bg); color:var(--warning-text); padding:1px 6px; border-radius:99px;">🔓 待鎖定</span>'}
+                  </div>
+                  <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">
+                    🎯 防線 ${doneCnt}/4 項 ｜ 🍱 餐食 ${foodCnt} 筆 ｜ 💧 ${r.water || 0}ml ${r.exMins ? `｜ ⏱️ 運動 ${r.exMins}分` : ''}
+                  </div>
+                </div>
+                <span style="font-size:11px; font-weight:700; color:var(--primary); white-space:nowrap;">檢視 ▶</span>
+              </div>
+            `;
+          }).join('');
         }
       }
     }
 
     // --- 600ml 保溫杯水分 ---
     function toggleThermos(idx) {
+      if (checkLockedGuard()) return;
       const card = document.querySelectorAll('.thermos-card')[idx];
       const isFilled = card.classList.contains('filled');
       if (isFilled) {
@@ -1629,14 +2182,19 @@
         state.water = Math.min(3600, state.water + 600);
       }
       save();
+      renderDateSwitcherBar();
       renderWater();
+      renderStats();
       updateCoachFeedback();
     }
 
     function addWater(val) {
+      if (checkLockedGuard()) return;
       state.water = Math.max(0, Math.min(3600, (state.water || 0) + val));
       save();
+      renderDateSwitcherBar();
       renderWater();
+      renderStats();
       updateCoachFeedback();
     }
 
@@ -1655,13 +2213,20 @@
 
     // --- 每日手錶與體重輸入處理 ---
     function updateDailyStats() {
-      const steps = parseInt(document.getElementById('input-steps').value, 10);
-      const exMins = parseInt(document.getElementById('input-ex-mins').value, 10);
-      const weight = parseFloat(document.getElementById('input-morning-weight').value);
-      if (!isNaN(steps)) state.steps = steps;
-      if (!isNaN(exMins)) state.exMins = exMins;
-      if (!isNaN(weight)) state.weight = weight;
+      if (checkLockedGuard()) {
+        refreshAllDayUI();
+        return;
+      }
+      const stepsVal = document.getElementById('input-steps').value.trim();
+      const exMinsVal = document.getElementById('input-ex-mins').value.trim();
+      const weightVal = document.getElementById('input-morning-weight').value.trim();
+
+      state.steps = stepsVal !== '' ? parseInt(stepsVal, 10) : '';
+      state.exMins = exMinsVal !== '' ? parseInt(exMinsVal, 10) : '';
+      state.weight = weightVal !== '' ? parseFloat(weightVal) : '';
       save();
+      renderDateSwitcherBar();
+      renderStats();
       updateCoachFeedback();
     }
 
@@ -1676,11 +2241,11 @@
 
       // 運動分鐘數反饋（對比日常通勤基本盤 8~10 分鐘）
       if (exMins >= 25) {
-        msgs.push(`🏆 <strong>手錶運動分鐘數達 ${exMins} 分鐘！</strong> 遠遠超越日常通勤基本盤（8~10分鐘），今天額外做的飯後微活動確實幫肝臟燒掉大量三酸甘油酯！`);
+        msgs.push(`🏆 <strong>手錶運動分鐘數達 ${exMins} 分鐘！</strong> 遠遠超越日常通勤基本盤（8~10分鐘），額外做的飯後微活動確實幫肝臟燒掉大量三酸甘油酯！`);
       } else if (exMins >= 15) {
         msgs.push(`⏱️ <strong>手錶運動分鐘數 ${exMins} 分鐘</strong>，已突破日常通勤基本盤！晚上邊追劇邊原地踏步 15 分鐘就能輕鬆衝破 25 分鐘！`);
       } else if (exMins > 0) {
-        msgs.push(`⌚ 目前運動分鐘數 <strong>${exMins} 分鐘</strong>（日常上下班通勤轉車基本盤約 8~10 分鐘），待會吃完飯記得起來踏步或墊腳尖 15 分鐘喔！`);
+        msgs.push(`⌚ 目前運動分鐘數 <strong>${exMins} 分鐘</strong>（日常上下班通勤轉車基本盤約 8~10 分鐘），吃完飯記得起來踏步或墊腳尖 15 分鐘喔！`);
       }
 
       // 步數反饋
@@ -1697,7 +2262,7 @@
 
       // 時段行動打卡綜合
       if (doneHabits >= 3) {
-        msgs.push(`✨ 今日時段防線已完成 ${doneHabits} / 4 項，不帶裝備去健身房也能在家穩定消脂！`);
+        msgs.push(`✨ 時段防線已完成 ${doneHabits} / 4 項，不帶裝備去健身房也能在家穩定消脂！`);
       }
 
       if (msgs.length === 0) {
@@ -1755,6 +2320,7 @@
     }
 
     function startStepWorkout() {
+      if (checkLockedGuard()) return;
       const btn = document.getElementById('step-start-btn');
       if (isStepRunning) {
         clearInterval(stepTimer);
@@ -1777,11 +2343,14 @@
           isStepRunning = false;
           btn.textContent = '🎉 15分鐘達標！';
           document.getElementById('step-phase-title').textContent = '🎉 太強了！晚餐後追劇踏步 15 分鐘完成！';
-          state.habits['dinner_step_15m'] = true;
-          save();
-          renderHabits();
-          updateProgress();
-          updateCoachFeedback();
+          if (!state.locked) {
+            state.habits['dinner_step_15m'] = true;
+            save();
+            renderDateSwitcherBar();
+            renderHabits();
+            updateProgress();
+            updateCoachFeedback();
+          }
           showToast('🎉 晚餐後踏步 15 分鐘完成！已自動為您打勾！');
         }
       }, 1000);
@@ -1797,6 +2366,7 @@
     }
 
     function startChairWorkout() {
+      if (checkLockedGuard()) return;
       const btn = document.getElementById('chair-start-btn');
       if (isChairRunning) {
         clearInterval(chairTimer);
@@ -1820,11 +2390,14 @@
           document.getElementById('chair-move-name').textContent = '🔥 全身代謝啟動！立刻沖澡去！';
           document.getElementById('chair-move-desc').textContent = '今天膝蓋沒有受到任何壓迫，但核心和股四頭肌都確實強化到了！';
           
-          state.habits['chair_workout'] = true;
-          save();
-          renderHabits();
-          updateProgress();
-          updateCoachFeedback();
+          if (!state.locked) {
+            state.habits['chair_workout'] = true;
+            save();
+            renderDateSwitcherBar();
+            renderHabits();
+            updateProgress();
+            updateCoachFeedback();
+          }
           showToast('🎉 4分鐘椅子操完成！已自動為您打勾！');
         }
       }, 1000);
@@ -1881,6 +2454,7 @@
     }
 
     function selectMealType(meal) {
+      if (checkLockedGuard()) return;
       selectedMealType = meal;
       updateMealChips();
       updateAiAdvice();
@@ -1897,6 +2471,7 @@
     }
 
     function quickAddFoodText(txt) {
+      if (checkLockedGuard()) return;
       const input = document.getElementById('food-note-input');
       if (!input) return;
       const cur = input.value.trim();
@@ -1944,6 +2519,7 @@
     // 📋 跨 iPhone 雙桌面捷徑：從剪貼簿一鍵匯入 AI 餐食成績單（支援單筆或今日整批匯入）
     function importSyncTokenString(rawStr) {
       if (!rawStr || !rawStr.includes('【VITALSTEP_SYNC】')) return false;
+      if (checkLockedGuard()) return true;
       try {
         const jsonPart = rawStr.split('【VITALSTEP_SYNC】')[1].trim();
         const parsed = JSON.parse(jsonPart);
@@ -1967,13 +2543,15 @@
         if (added > 0) {
           if (state.foodLogs.length > 12) state.foodLogs = state.foodLogs.slice(0, 12);
           save();
+          renderDateSwitcherBar();
           renderFoodLogs();
           renderDietAutoRadar();
+          renderStats();
           updateCoachFeedback();
         }
         const input = document.getElementById('food-note-input');
         if (input && input.value.includes('【VITALSTEP_SYNC】')) input.value = '';
-        showToast(items.length > 1 ? `🎉 已成功同步 ${items.length} 筆今日餐食成績單！` : `🎉 已成功匯入【${items[0].mealType}】AI 成績單！`);
+        showToast(items.length > 1 ? `🎉 已成功同步 ${items.length} 筆餐食成績單！` : `🎉 已成功匯入【${items[0].mealType}】AI 成績單！`);
         return true;
       } catch (e) {
         console.warn('Parse sync token failed:', e);
@@ -1982,6 +2560,7 @@
     }
 
     async function pasteFromMealAi() {
+      if (checkLockedGuard()) return;
       // 先檢查同源信箱是否有資料
       checkMealSyncInbox();
 
@@ -2047,6 +2626,7 @@
     }
 
     function saveFoodLog() {
+      if (checkLockedGuard()) return;
       const note = (document.getElementById('food-note-input')?.value || '').trim();
       if (!note) {
         alert('請先打字填寫這餐吃了什麼（或點選上方按鈕去拍照分析）喔！');
@@ -2068,8 +2648,10 @@
       state.foodLogs.unshift(newLog);
       if (state.foodLogs.length > 12) state.foodLogs.pop();
       save();
+      renderDateSwitcherBar();
       renderFoodLogs();
       renderDietAutoRadar();
+      renderStats();
       updateCoachFeedback();
       
       document.getElementById('food-note-input').value = '';
@@ -2080,17 +2662,21 @@
     }
 
     function deleteFoodLog(id) {
+      if (checkLockedGuard()) return;
       if (confirm('確定刪除這筆餐點記錄嗎？')) {
         state.foodLogs = (state.foodLogs || []).filter(item => item.id !== id);
         save();
+        renderDateSwitcherBar();
         renderFoodLogs();
         renderDietAutoRadar();
+        renderStats();
         updateCoachFeedback();
         showToast('已刪除該筆記錄。');
       }
     }
 
     function openEditModal(id) {
+      if (checkLockedGuard()) return;
       const item = (state.foodLogs || []).find(l => l.id === id);
       if (!item) return;
 
@@ -2108,6 +2694,7 @@
     }
 
     function saveEditedLog() {
+      if (checkLockedGuard()) return;
       const id = parseInt(document.getElementById('edit-log-id').value, 10);
       const item = (state.foodLogs || []).find(l => l.id === id);
       if (!item) return;
@@ -2126,8 +2713,9 @@
 
     function renderFoodLogs() {
       const c = document.getElementById('food-logs-history');
+      const isLocked = !!state.locked;
       if (!state.foodLogs || state.foodLogs.length === 0) {
-        c.innerHTML = '<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">尚無今日飲食記錄，打字速記或點上方「📸 拍便當」同步過來吧！</div>';
+        c.innerHTML = `<div style="color:var(--text-muted); font-size:11px; text-align:center; padding:10px 0;">${isLocked ? '🔒 此日封存時無飲食記錄' : '尚無本日飲食記錄，打字速記或從「AI 餐食」同步過來吧！'}</div>`;
         return;
       }
 
@@ -2138,7 +2726,7 @@
         '點心': { bg: '#ffe4e6', color: '#9f1239', icon: '🍪 點心零食' }
       };
 
-      c.innerHTML = '<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">今日已記錄餐點（自動連動上方健檢雷達）：</div>' +
+      c.innerHTML = `<div style="font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px;">📋 【${selectedDate}】已記錄餐點（共 ${state.foodLogs.length} 筆${isLocked ? '・🔒唯讀封存' : ''}）：</div>` +
         state.foodLogs.map(item => {
           const badge = mealBadgeMap[item.mealType] || mealBadgeMap['晚餐'];
           const aiRep = item.aiReport;
@@ -2151,10 +2739,12 @@
                 <span style="font-size:11px; font-weight:600; color:var(--text-muted);">${item.time}</span>
                 ${aiRep?.badge ? `<span style="font-size:10px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:1px 6px; border-radius:6px;">${aiRep.badge}</span>` : ''}
               </div>
+              ${isLocked ? `<span style="font-size:10px; color:var(--text-muted);">🔒 唯讀</span>` : `
               <div style="display:flex; gap:8px; align-items:center;">
                 <button onclick="openEditModal(${item.id})" style="background:none; border:none; color:var(--accent); font-size:11px; cursor:pointer; font-weight:700;">✏️ 編輯</button>
                 <button onclick="deleteFoodLog(${item.id})" style="background:none; border:none; color:var(--text-muted); font-size:12px; cursor:pointer;">🗑️</button>
               </div>
+              `}
             </div>
 
             ${item.note ? `<div style="font-size:12px; color:var(--text-main); margin-top:6px; background:var(--card-bg); padding:7px 9px; border-radius:8px; border:1px solid var(--border); line-height:1.4; word-break:break-word;">${item.note}</div>` : ''}
@@ -2206,35 +2796,18 @@
       }
     }
 
-    // --- 🔄 一鍵清空測試資料（全新啟航） ---
+    // --- 🔄 一鍵清空未鎖定測試資料（已鎖定封存的歷史日則受保護） ---
     function resetAllTestData() {
-      if (confirm('確定要清空今天測試的所有打卡與數據嗎？\n\n清空後將恢復為乾淨的一張白紙！')) {
-        state = {
-          habits: {},
-          water: 0,
-          thermosCount: 0,
-          steps: '',
-          exMins: '',
-          weight: '',
-          followup: state.followup || '2027-01-26',
-          streak: 0,
-          foodLogs: []
-        };
+      if (state.locked) {
+        alert(`【${selectedDate}】已經鎖定封存，受到自律保護機制保護，無法清空喔！`);
+        return;
+      }
+      if (confirm(`確定要清空【${selectedDate}】尚未鎖定的打卡與數據嗎？`)) {
+        historyByDate[selectedDate] = createEmptyDayRecord();
+        loadDayIntoState(selectedDate);
         save();
-        const stepsInput = document.getElementById('input-steps');
-        const exMinsInput = document.getElementById('input-ex-mins');
-        const weightInput = document.getElementById('input-morning-weight');
-        if (stepsInput) stepsInput.value = '';
-        if (exMinsInput) exMinsInput.value = '';
-        if (weightInput) weightInput.value = '';
-        renderHabits();
-        renderDietAutoRadar();
-        renderWater();
-        renderFoodLogs();
-        updateProgress();
-        renderStats();
-        updateCoachFeedback();
-        showToast('✨ 所有測試資料已清空！');
+        refreshAllDayUI();
+        showToast(`✨ 【${selectedDate}】未鎖定測試資料已清空！`);
       }
     }
 

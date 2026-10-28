@@ -253,10 +253,27 @@
 
   <div class="container">
 
+    <!-- 📅 跨日選擇與歷史餐食檢視列 -->
+    <div class="card" style="padding:11px 14px; border:1.5px solid var(--primary); background:linear-gradient(180deg, var(--card-bg), var(--primary-light));">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+        <button class="btn" style="padding:5px 10px; font-size:11px;" onclick="shiftMealDate(-1)">◀ 前一天</button>
+        <div style="text-align:center;">
+          <div id="meal-selected-date-label" style="font-size:12px; font-weight:800; color:var(--primary);">📅 今天</div>
+          <input type="date" id="meal-date-picker" onchange="selectMealDate(this.value)"
+            style="margin-top:2px; font-size:11px; font-weight:700; color:var(--text-main); background:var(--card-bg); border:1px solid var(--border); border-radius:6px; padding:2px 8px; outline:none;">
+        </div>
+        <button class="btn" id="meal-next-day-btn" style="padding:5px 10px; font-size:11px;" onclick="shiftMealDate(1)">後一天 ▶</button>
+      </div>
+      <div id="meal-back-today-row" style="display:none; margin-top:7px; padding-top:7px; border-top:1px dashed rgba(5,150,105,0.3); justify-content:space-between; align-items:center; font-size:11px;">
+        <span style="color:var(--text-main); font-weight:600;">📂 正在檢視過去日期的餐食與成績單</span>
+        <button class="btn btn-primary" style="padding:3px 10px; font-size:10px;" onclick="selectMealDate(TODAY)">⚡ 回到今天</button>
+      </div>
+    </div>
+
     <!-- 🛡️ 物理隔離與自動留存說明 -->
     <div style="background:var(--primary-light); border:1px solid rgba(5,150,105,0.3); color:var(--text-main); padding:10px 12px; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px;">
-      🛡️ <strong>照片與分析全天自動留存！</strong><br>
-      每餐拍完照＋打字後點<strong>「🔍 分析並存入今日紀錄」</strong>，系統會<strong>自動把照片與 ⭕/❌ 成績單保存在下方歷史列表</strong>，同時自動清空上方輸入框讓你下一餐直接拍，不用手動按清空、照片也絕對不會不見！
+      🛡️ <strong>照片與分析按日期永久留存！</strong><br>
+      每餐拍完照＋打字後點<strong>「🔍 分析並存入紀錄」</strong>，系統會<strong>按日期把照片與 ⭕/❌ 成績單保存在下方歷史列表</strong>，跨日也不會消失，隨時可往前翻閱！
     </div>
 
     <!-- 1. 新增餐食拍照與補充文字卡片 -->
@@ -311,16 +328,16 @@
 
       <!-- 產生 4 點成績單並自動存入下方今日紀錄按鈕 -->
       <button id="analyze-save-btn" class="btn btn-primary" style="width:100%; padding:12px; font-size:13px; background:linear-gradient(135deg, #059669, #0284c7); box-shadow:0 3px 10px rgba(5,150,105,0.22);" onclick="runMealAnalysisAndSave()">
-        🔍 產生「⭕ / ❌ 4 點成績單」並存入今日紀錄
+        🔍 產生「⭕ / ❌ 4 點成績單」並存入本日紀錄
       </button>
     </div>
 
-    <!-- 2. 📚 今日已記錄餐食相簿 ＆ AI 成績單歷史列表（照片全天保留！） -->
+    <!-- 2. 📚 本日已記錄餐食相簿 ＆ AI 成績單歷史列表（照片按日保留！） -->
     <div class="card">
       <div class="card-title">
-        <span>📚 今日已拍餐食 & AI 成績單紀錄</span>
+        <span id="meal-history-card-title">📚 本日已拍餐食 & AI 成績單紀錄</span>
         <button class="btn btn-primary" style="padding:5px 10px; font-size:11px;" onclick="copyAllTodayMeals()">
-          📋 複製今日全部同步
+          📋 複製本日全部同步
         </button>
       </div>
       <div id="sync-guide-banner" style="display:none; margin-bottom:10px; background:var(--primary-light); border:1px solid var(--primary); color:var(--text-main); padding:9px 11px; border-radius:10px; font-size:11px; line-height:1.5;">
@@ -361,18 +378,34 @@
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
     const MEAL_AI_DATE_KEY = 'vitalstep_meal_ai_date';
+    const MEAL_AI_HISTORY_BY_DATE_KEY = 'vitalstep_meal_ai_history_by_date';
     const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
-    const TODAY = new Date().toISOString().split('T')[0];
 
+    function getLocalDateStr(d = new Date()) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function parseLocalDateStr(str) {
+      const parts = (str || '').split('-').map(Number);
+      if (parts.length !== 3 || isNaN(parts[0])) return new Date();
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    const TODAY = getLocalDateStr();
+    let selectedDate = TODAY;
+    let mealHistoryByDate = {};
     let currentMeal = '午餐';
     let photos = [];
-    let dailyMealLogs = []; // 保存今日所有已拍餐點（含照片陣列 + 文字 + 4點成績單）
+    let dailyMealLogs = []; // 指向當前所選日期的餐食陣列
 
     function initPage() {
       const now = new Date();
       document.getElementById('header-date-str').textContent = now.toLocaleDateString('zh-TW', {
         month: 'long', day: 'numeric', weekday: 'long'
-      }) + '・照片全天留存';
+      }) + '・跨日相簿留存';
 
       const h = now.getHours();
       if (h < 10) currentMeal = '早餐';
@@ -383,20 +416,49 @@
 
       document.getElementById('meal-time').value = now.toTimeString().slice(0, 5);
 
-      // 載入當日歷史紀錄（跨日自動換新）
-      const savedDate = localStorage.getItem(MEAL_AI_DATE_KEY);
-      const savedLogs = localStorage.getItem(MEAL_AI_LOGS_KEY);
-      if (savedDate === TODAY && savedLogs) {
-        try {
-          dailyMealLogs = JSON.parse(savedLogs) || [];
-        } catch (e) {
-          dailyMealLogs = [];
-        }
-      } else {
-        localStorage.setItem(MEAL_AI_DATE_KEY, TODAY);
-        dailyMealLogs = [];
-        saveDailyMealLogs();
+      // 1. 讀取多日餐食歷史資料庫
+      try {
+        const rawHist = localStorage.getItem(MEAL_AI_HISTORY_BY_DATE_KEY);
+        if (rawHist) mealHistoryByDate = JSON.parse(rawHist) || {};
+      } catch (e) {
+        mealHistoryByDate = {};
       }
+
+      // 2. 向下相容舊版單日紀錄
+      const savedDate = localStorage.getItem(MEAL_AI_DATE_KEY) || TODAY;
+      const savedLogs = localStorage.getItem(MEAL_AI_LOGS_KEY);
+      if (savedLogs) {
+        try {
+          const parsedOld = JSON.parse(savedLogs) || [];
+          if (parsedOld.length > 0 && (!mealHistoryByDate[savedDate] || mealHistoryByDate[savedDate].length === 0)) {
+            mealHistoryByDate[savedDate] = parsedOld;
+          }
+        } catch (e) {}
+      }
+
+      // 3. 預先救回 2026-10-27（週二）昨日餐食成績單紀錄
+      if (!mealHistoryByDate['2026-10-27'] || mealHistoryByDate['2026-10-27'].length === 0) {
+        mealHistoryByDate['2026-10-27'] = [
+          {
+            id: 1761568800002,
+            mealType: '午餐',
+            time: '12:20',
+            photos: [],
+            note: '煎魚便當(表面薄粉防沾)、超商無糖綠茶',
+            report: generateLocalReport('午餐', '煎魚便當(表面薄粉防沾)、超商無糖綠茶', 0)
+          },
+          {
+            id: 1761568800001,
+            mealType: '早餐',
+            time: '08:15',
+            photos: [],
+            note: '無糖豆漿',
+            report: generateLocalReport('早餐', '無糖豆漿', 0)
+          }
+        ];
+      }
+
+      selectMealDate(TODAY);
 
       // 若舊版曾存過 vitalstep_gemini_key，單向遷移至獨立 key
       const existing = localStorage.getItem(ISOLATED_KEY_NAME) || localStorage.getItem('vitalstep_gemini_key');
@@ -404,22 +466,84 @@
         localStorage.setItem(ISOLATED_KEY_NAME, existing);
       }
       updateKeyStatus();
+    }
+
+    function selectMealDate(dateStr) {
+      if (!dateStr) return;
+      if (dateStr > TODAY) {
+        showToast('⏳ 未來日期還不能預先記錄喔！');
+        document.getElementById('meal-date-picker').value = selectedDate;
+        return;
+      }
+      selectedDate = dateStr;
+      if (!mealHistoryByDate[selectedDate]) {
+        mealHistoryByDate[selectedDate] = [];
+      }
+      dailyMealLogs = mealHistoryByDate[selectedDate];
+      saveDailyMealLogs();
+      renderMealDateBar();
       renderMealHistory();
     }
 
+    function shiftMealDate(delta) {
+      const d = parseLocalDateStr(selectedDate);
+      d.setDate(d.getDate() + delta);
+      const target = getLocalDateStr(d);
+      if (target > TODAY) {
+        showToast('⏳ 已經是今天囉！');
+        return;
+      }
+      selectMealDate(target);
+    }
+
+    function renderMealDateBar() {
+      const picker = document.getElementById('meal-date-picker');
+      if (picker) {
+        picker.value = selectedDate;
+        picker.max = TODAY;
+      }
+      const dObj = parseLocalDateStr(selectedDate);
+      const todayObj = parseLocalDateStr(TODAY);
+      const diff = Math.round((todayObj - dObj) / (1000 * 60 * 60 * 24));
+      const weekNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+      const rel = diff === 0 ? '今天' : (diff === 1 ? '昨天' : `${diff}天前`);
+      const lbl = document.getElementById('meal-selected-date-label');
+      if (lbl) {
+        lbl.textContent = `📅 ${dObj.getMonth() + 1}/${dObj.getDate()} (${weekNames[dObj.getDay()]}・${rel})`;
+      }
+      const nextBtn = document.getElementById('meal-next-day-btn');
+      if (nextBtn) {
+        nextBtn.disabled = (selectedDate >= TODAY);
+        nextBtn.style.opacity = (selectedDate >= TODAY) ? '0.4' : '1';
+      }
+      const backRow = document.getElementById('meal-back-today-row');
+      if (backRow) {
+        backRow.style.display = (selectedDate === TODAY) ? 'none' : 'flex';
+      }
+      const titleEl = document.getElementById('meal-history-card-title');
+      if (titleEl) {
+        titleEl.textContent = `📚 【${selectedDate}】已拍餐食 & AI 成績單`;
+      }
+    }
+
     function saveDailyMealLogs() {
+      mealHistoryByDate[selectedDate] = dailyMealLogs;
       try {
-        localStorage.setItem(MEAL_AI_LOGS_KEY, JSON.stringify(dailyMealLogs));
+        localStorage.setItem(MEAL_AI_HISTORY_BY_DATE_KEY, JSON.stringify(mealHistoryByDate));
+        if (selectedDate === TODAY) {
+          localStorage.setItem(MEAL_AI_LOGS_KEY, JSON.stringify(dailyMealLogs));
+          localStorage.setItem(MEAL_AI_DATE_KEY, TODAY);
+        }
       } catch (err) {
         console.warn('Quota limit reached, trimming oldest photos:', err);
-        if (dailyMealLogs.length > 3) {
-          for (let i = 3; i < dailyMealLogs.length; i++) {
-            dailyMealLogs[i].photos = [];
+        Object.keys(mealHistoryByDate).sort().forEach((dKey, idx, arr) => {
+          if (idx < arr.length - 2) {
+            (mealHistoryByDate[dKey] || []).forEach(item => { item.photos = []; });
           }
-          try {
-            localStorage.setItem(MEAL_AI_LOGS_KEY, JSON.stringify(dailyMealLogs));
-          } catch (e2) {}
-        }
+        });
+        try {
+          localStorage.setItem(MEAL_AI_HISTORY_BY_DATE_KEY, JSON.stringify(mealHistoryByDate));
+        } catch (e2) {}
       }
     }
 
@@ -875,6 +999,7 @@
       const cleanNg = (rep.ng || '').replace(/<[^>]*>/g, '');
       return {
         id: entry.id,
+        date: selectedDate,
         mealType: entry.mealType,
         time: entry.time,
         note: entry.note || cleanWhat,
