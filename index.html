@@ -620,7 +620,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.5 <span class="tag">免刪捷徑更新・額度接力</span></div>
+        <div class="logo-title">微步輕健 5.6 <span class="tag">3大防線・每週AI診斷</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -791,26 +791,16 @@
         </div>
       </div>
 
-      <!-- ⏱️ 今日時段行動打卡（整合午休 + 晚餐後追劇 + 洗澡前 + 睡前 2 小時） -->
+      <!-- ⏱️ 今日時段行動打卡（順應真實作息：午餐後 + 晚餐後追劇 + 睡前 2 小時） -->
       <div class="card">
         <div class="card-title">
-          <span>⏱️ 今日時段行動打卡（湊滿 30 分鐘微活動）</span>
+          <span>⏱️ 今日時段行動打卡（3 大黃金防線）</span>
           <span style="font-size:11px; color:var(--primary);">依作息順手勾</span>
         </div>
         <div id="exercise-list"></div>
       </div>
 
-      <!-- 🤖 飲食原則自動健檢雷達（取代舊版籠統是非題，由三餐紀錄自動判讀） -->
-      <div class="card" style="border-left: 4px solid var(--primary);">
-        <div class="card-title">
-          <span>🤖 今日飲食自動健檢雷達</span>
-          <span style="font-size:10px; color:var(--primary);">從下方餐食紀錄自動檢查</span>
-        </div>
-        <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
-          不用再自己糾結「薄粉煎魚算不算破功」！只要在下方記錄三餐或從拍照頁同步，系統會自動檢查並亮燈反饋：
-        </div>
-        <div id="diet-auto-radar-list"></div>
-      </div>
+      <div id="diet-auto-radar-list" style="display:none;"></div>
 
       <!-- 🍵 飲水量管理（打破固定 200ml，支援直接打字與任意自訂加減） -->
       <div class="card">
@@ -1371,12 +1361,11 @@
       customMenuPlan: null
     };
 
-    // v5.2 全新「時段綁定」4 大黃金防線（前 3 項加總剛好湊滿每日 34 分鐘溫和消脂活動！）
+    // v5.6 順應真實作息之「3 大黃金防線」
     const HABITS = [
-      { id: 'lunch_move_15m', cat: 'ex', title: '【午餐後】黃金 15 分鐘微活動', desc: '公司午休散步買無糖茶、繞遠路，或座位追劇「連續墊腳尖 15 分鐘」攔截飯後血糖', icon: '🍱' },
-      { id: 'dinner_step_15m', cat: 'ex', title: '【晚餐後】追劇原地踏步 15 分鐘', desc: '穿厚底緩衝拖鞋邊看劇邊微快踏步（腳不離地彈跳），直接消耗晚餐熱量防囤積 TG', icon: '🏠' },
-      { id: 'chair_workout', cat: 'ex', title: '【洗澡前】4 分鐘無膝壓坐姿椅子操', desc: '訓練走路與踏步練不到的大腿前側股四頭肌與核心，幫膝蓋裝上天然護膝', icon: '🪑' },
-      { id: 'bedtime_2hr_fast', cat: 'ex', title: '【睡前防線】睡前 2 小時結束進食（零宵夜）', desc: '晚餐後不偷吃零食或宵夜（餅乾嚴格限午餐吃飽後立刻吃），讓肝臟夜間專心燃脂', icon: '🌙' }
+      { id: 'lunch_move_15m', cat: 'ex', title: '【午餐後】黃金 15 分鐘微活動', desc: '公司午休散步買無糖茶，或座位「連續墊腳尖 15 分鐘」抽乾飯後血糖', icon: '🍱' },
+      { id: 'dinner_step_15m', cat: 'ex', title: '【晚餐後】追劇舒心微動 15～20 分鐘', desc: '厚底拖鞋微踏步，或隨心搭配沙發椅子操/甩腿/踢腿，動滿 15~20 分即可', icon: '🏠' },
+      { id: 'bedtime_2hr_fast', cat: 'ex', title: '【睡前防線】睡前 2 小時結束進食（零宵夜）', desc: '晚餐後不偷吃宵夜零食（長通勤餓了吃堅果墊胃很棒），讓肝臟夜間專心燃脂', icon: '🌙' }
     ];
 
     function createEmptyDayRecord() {
@@ -2113,9 +2102,9 @@
 
       const enc = document.getElementById('encouragement');
       if (pct === 100) enc.textContent = '滿分達成！今天動滿 34 分鐘且守住睡前防線 🎉';
-      else if (pct >= 50) enc.textContent = '已經完成一半以上！飯後微活動正在幫肝臟消脂 💪';
-      else if (pct > 0) enc.textContent = '跨出第一步了！晚上邊看劇邊踏步 15 分鐘超輕鬆 ✨';
-      else enc.textContent = '綁定飯後追劇與洗澡前，零裝備動滿 30 分鐘！';
+      else if (pct >= 66) enc.textContent = '已經完成 2/3！飯後微活動正在幫肝臟消脂 💪';
+      else if (pct > 0) enc.textContent = '跨出第一步了！晚上邊看劇邊舒心微動超輕鬆 ✨';
+      else enc.textContent = '順應真實作息：午餐動、晚餐動、睡前不宵夜！';
 
       state.streak = calculateStreakCount();
       renderStats();
@@ -2254,6 +2243,34 @@
           dietMissingSummary.push('💡 累積記錄幾餐後，這裡會自動幫您分析本週整體「補了什麼、還缺什麼」喔！');
         }
 
+        const mondayKey = getLocalDateStr(mondayDate);
+        const aiReview = (globalCfg.weeklyAiReviews || {})[mondayKey];
+
+        let aiReviewHtml = '';
+        if (aiReview && aiReview.text) {
+          aiReviewHtml = `
+            <div style="margin-top:10px; background:linear-gradient(135deg, rgba(5,150,105,0.09), rgba(2,132,199,0.09)); border:1.5px solid var(--primary); border-radius:10px; padding:11px 13px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-weight:800; color:var(--primary); font-size:12px;">🤖 本週飲食 AI 深度總評（Gemini 護肝診斷）</span>
+                <button class="btn" style="font-size:10px; padding:2px 7px; border-color:var(--primary); color:var(--primary);" onclick="pasteWeeklyAiSummary()">🔄 更新貼上</button>
+              </div>
+              <div style="font-size:10px; color:var(--text-muted); margin-bottom:8px;">📅 評估區間：${mondayDate.getMonth() + 1}/${mondayDate.getDate()} ～ ${sundayDate.getMonth() + 1}/${sundayDate.getDate()}（產出時間：${aiReview.updatedAt || '本週'}）</div>
+              <div style="font-size:11px; line-height:1.65; color:var(--text-main); white-space:pre-wrap;">${aiReview.text}</div>
+            </div>
+          `;
+        } else {
+          aiReviewHtml = `
+            <div style="margin-top:10px; background:var(--card-bg); border:1px dashed var(--primary); border-radius:10px; padding:10px 12px; text-align:center;">
+              <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">
+                💡 想了解這週外食不知不覺「漏掉了什麼好營養」嗎？
+              </div>
+              <button class="btn btn-primary" style="font-size:11px; padding:6px 14px;" onclick="pasteWeeklyAiSummary()">
+                📥 貼上來自拍照頁的【本週 AI 總結】
+              </button>
+            </div>
+          `;
+        }
+
         weeklySummaryBox.innerHTML = `
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
             <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:9px 10px;">
@@ -2268,10 +2285,11 @@
             </div>
           </div>
           <div style="background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:11px; line-height:1.6;">
-            <div style="font-weight:800; color:var(--primary); margin-bottom:4px;">🥗 本週飲食＆活動結構總評（共記錄 ${totalMealsCount} 餐）：</div>
+            <div style="font-weight:800; color:var(--primary); margin-bottom:4px;">🥗 本週飲食＆活動結構速評（共記錄 ${totalMealsCount} 餐）：</div>
             <div>✅ <strong>這週補足亮點</strong>：${dietGoodSummary.length > 0 ? dietGoodSummary.join('、') : '尚待累積餐點紀錄'}</div>
             <div style="margin-top:4px;">${dietMissingSummary.join('<br>')}</div>
           </div>
+          ${aiReviewHtml}
         `;
       }
 
@@ -2557,7 +2575,7 @@
       fb.innerHTML = msgs.join('<br><br>');
     }
 
-    // --- 🎯 本日護膝微運動隨機菜單（取代不實用的倒數計時器，每天自動隨機配菜！） ---
+    // --- 🎯 本日護膝微運動隨機菜單（順應真實作息：午餐散步提踵 ＋ 晚餐追劇舒心微動） ---
     const LUNCH_MENU_POOL = [
       {
         title: '🚶‍♀️ 外出散步派：超商買無糖茶平地快走 15～25 分鐘',
@@ -2572,30 +2590,27 @@
     const DINNER_MENU_POOL = [
       {
         title: '👟 厚底拖鞋追劇踏步 10分 ＋ 🦵 叉腰交替後勾腿 50下',
-        desc: '穿厚底緩衝拖鞋邊看劇邊原地微踏步（腳不騰空彈跳），廣告或換幕時穿插「站姿叉腰交替後勾腿 50 下」，啟動大腿後側大肌群、膝蓋前側零壓力！'
+        desc: '穿厚底緩衝拖鞋邊看劇邊原地微踏步（腳不離地彈跳），中途穿插「站姿叉腰交替後勾腿 50 下」，啟動大腿後側大肌群、膝蓋前側零壓力！'
       },
       {
         title: '👟 厚底拖鞋追劇踏步 10分 ＋ 🦵 叉腰往前輕甩腿 50下',
         desc: '穿厚底拖鞋微抬腳輕落地踏步，搭配「站姿往前輕甩腿 50 下」放鬆潤滑膝關節，溫和把晚餐澱粉推進肌肉消耗掉！'
       },
       {
-        title: '👟 厚底拖鞋追劇連續微踏步 15 分鐘（約半集影集）',
-        desc: '最無腦消脂法！穿厚底拖鞋站著看劇 15 分鐘，保持微抬腳、輕落地、身體不上下彈跳，保護腸胃不逆流又能穩降 TG！'
-      }
-    ];
-
-    const CHAIR_MENU_POOL = [
-      {
-        title: '🪑 組合 A：坐姿扶椅交替抬膝踢腿 (30下×2組) ＋ 踝泵上勾下壓 (30下×2組)',
-        desc: '【護膝＋消水腫】坐穩椅子前半部，輪流抬膝踢腿強化大腿前側「股四頭肌」保護膝蓋；接著雙腿前伸腳尖用力往回勾再往下壓，消除整天通勤水腫！'
+        title: '👟 厚底拖鞋追劇連續微踏步 15～20 分鐘（約半集影集）',
+        desc: '最無腦消脂法！穿厚底拖鞋站著看劇 15～20 分鐘，保持微抬腳、輕落地、身體不上下彈跳，保護腸胃不逆流又能穩降 TG！'
       },
       {
-        title: '🪑 組合 B：坐姿雙腳墊腳尖提踵 (30下×2組) ＋ 水平伸腿停留 2秒 (20下×2組)',
-        desc: '【燃糖＋護膝鎖定】坐姿雙腳同時大幅度墊腳尖 30 下×2 組；接著交替將單腳往前踢平、在空中停留 2 秒感受大腿前側收緊，完全零膝蓋衝擊！'
+        title: '🪑 沙發追劇放鬆操：坐姿交替抬膝踢腿 (30下×2組) ＋ 踝泵勾腳 (30下×2組)',
+        desc: '【上班走累時首選】坐在沙發或椅子看劇，輪流抬膝踢腿強化大腿前側「股四頭肌」保護膝蓋；接著腳尖用力往回勾再往下壓，消除整天通勤水腫！'
       },
       {
-        title: '🪑 組合 C：坐姿扶椅抬膝擊掌 (30下×2組) ＋ 坐姿核心快速直拳 (40拳×2組)',
-        desc: '【消小腹＋促循環】坐姿輪流抬高左右膝蓋拍手燃燒下腹內臟脂肪；接著收緊肚子雙手向前快速出拳，帶動上半身與肩頸微發熱後直接去洗澡！'
+        title: '🪑 坐姿追劇護膝操：雙腳墊腳尖提踵 (30下×2組) ＋ 水平伸腿停留 2秒 (20下×2組)',
+        desc: '【零膝壓燃糖】看劇時雙腳同時大幅度墊腳尖；接著交替將單腳往前踢平、在空中停留 2 秒感受大腿前側收緊，膝蓋完全零衝擊！'
+      },
+      {
+        title: '🪑 坐姿追劇輕活操：扶椅抬膝擊掌 (30下×2組) ＋ 坐姿核心快速直拳 (40拳×2組)',
+        desc: '【消腹促循環】坐姿輪流抬高左右膝蓋拍手燃燒下腹內臟脂肪；接著收緊肚子雙手向前快速出拳，帶動上半身微發熱超舒服！'
       }
     ];
 
@@ -2617,20 +2632,15 @@
       const baseSeed = getDateHashNumber(selectedDate) + menuShuffleOffset;
       const lunchPick = LUNCH_MENU_POOL[baseSeed % LUNCH_MENU_POOL.length];
       const dinnerPick = DINNER_MENU_POOL[(baseSeed * 3 + 1) % DINNER_MENU_POOL.length];
-      const chairPick = CHAIR_MENU_POOL[(baseSeed * 7 + 2) % CHAIR_MENU_POOL.length];
 
       container.innerHTML = `
         <div style="background:var(--card-bg); border:1px solid var(--border); border-left:4px solid #059669; border-radius:10px; padding:9px 11px; margin-bottom:8px;">
           <div style="font-size:11px; font-weight:800; color:#059669; margin-bottom:2px;">🍱 【午餐後】今日配菜：${lunchPick.title}</div>
           <div style="font-size:11px; color:var(--text-muted); line-height:1.5;">${lunchPick.desc}</div>
         </div>
-        <div style="background:var(--card-bg); border:1px solid var(--border); border-left:4px solid #0284c7; border-radius:10px; padding:9px 11px; margin-bottom:8px;">
-          <div style="font-size:11px; font-weight:800; color:#0284c7; margin-bottom:2px;">🏠 【晚餐後追劇】今日配菜：${dinnerPick.title}</div>
+        <div style="background:var(--card-bg); border:1px solid var(--border); border-left:4px solid #0284c7; border-radius:10px; padding:9px 11px;">
+          <div style="font-size:11px; font-weight:800; color:#0284c7; margin-bottom:2px;">🏠 【晚餐後追劇】今日配菜（站姿/坐姿隨選）：${dinnerPick.title}</div>
           <div style="font-size:11px; color:var(--text-muted); line-height:1.5;">${dinnerPick.desc}</div>
-        </div>
-        <div style="background:var(--card-bg); border:1px solid var(--border); border-left:4px solid #4f46e5; border-radius:10px; padding:9px 11px;">
-          <div style="font-size:11px; font-weight:800; color:#4f46e5; margin-bottom:2px;">🪑 【洗澡前椅子操】今日配菜：${chairPick.title}</div>
-          <div style="font-size:11px; color:var(--text-muted); line-height:1.5;">${chairPick.desc}</div>
         </div>
       `;
     }
@@ -2725,7 +2735,11 @@
 
     // 📋 跨 iPhone 雙桌面捷徑：從剪貼簿一鍵匯入 AI 餐食成績單（支援單筆或今日整批匯入）
     function importSyncTokenString(rawStr) {
-      if (!rawStr || !rawStr.includes('【VITALSTEP_SYNC】')) return false;
+      if (!rawStr) return false;
+      if (rawStr.includes('【VITALSTEP_WEEKLY_AI_SUMMARY】')) {
+        return importWeeklyAiSummaryTokenString(rawStr);
+      }
+      if (!rawStr.includes('【VITALSTEP_SYNC】')) return false;
       if (checkLockedGuard()) return true;
       try {
         const jsonPart = rawStr.split('【VITALSTEP_SYNC】')[1].trim();
@@ -2763,6 +2777,60 @@
       } catch (e) {
         console.warn('Parse sync token failed:', e);
         return false;
+      }
+    }
+
+    // 📋 匯入本週 AI 飲食深度總評（外食偏頗與盲點診斷）
+    function importWeeklyAiSummaryTokenString(rawStr) {
+      if (!rawStr || !rawStr.includes('【VITALSTEP_WEEKLY_AI_SUMMARY】')) return false;
+      try {
+        const jsonPart = rawStr.split('【VITALSTEP_WEEKLY_AI_SUMMARY】')[1].trim();
+        const data = JSON.parse(jsonPart);
+        if (!data || !data.text) return false;
+
+        // 計算當前選擇日期的週一
+        const refDate = parseLocalDateStr(selectedDate || TODAY);
+        const dayOfWeek = refDate.getDay();
+        const diffToMonday = dayOfWeek === 0 ? -6 : (1 - dayOfWeek);
+        const mondayDate = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate() + diffToMonday);
+        const mondayKey = data.monday || getLocalDateStr(mondayDate);
+
+        globalCfg.weeklyAiReviews = globalCfg.weeklyAiReviews || {};
+        globalCfg.weeklyAiReviews[mondayKey] = {
+          text: data.text,
+          updatedAt: data.updatedAt || new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+
+        try {
+          localStorage.setItem(GLOBAL_CFG_KEY, JSON.stringify(globalCfg));
+        } catch(e) {}
+
+        renderStats();
+        showToast('🎉 已成功匯入【本週飲食 AI 深度總評】！');
+        return true;
+      } catch (e) {
+        console.warn('Import weekly AI summary failed:', e);
+        return false;
+      }
+    }
+
+    async function pasteWeeklyAiSummary() {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text && importWeeklyAiSummaryTokenString(text)) {
+            return;
+          }
+        } catch (err) {
+          console.warn('Clipboard read failed:', err);
+        }
+      }
+
+      const input = prompt('請在下方貼上來自餐食拍照頁複製的【本週 AI 總結同步碼】：');
+      if (input) {
+        if (!importWeeklyAiSummaryTokenString(input)) {
+          alert('同步碼格式不正確，請確認已在拍照頁點選「📋 複製本週 AI 總結同步碼」！');
+        }
       }
     }
 

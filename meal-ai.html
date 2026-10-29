@@ -244,7 +244,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">餐食拍照 & AI 成績單 <span class="tag">v5.5 額度接力</span></div>
+        <div class="logo-title">餐食拍照 & AI 成績單 <span class="tag">v5.6 本週AI總評</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -347,6 +347,26 @@
           📋 複製本日全部同步
         </button>
       </div>
+
+      <!-- 📊 本週飲食 AI 深度總評（隨時點選・不限週日・告別罐頭） -->
+      <div style="margin-bottom:12px; background:linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08)); border:1.5px solid var(--primary); border-radius:10px; padding:10px 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+          <span style="font-size:12px; font-weight:800; color:var(--primary);">📊 本週飲食 AI 深度總評（外食偏頗診斷）</span>
+          <button class="btn btn-primary" id="weekly-ai-gen-btn" style="padding:4px 9px; font-size:11px;" onclick="generateWeeklyAiReview()">
+            🤖 生成本週 AI 總結
+          </button>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="weekly-ai-review-desc">
+          隨時點選！由 Gemini AI 統整本週目前所有外食與餐點，客觀診斷「公司週邊外食偏頗與不知不覺漏掉的好營養」，生成後可一鍵同步回「每週統計」！
+        </div>
+        <div id="weekly-ai-result-box" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+          <div id="weekly-ai-result-text" style="font-size:11px; line-height:1.65; color:var(--text-main); white-space:pre-wrap; margin-bottom:8px; background:var(--card-bg); padding:9px 10px; border-radius:8px; border:1px solid var(--border);"></div>
+          <button class="btn btn-primary" id="copy-weekly-ai-btn" style="width:100%; padding:8px; font-size:11px;" onclick="copyWeeklyAiReview()">
+            📋 複製本週總結同步碼（回每週統計貼上）
+          </button>
+        </div>
+      </div>
+
       <div id="sync-guide-banner" style="display:none; margin-bottom:10px; background:var(--primary-light); border:1px solid var(--primary); color:var(--text-main); padding:9px 11px; border-radius:10px; font-size:11px; line-height:1.5;">
         🎉 <strong>已複製成績單同步碼！</strong><br>
         現在請回手機桌面打開<strong>「每日進度」捷徑</strong>，點一下飲食區上方的<strong>「📋 一鍵貼上匯入 AI 餐食」</strong>就會立刻同步過去！
@@ -1513,6 +1533,181 @@
       const banner = document.getElementById('sync-guide-banner');
       if (banner) banner.style.display = 'block';
       showToast(`📋 已複製今日全部 ${allSyncItems.length} 餐成績單！請回「每日進度」貼上！`);
+    }
+
+    // 🤖 本週飲食 AI 深度總評：文字推理模型自動備援接力
+    async function callGeminiTextWithFallback(promptText, key) {
+      let cooldownMap = {};
+      try {
+        cooldownMap = JSON.parse(localStorage.getItem('vitalstep_quota_cooldown_map') || '{}') || {};
+      } catch (e) { cooldownMap = {}; }
+      const nowTs = Date.now();
+
+      function isModelInCooldown(mName) {
+        const until = cooldownMap[mName];
+        return until && until > nowTs;
+      }
+      function markModelQuotaCooldown(mName) {
+        cooldownMap[mName] = Date.now() + 45 * 60 * 1000;
+        try { localStorage.setItem('vitalstep_quota_cooldown_map', JSON.stringify(cooldownMap)); } catch (e) {}
+      }
+
+      async function tryTextGen(modelName) {
+        const cleanName = modelName.replace(/^models\//, '');
+        const controller = new AbortController();
+        const timerId = setTimeout(() => controller.abort(), 20000);
+        try {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+              generationConfig: {
+                temperature: 0.3
+              }
+            })
+          });
+          clearTimeout(timerId);
+          return await resp.json();
+        } catch (err) {
+          clearTimeout(timerId);
+          throw err;
+        }
+      }
+
+      const rememberWorkingModel = localStorage.getItem('vitalstep_working_gemini_model') || 'gemini-3.8-flash';
+      const modelsToTry = [
+        rememberWorkingModel,
+        'gemini-3.8-flash',
+        'gemini-3.8-flash-lite',
+        'gemini-flash-lite-latest',
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash'
+      ];
+      const uniqueModels = [...new Set(modelsToTry)];
+
+      for (const mName of uniqueModels) {
+        if (isModelInCooldown(mName)) continue;
+        try {
+          const data = await tryTextGen(mName);
+          if (data && data.error) {
+            if ((data.error.message || '').includes('Quota exceeded') || data.error.code === 429) {
+              markModelQuotaCooldown(mName);
+              continue;
+            }
+            continue;
+          }
+          const cand = data.candidates?.[0];
+          const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
+          if (textPart) {
+            localStorage.setItem('vitalstep_working_gemini_model', mName);
+            return textPart.trim();
+          }
+        } catch (err) {
+          continue;
+        }
+      }
+      throw new Error('所有 Gemini 備援模型額度均用盡或網路超時，請稍後重試！');
+    }
+
+    let currentWeeklyReviewData = null;
+
+    // 📊 隨時生成本週目前外食 AI 深度診斷（告別罐頭，分析偏食與漏掉的營養）
+    async function generateWeeklyAiReview() {
+      const key = getApiKey();
+      if (!key) {
+        showToast('💡 請先在下方設定 Gemini API Key 才能呼叫 AI 分析喔！');
+        const box = document.getElementById('key-box');
+        if (box) box.style.display = 'block';
+        return;
+      }
+
+      // 1. 抓取所選日期所在的「週一 ～ 今天（或週日）」7 天餐食清單
+      const refDate = parseLocalDateStr(selectedDate || TODAY);
+      const dayOfWeek = refDate.getDay();
+      const diffToMonday = dayOfWeek === 0 ? -6 : (1 - dayOfWeek);
+      const mondayDate = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate() + diffToMonday);
+      const sundayDate = new Date(mondayDate.getFullYear(), mondayDate.getMonth(), mondayDate.getDate() + 6);
+      const mondayStr = getLocalDateStr(mondayDate);
+
+      const weekDayNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+      const weekLogs = [];
+      for (let i = 0; i < 7; i++) {
+        const dObj = new Date(mondayDate.getFullYear(), mondayDate.getMonth(), mondayDate.getDate() + i);
+        const dStr = getLocalDateStr(dObj);
+        const dayMeals = mealHistoryByDate[dStr] || [];
+        if (dayMeals.length > 0) {
+          const items = dayMeals.map(m => {
+            const what = m.note || m.report?.what || m.mealType;
+            const good = m.report?.good ? `[亮點:${m.report.good}]` : '';
+            const ng = m.report?.ng ? `[提醒:${m.report.ng}]` : '';
+            return `${m.mealType}: ${what} ${good} ${ng}`.trim();
+          });
+          weekLogs.push(`${dStr} (${weekDayNames[dObj.getDay()]}): ${items.join(' ｜ ')}`);
+        }
+      }
+
+      if (weekLogs.length === 0) {
+        alert('本週目前尚無已儲存的餐點紀錄喔！請先在上方拍幾餐或補充文字後再來分析！');
+        return;
+      }
+
+      const btn = document.getElementById('weekly-ai-gen-btn');
+      const originalText = btn.textContent;
+      btn.textContent = '⏳ AI 統整分析中...';
+      btn.disabled = true;
+
+      const prompt = `你是一位溫暖、務實的專業減脂與護肝營養教練。
+使用者的健康防線與日常：體重約 93.5kg，三酸甘油酯(TG) 260，HbA1c 5.7%，通勤長達 3~4 小時(20:00~20:30 到家)，午餐多吃公司週邊便當/外食。
+以下是使用者本週目前的真實飲食紀錄清單（共 ${weekLogs.length} 天有紀錄）：
+${weekLogs.join('\n')}
+
+請為使用者撰寫一份「本週飲食偏頗與漏掉的營養深度總評」：
+【核心要求】：
+1. 拒絕罐頭官方空話，拒絕教條式說教。像一位懂他長通勤與公司週邊限制的貼心教練。
+2. 【肯定護肝直覺】：先肯定他本週做對的防線（例如切斷含糖手搖飲、長通勤餓了用堅果/蛋白質墊胃而非亂買宵夜等）。
+3. 【外食結構盲點】：客觀指出這幾天外食不知不覺「漏掉了什麼好營養」或「偏食盲點」（例如：蛋白質是否集中在豬/雞肉而缺魚？公司便當配菜是否缺乏深綠色葉菜？主食麵類比例等）。
+4. 【不派加法功課】：絕不叫他明天或下週狂補吃一堆食物！只給 1~2 個在公司週邊買便當或超商時「順手微調/減害」的挑選撇步即可。
+請使用繁體中文，語氣親切有同理心，段落清晰，字數約 200~280 字。`;
+
+      try {
+        const resultText = await callGeminiTextWithFallback(prompt, key);
+        currentWeeklyReviewData = {
+          monday: mondayStr,
+          text: resultText,
+          updatedAt: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+
+        const resultBox = document.getElementById('weekly-ai-result-box');
+        const resultEl = document.getElementById('weekly-ai-result-text');
+        if (resultBox && resultEl) {
+          resultEl.textContent = resultText;
+          resultBox.style.display = 'block';
+        }
+
+        copyWeeklyAiReview(true);
+        showToast('🎉 本週 AI 飲食總評已產出，並已自動複製同步碼！');
+      } catch (err) {
+        alert('生成本週 AI 總結失敗：' + (err.message || err));
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // 📋 複製本週總結同步碼
+    function copyWeeklyAiReview(isAuto) {
+      if (!currentWeeklyReviewData) {
+        alert('尚未生成本週 AI 總結喔！');
+        return;
+      }
+      const token = '【VITALSTEP_WEEKLY_AI_SUMMARY】' + JSON.stringify(currentWeeklyReviewData);
+      copyTextToClipboard(token);
+
+      if (!isAuto) {
+        showToast('📋 已複製本週 AI 總評同步碼！請回手機「每日進度」的「每週統計」貼上！');
+      }
     }
 
     window.addEventListener('DOMContentLoaded', initPage);
