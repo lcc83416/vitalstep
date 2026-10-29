@@ -691,11 +691,11 @@
         </div>
       </div>
 
-      <!-- 每日步數、實際活動分鐘數（含沒戴手錶）與體重記錄 -->
+      <!-- 每日步數、手錶運動圈與手動補記明細、體重記錄 -->
       <div class="card">
         <div class="card-title">
-          <span>⌚ 今日步數、實際活動時間與體重</span>
-          <span style="font-size:10px; color:var(--primary);">沒戴錶/散步都算數！</span>
+          <span>⌚ 今日步數、手錶運動圈與體重</span>
+          <span style="font-size:10px; color:var(--primary);">透明記錄・拒絕灌水</span>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
           <div>
@@ -708,9 +708,9 @@
           </div>
           <div>
             <label style="font-size:10px; color:var(--primary); display:block; margin-bottom:3px; font-weight:700;">
-              ⏱️ 實際活動(分)
+              ⌚ 手錶運動(分)
             </label>
-            <input type="number" id="input-ex-mins" placeholder="含散步/沒戴錶" 
+            <input type="number" id="input-watch-mins" placeholder="手錶綠圈如: 12" 
               style="width:100%; padding:8px 8px; font-size:12px; border:1px solid rgba(5,150,105,0.4); border-radius:8px; background:var(--bg); color:var(--text-main); font-weight:700;"
               onchange="updateDailyStats()">
           </div>
@@ -723,13 +723,32 @@
               onchange="updateDailyStats()">
           </div>
         </div>
-        <!-- 沒戴手錶 / 午休散步一鍵補加分鐘數 -->
-        <div style="margin-top:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px;">
-          <span style="font-size:10px; color:var(--text-muted);">💡 手錶漏算或忘記戴？點選直接累加真實活動時間：</span>
-          <div style="display:flex; gap:5px; flex-wrap:wrap;">
-            <span class="pantry-chip" style="padding:3px 8px; font-size:10px;" onclick="addExerciseMinutes(10)">+10分(沒戴錶)</span>
-            <span class="pantry-chip" style="padding:3px 8px; font-size:10px;" onclick="addExerciseMinutes(15)">+15分(踏步)</span>
-            <span class="pantry-chip" style="padding:3px 8px; font-size:10px;" onclick="addExerciseMinutes(25)">+25分(午休散步)</span>
+
+        <!-- ➕ 忘戴手錶／額外手動補記(分) 自訂區 -->
+        <div style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
+            <span style="font-size:10px; font-weight:700; color:var(--text-main);">➕ 忘戴手錶／額外手動補記(分)：</span>
+            <div style="display:flex; gap:4px; align-items:center;">
+              <input type="number" id="input-manual-mins" placeholder="自訂+?分" 
+                style="width:75px; padding:4px 6px; font-size:11px; font-weight:700; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text-main); text-align:center;"
+                onchange="updateDailyStats()">
+              <button class="btn btn-primary" style="padding:4px 8px; font-size:10px;" onclick="saveManualMinutesDirect()">確定補分</button>
+            </div>
+          </div>
+
+          <!-- 快速點選補分膠囊 -->
+          <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:10px; color:var(--text-muted);">快速加：</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addManualMinutes(10)">+10分</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addManualMinutes(15)">+15分</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addManualMinutes(20)">+20分</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addManualMinutes(30)">+30分</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px; color:var(--text-muted);" onclick="clearManualMinutes()">🧹 清空補分</span>
+          </div>
+
+          <!-- 即時透明明細標籤（解救金魚腦，日後看絕不懷疑手錶） -->
+          <div id="activity-breakdown-badge" style="margin-top:8px; padding:7px 10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-size:11px; line-height:1.5; color:var(--text-main);">
+            <!-- 由 renderActivityBreakdown() 動態渲染 -->
           </div>
         </div>
       </div>
@@ -793,17 +812,17 @@
         <div id="diet-auto-radar-list"></div>
       </div>
 
-      <!-- 🍵 600ml 保溫杯茶水排程（符合個人化習慣） -->
+      <!-- 🍵 飲水量管理（打破固定 200ml，支援直接打字與任意自訂加減） -->
       <div class="card">
         <div class="card-title">
-          <span>🍵 600ml 保溫杯水分排程</span>
-          <span style="font-size:11px; color:var(--accent);" id="water-text">0 / 2400 ml</span>
+          <span>🍵 每日飲水排程與自訂記錄</span>
+          <span style="font-size:11px; color:var(--accent); font-weight:800;" id="water-text">0 / 2400 ml</span>
         </div>
         <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">
-          💡 <strong>科學目標</strong>：體重 93.5kg × 30ml ＝ 2800ml。初期以 <strong>4 壺保溫杯（2400ml）</strong> 為目標！白天喝滿 3 壺，晚上不夜尿！
+          💡 <strong>科學目標</strong>：體重 93.5kg × 30ml ＝ 2800ml。初期以 <strong>4 壺保溫杯（2400ml）</strong> 為目標！白天喝足，晚上不夜尿！
         </div>
         
-        <!-- 4 壺保溫杯卡片 -->
+        <!-- 4 壺保溫杯卡片（點擊可快速切換 600ml 滿壺） -->
         <div class="thermos-grid" id="thermos-container">
           <div class="thermos-card" onclick="toggleThermos(0)">
             <div class="thermos-icon">☕</div>
@@ -823,12 +842,41 @@
           </div>
         </div>
 
-        <!-- 快速微調按鈕 -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-          <span style="font-size:11px; color:var(--text-muted);" id="thermos-summary-text">已喝 0 壺保溫杯</span>
-          <div style="display:flex; gap:6px;">
-            <button class="btn" onclick="addWater(-200)">- 200ml</button>
-            <button class="btn btn-accent" onclick="addWater(200)">+ 回沖 200ml</button>
+        <!-- 💧 直接輸入目前總水量 ＆ 自由自訂加減水（打破只能 ±200ml） -->
+        <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
+          <!-- 第 1 排：直接修改總水量 -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px;">
+            <span style="font-size:11px; font-weight:700; color:var(--text-main);">💧 直接修改目前總水量：</span>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <input type="number" id="input-water-direct" step="50" placeholder="如: 1800"
+                style="width:85px; padding:5px 8px; font-size:12px; font-weight:800; color:var(--accent); text-align:center; border:1px solid var(--accent); border-radius:8px; background:var(--bg);"
+                onchange="updateDirectWater(this.value)">
+              <span style="font-size:11px; font-weight:700; color:var(--text-muted);">ml</span>
+            </div>
+          </div>
+
+          <!-- 第 2 排：自訂加水／減水 -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:6px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:10px; color:var(--text-muted); font-weight:600;">自訂量:</span>
+              <input type="number" id="input-custom-water-delta" placeholder="如: 350" step="50"
+                style="width:75px; padding:4px 6px; font-size:11px; text-align:center; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text-main);">
+              <span style="font-size:10px; color:var(--text-muted);">ml</span>
+            </div>
+            <div style="display:flex; gap:5px;">
+              <button class="btn" style="padding:4px 8px; font-size:11px;" onclick="applyCustomWater(-1)">➖ 扣除</button>
+              <button class="btn btn-primary" style="padding:4px 9px; font-size:11px;" onclick="applyCustomWater(1)">➕ 增加</button>
+            </div>
+          </div>
+
+          <!-- 第 3 排：常用容器快速加水膠囊 -->
+          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+            <span style="font-size:10px; color:var(--text-muted);">常用快捷：</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(150)">+150ml (馬克杯)</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(250)">+250ml (咖啡)</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(350)">+350ml (茶杯)</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(500)">+500ml (瓶裝茶)</span>
+            <span class="pantry-chip" style="padding:2px 7px; font-size:10px; color:var(--text-muted);" onclick="resetWaterZero()">🧹 歸零</span>
           </div>
         </div>
       </div>
@@ -1337,6 +1385,8 @@
         water: 0,
         thermosCount: 0,
         steps: '',
+        watchExMins: '',
+        manualExMins: '',
         exMins: '',
         weight: '',
         foodLogs: [],
@@ -1350,6 +1400,8 @@
       water: 0,
       thermosCount: 0,
       steps: '',
+      watchExMins: '',
+      manualExMins: '',
       exMins: '',
       weight: '',
       followup: '2027-01-26',
@@ -1396,7 +1448,11 @@
       state.water = dayRec.water || 0;
       state.thermosCount = dayRec.thermosCount || 0;
       state.steps = dayRec.steps !== undefined ? dayRec.steps : '';
-      state.exMins = dayRec.exMins !== undefined ? dayRec.exMins : '';
+      state.watchExMins = dayRec.watchExMins !== undefined ? dayRec.watchExMins : (dayRec.exMins || '');
+      state.manualExMins = dayRec.manualExMins !== undefined ? dayRec.manualExMins : '';
+      const wMins = parseInt(state.watchExMins, 10) || 0;
+      const mMins = parseInt(state.manualExMins, 10) || 0;
+      state.exMins = (wMins + mMins > 0) ? (wMins + mMins) : (dayRec.exMins !== undefined ? dayRec.exMins : '');
       state.weight = dayRec.weight !== undefined ? dayRec.weight : '';
       state.foodLogs = Array.isArray(dayRec.foodLogs) ? dayRec.foodLogs : [];
       state.locked = !!dayRec.locked;
@@ -1523,21 +1579,33 @@
 
     function refreshAllDayUI() {
       const stepsEl = document.getElementById('input-steps');
-      const exMinsEl = document.getElementById('input-ex-mins');
+      const watchMinsEl = document.getElementById('input-watch-mins');
+      const manualMinsEl = document.getElementById('input-manual-mins');
       const weightEl = document.getElementById('input-morning-weight');
+      const waterDirectEl = document.getElementById('input-water-direct');
+
       if (stepsEl) {
         stepsEl.value = state.steps !== undefined && state.steps !== null ? state.steps : '';
         stepsEl.disabled = !!state.locked;
       }
-      if (exMinsEl) {
-        exMinsEl.value = state.exMins !== undefined && state.exMins !== null ? state.exMins : '';
-        exMinsEl.disabled = !!state.locked;
+      if (watchMinsEl) {
+        watchMinsEl.value = state.watchExMins !== undefined && state.watchExMins !== null ? state.watchExMins : '';
+        watchMinsEl.disabled = !!state.locked;
+      }
+      if (manualMinsEl) {
+        manualMinsEl.value = state.manualExMins !== undefined && state.manualExMins !== null ? state.manualExMins : '';
+        manualMinsEl.disabled = !!state.locked;
       }
       if (weightEl) {
         weightEl.value = state.weight !== undefined && state.weight !== null ? state.weight : '';
         weightEl.disabled = !!state.locked;
       }
+      if (waterDirectEl) {
+        waterDirectEl.value = state.water !== undefined ? state.water : 0;
+        waterDirectEl.disabled = !!state.locked;
+      }
 
+      renderActivityBreakdown();
       renderDateSwitcherBar();
       renderDayLockBanner();
       renderDailyWorkoutMenu();
@@ -1703,7 +1771,7 @@
           `• 時段打卡：完成 ${doneCount} / 4 項\n` +
           `• 餐食記錄：共 ${foodCount} 筆\n` +
           `• 飲水紀錄：${waterVal} ml\n` +
-          `• 手錶分鐘數：${state.exMins ? state.exMins + ' 分鐘' : '未填'}\n\n` +
+          `• 活動時間：${state.exMins ? (state.manualExMins > 0 ? `${state.exMins} 分鐘 (錶${state.watchExMins || 0}+補${state.manualExMins})` : `${state.exMins} 分鐘`) : '未填'}\n\n` +
           `⚠️ 按下確定後，本日紀錄將「蓋章封存為唯讀模式」，之後只能檢視、不能再修改或刪除喔！`;
         if (!confirm(msg)) return;
       }
@@ -1835,6 +1903,8 @@
         water: state.water || 0,
         thermosCount: state.thermosCount || 0,
         steps: state.steps !== undefined ? state.steps : '',
+        watchExMins: state.watchExMins !== undefined ? state.watchExMins : '',
+        manualExMins: state.manualExMins !== undefined ? state.manualExMins : '',
         exMins: state.exMins !== undefined ? state.exMins : '',
         weight: state.weight !== undefined ? state.weight : '',
         foodLogs: Array.isArray(state.foodLogs) ? state.foodLogs : [],
@@ -2236,7 +2306,7 @@
                       : '<span style="font-size:9px; background:var(--warning-bg); color:var(--warning-text); padding:1px 6px; border-radius:99px;">🔓 待鎖定</span>'}
                   </div>
                   <div style="font-size:10px; color:var(--text-muted); margin-top:3px;">
-                    🎯 防線 ${doneCnt}/4 項 ｜ 🍱 餐食 ${foodCnt} 筆 ｜ 💧 ${r.water || 0}ml ${r.exMins ? `｜ ⏱️ 活動 ${r.exMins}分` : ''}
+                    🎯 防線 ${doneCnt}/4 項 ｜ 🍱 餐食 ${foodCnt} 筆 ｜ 💧 ${r.water || 0}ml ${r.exMins ? `｜ ⏱️ 活動 ${r.exMins}分${r.manualExMins > 0 ? ` (錶${r.watchExMins || 0}+補${r.manualExMins})` : ''}` : ''}
                   </div>
                 </div>
                 <span style="font-size:11px; font-weight:700; color:var(--primary); white-space:nowrap;">檢視 ▶</span>
@@ -2247,15 +2317,15 @@
       }
     }
 
-    // --- 600ml 保溫杯水分 ---
+    // --- 每日飲水量管理（支援直接輸入、自訂加減水與 600ml 保溫杯捷徑） ---
     function toggleThermos(idx) {
       if (checkLockedGuard()) return;
       const card = document.querySelectorAll('.thermos-card')[idx];
       const isFilled = card.classList.contains('filled');
       if (isFilled) {
-        state.water = Math.max(0, state.water - 600);
+        state.water = Math.max(0, (state.water || 0) - 600);
       } else {
-        state.water = Math.min(3600, state.water + 600);
+        state.water = Math.min(5000, (state.water || 0) + 600);
       }
       save();
       renderDateSwitcherBar();
@@ -2266,58 +2336,183 @@
 
     function addWater(val) {
       if (checkLockedGuard()) return;
-      state.water = Math.max(0, Math.min(3600, (state.water || 0) + val));
+      state.water = Math.max(0, Math.min(5000, (state.water || 0) + val));
       save();
       renderDateSwitcherBar();
       renderWater();
       renderStats();
       updateCoachFeedback();
+      showToast(val >= 0 ? `💧 已增加 +${val} ml（累計 ${state.water} ml）` : `💧 已扣除 ${Math.abs(val)} ml（累計 ${state.water} ml）`);
+    }
+
+    function updateDirectWater(val) {
+      if (checkLockedGuard()) return;
+      const num = parseInt(val, 10);
+      state.water = isNaN(num) ? 0 : Math.max(0, Math.min(5000, num));
+      save();
+      renderDateSwitcherBar();
+      renderWater();
+      renderStats();
+      updateCoachFeedback();
+      showToast(`💧 今日總飲水量已直接更新為 ${state.water} ml！`);
+    }
+
+    function applyCustomWater(sign) {
+      if (checkLockedGuard()) return;
+      const inp = document.getElementById('input-custom-water-delta');
+      const delta = parseInt(inp ? inp.value.trim() : '0', 10);
+      if (isNaN(delta) || delta <= 0) {
+        alert('請先在格子裡輸入自訂要加／減的水量（例如: 350）喔！');
+        return;
+      }
+      addWater(sign * delta);
+      if (inp) inp.value = '';
+    }
+
+    function resetWaterZero() {
+      if (checkLockedGuard()) return;
+      if (confirm('確定要將今日飲水量歸零重記嗎？')) {
+        state.water = 0;
+        save();
+        renderDateSwitcherBar();
+        renderWater();
+        renderStats();
+        updateCoachFeedback();
+        showToast('💧 今日飲水量已歸零');
+      }
     }
 
     function renderWater() {
       const w = state.water || 0;
-      document.getElementById('water-text').textContent = `${w} / 2400 ml`;
-      const thermoses = Math.floor(w / 600);
+      const textEl = document.getElementById('water-text');
+      if (textEl) textEl.textContent = `${w} / 2400 ml`;
       
+      const directInp = document.getElementById('input-water-direct');
+      if (directInp && document.activeElement !== directInp) {
+        directInp.value = w;
+      }
+
+      const thermoses = Math.floor(w / 600);
       document.querySelectorAll('.thermos-card').forEach((card, idx) => {
         if (idx < thermoses) card.classList.add('filled');
         else card.classList.remove('filled');
       });
 
-      document.getElementById('thermos-summary-text').textContent = `已喝約 ${(w / 600).toFixed(1)} 壺保溫杯`;
+      const summaryText = document.getElementById('thermos-summary-text');
+      if (summaryText) {
+        summaryText.textContent = `已喝約 ${(w / 600).toFixed(1)} 壺保溫杯`;
+      }
     }
 
-    // --- 每日步數、實際活動時間與體重輸入處理 ---
+    // --- 每日步數、手錶運動圈與手動補記明細處理 ---
     function updateDailyStats() {
       if (checkLockedGuard()) {
         refreshAllDayUI();
         return;
       }
-      const stepsVal = document.getElementById('input-steps').value.trim();
-      const exMinsVal = document.getElementById('input-ex-mins').value.trim();
-      const weightVal = document.getElementById('input-morning-weight').value.trim();
+      const stepsVal = document.getElementById('input-steps')?.value.trim() || '';
+      const watchVal = document.getElementById('input-watch-mins')?.value.trim() || '';
+      const manualVal = document.getElementById('input-manual-mins')?.value.trim() || '';
+      const weightVal = document.getElementById('input-morning-weight')?.value.trim() || '';
 
       state.steps = stepsVal !== '' ? parseInt(stepsVal, 10) : '';
-      state.exMins = exMinsVal !== '' ? parseInt(exMinsVal, 10) : '';
+      state.watchExMins = watchVal !== '' ? parseInt(watchVal, 10) : '';
+      state.manualExMins = manualVal !== '' ? parseInt(manualVal, 10) : '';
+      
+      const wMins = parseInt(state.watchExMins, 10) || 0;
+      const mMins = parseInt(state.manualExMins, 10) || 0;
+      state.exMins = (wMins + mMins > 0) ? (wMins + mMins) : '';
       state.weight = weightVal !== '' ? parseFloat(weightVal) : '';
+      
       save();
+      renderActivityBreakdown();
       renderDateSwitcherBar();
       renderStats();
       updateCoachFeedback();
     }
 
-    // 一鍵累加沒戴手錶或午休散步的真實活動分鐘數
-    function addExerciseMinutes(addMins) {
+    function saveManualMinutesDirect() {
       if (checkLockedGuard()) return;
-      const cur = parseInt(state.exMins, 10) || 0;
-      state.exMins = cur + addMins;
-      const exMinsEl = document.getElementById('input-ex-mins');
-      if (exMinsEl) exMinsEl.value = state.exMins;
+      const inp = document.getElementById('input-manual-mins');
+      const val = inp ? inp.value.trim() : '';
+      const num = parseInt(val, 10);
+      state.manualExMins = (!isNaN(num) && num > 0) ? num : '';
+      const wMins = parseInt(state.watchExMins, 10) || 0;
+      const mMins = parseInt(state.manualExMins, 10) || 0;
+      state.exMins = (wMins + mMins > 0) ? (wMins + mMins) : '';
       save();
+      renderActivityBreakdown();
       renderDateSwitcherBar();
       renderStats();
       updateCoachFeedback();
-      showToast(`⏱️ 已累加 +${addMins} 分鐘！（今日實際活動共 ${state.exMins} 分鐘）`);
+      showToast(state.manualExMins ? `➕ 已設定手動補記 +${state.manualExMins} 分鐘！` : '已清空手動補記分鐘數');
+    }
+
+    function addManualMinutes(addMins) {
+      if (checkLockedGuard()) return;
+      const cur = parseInt(state.manualExMins, 10) || 0;
+      state.manualExMins = cur + addMins;
+      const inp = document.getElementById('input-manual-mins');
+      if (inp) inp.value = state.manualExMins;
+      const wMins = parseInt(state.watchExMins, 10) || 0;
+      state.exMins = wMins + state.manualExMins;
+      save();
+      renderActivityBreakdown();
+      renderDateSwitcherBar();
+      renderStats();
+      updateCoachFeedback();
+      showToast(`➕ 手動補記累加至 ${state.manualExMins} 分鐘！（今日總活動共 ${state.exMins} 分）`);
+    }
+
+    function clearManualMinutes() {
+      if (checkLockedGuard()) return;
+      state.manualExMins = '';
+      const inp = document.getElementById('input-manual-mins');
+      if (inp) inp.value = '';
+      const wMins = parseInt(state.watchExMins, 10) || 0;
+      state.exMins = wMins > 0 ? wMins : '';
+      save();
+      renderActivityBreakdown();
+      renderDateSwitcherBar();
+      renderStats();
+      updateCoachFeedback();
+      showToast('🧹 已清空手動補記分鐘數（100% 恢復為純手錶數據）');
+    }
+
+    // 渲染透明明細標籤（解救金魚腦）
+    function renderActivityBreakdown() {
+      const badge = document.getElementById('activity-breakdown-badge');
+      if (!badge) return;
+      const wMins = parseInt(state.watchExMins, 10) || 0;
+      const mMins = parseInt(state.manualExMins, 10) || 0;
+      const total = wMins + mMins;
+
+      if (mMins > 0) {
+        badge.innerHTML = `
+          <div style="font-weight:800; color:var(--primary); display:flex; justify-content:space-between; align-items:center;">
+            <span>⏱️ 今日總活動：${total} 分鐘</span>
+            <span style="font-size:10px; background:var(--primary-light); color:var(--primary); padding:1px 6px; border-radius:4px;">透明明細已記錄</span>
+          </div>
+          <div style="font-size:11px; color:var(--text-main); margin-top:3px;">
+            ⌚ <strong>手錶綠圈</strong>：${wMins} 分鐘 ＋ ➕ <strong>手動補記</strong>：${mMins} 分鐘（忘戴錶/踏步）
+          </div>
+          <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">
+            💡 系統已永久分開保存手錶原值與手動補記，日後回查一眼即知，絕不懷疑手錶少算！
+          </div>
+        `;
+      } else if (wMins > 0) {
+        badge.innerHTML = `
+          <div style="font-weight:700; color:var(--text-main);">
+            ⏱️ 今日總活動：<strong>${wMins} 分鐘</strong>（⌚ 100% 由 Apple Watch 綠圈計入，無手動灌水）
+          </div>
+        `;
+      } else {
+        badge.innerHTML = `
+          <div style="color:var(--text-muted); font-size:11px;">
+            ⏱️ 今日活動時間尚未記錄（睡前看手錶照抄即可；忘戴手錶踏步可在此自訂補分）。
+          </div>
+        `;
+      }
     }
 
     // --- 🧠 動態健康管家即時反饋引擎 ---
