@@ -615,16 +615,19 @@
     </div>
   </div>
 
-  <!-- 頂部標題列 -->
+  <!-- 頂部標題列（含免刪桌面捷徑一鍵更新按鈕） -->
   <header>
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.4 <span class="tag">隨機運動菜單・每週總結</span></div>
+        <div class="logo-title">微步輕健 5.5 <span class="tag">免刪捷徑更新・額度接力</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
-    <div style="font-size:11px; color:var(--text-muted); white-space:nowrap;" id="header-streak-badge">🔥 第 1 週啟航</div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <div style="font-size:11px; color:var(--text-muted); white-space:nowrap;" id="header-streak-badge">🔥 第 1 週啟航</div>
+      <button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="forceUpdateMainApp()" title="免刪桌面捷徑，保留資料更新至最新版">🔄 更新</button>
+    </div>
   </header>
 
   <div class="container">
@@ -960,13 +963,22 @@
         </div>
       </div>
 
-      <!-- 🗂️ 歷史紀錄總覽與快速跳轉清單 -->
+      <!-- 🗂️ 歷史紀錄總覽與快速跳轉清單 ＋ 一鍵備份還原保護 -->
       <div class="card">
         <div class="card-title">
           <span>🗂️ 歷史紀錄抽屜（點選可往前檢視／補鎖定）</span>
           <span style="font-size:10px; color:var(--text-muted);">永久保存</span>
         </div>
-        <div id="history-drawer-list" style="font-size:11px;"></div>
+        <div id="history-drawer-list" style="font-size:11px; margin-bottom:10px;"></div>
+        <div style="padding-top:10px; border-top:1px dashed var(--border);">
+          <div style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">
+            🛡️ <strong>桌面捷徑資料雙重保險</strong>（平時點右上角「🔄 更新」即可免刪捷徑升級；亦可隨時複製備份碼留存）：
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn" style="flex:1; font-size:11px; padding:7px;" onclick="exportMainHistoryBackup()">💾 複製全部歷史備份碼</button>
+            <button class="btn" style="flex:1; font-size:11px; padding:7px;" onclick="importMainHistoryBackup()">📥 貼上備份碼還原</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3454,6 +3466,67 @@
       }
 
       container.innerHTML = html;
+    }
+
+    // 🔄 免刪桌面捷徑：一鍵強制拉取 GitHub 最新版（100% 保留 localStorage 所有歷史打卡與體重資料）
+    async function forceUpdateMainApp() {
+      showToast('🔄 正在從雲端更新至最新版（已填資料 100% 保留）...');
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        await fetch(window.location.pathname + '?_t=' + Date.now(), { cache: 'no-store' });
+      } catch (e) {}
+      const url = new URL(window.location.href);
+      url.searchParams.set('v', Date.now());
+      window.location.replace(url.toString());
+    }
+
+    // 💾 一鍵匯出與還原全部歷史資料庫（雙重防丟失保險）
+    function exportMainHistoryBackup() {
+      saveState();
+      const backupObj = {
+        historyByDate: historyByDate || {},
+        state: state || {},
+        exportedAt: new Date().toISOString()
+      };
+      const token = '【VITALSTEP_MAIN_BACKUP】' + JSON.stringify(backupObj);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(token).catch(() => {});
+      }
+      const ta = document.createElement('textarea');
+      ta.value = token;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      alert('💾 已複製「所有日期的打卡、步數、體重與三餐完整備份碼」到剪貼簿！\n\n您可以貼在 iPhone 備忘錄保存；日後若換手機或重設捷徑，點「📥 貼上備份碼還原」即可 1 秒鐘完整復原！');
+    }
+
+    function importMainHistoryBackup() {
+      const raw = prompt('請貼上先前複製的【VITALSTEP_MAIN_BACKUP】備份碼：');
+      if (!raw || !raw.trim()) return;
+      const clean = raw.trim().replace(/^【VITALSTEP_MAIN_BACKUP】/, '');
+      try {
+        const parsed = JSON.parse(clean);
+        if (parsed && parsed.historyByDate && typeof parsed.historyByDate === 'object') {
+          Object.keys(parsed.historyByDate).forEach(d => {
+            historyByDate[d] = parsed.historyByDate[d];
+          });
+          localStorage.setItem(HISTORY_BY_DATE_KEY, JSON.stringify(historyByDate));
+          selectDate(selectedDate);
+          renderStats();
+          showToast('🎉 歷史資料備份還原成功！');
+        } else {
+          alert('備份碼格式不正確，請確認是否完整複製！');
+        }
+      } catch (e) {
+        alert('備份碼解析失敗，請確認複製內容完整！');
+      }
     }
 
     window.addEventListener('DOMContentLoaded', init);

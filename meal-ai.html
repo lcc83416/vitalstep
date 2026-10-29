@@ -239,16 +239,19 @@
     </div>
   </div>
 
-  <!-- 頂部標題列（清爽不擠壓） -->
+  <!-- 頂部標題列（清爽不擠壓＋免刪桌面捷徑一鍵更新） -->
   <header>
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">餐食拍照 & AI 成績單 <span class="tag">物理隔離</span></div>
+        <div class="logo-title">餐食拍照 & AI 成績單 <span class="tag">v5.5 額度接力</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
-    <div style="font-size:11px; color:var(--primary); font-weight:700; white-space:nowrap;" id="header-count-badge">今日 0 餐</div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <div style="font-size:11px; color:var(--primary); font-weight:700; white-space:nowrap;" id="header-count-badge">今日 0 餐</div>
+      <button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="forceUpdateMealApp()" title="免刪桌面捷徑，保留資料更新至最新版">🔄 更新</button>
+    </div>
   </header>
 
   <div class="container">
@@ -353,27 +356,38 @@
       <div id="meal-history-list"></div>
     </div>
 
-    <!-- 3. Gemini API Key 設定（獨立儲存） -->
+    <!-- 3. Gemini API Key 設定（獨立儲存＋多模型免費額度自動接力） -->
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleKeyBox()">
         <span style="font-size:12px; font-weight:700; color:var(--text-muted);">
-          ⚙️ 雲端 Gemini AI 視覺金鑰設定 <span id="key-header-tag" class="tag">⚪ 未填金鑰（本機判讀）</span>
+          ⚙️ 雲端 Gemini AI 視覺金鑰 & 備份更新 <span id="key-header-tag" class="tag">⚪ 未填金鑰（本機判讀）</span>
         </span>
         <span id="key-arrow" style="font-size:11px; color:var(--text-muted);">▼</span>
       </div>
 
       <div id="key-box" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
         <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
-          貼上 Google Gemini API Key 後，系統會將照片與補充文字交由 Gemini 視覺模型辨識（內建匿名化護肝降三酸甘油酯標準，不附帶任何個人身分數據）。若未設定金鑰，亦可使用本機關鍵字營養師引擎分析並同步！
+          💡 <strong>多模型免費額度自動接力保護</strong>：Google 對單一 `gemini-3.8-flash` 免費版設有每日 20 次上限（台灣下午 15:00 重置）。本系統已內建<strong>「多模型自動接力池」</strong>，當主力模型滿 20 次時會<strong>自動無縫切換至獨立額度的 `flash-lite` 等備援模型</strong>，不卡頓、不中斷！
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <input type="password" id="isolated-gemini-key" placeholder="貼上 Gemini API Key"
             style="flex:1; min-width:160px; padding:8px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
           <button class="btn btn-primary" onclick="saveKey()">儲存</button>
-          <button class="btn" style="border-color:var(--primary); color:var(--primary);" onclick="testGeminiKey()">🔌 測試連線</button>
+          <button class="btn" style="border-color:var(--primary); color:var(--primary);" onclick="testGeminiKey()">🔌 零額度測試連線</button>
           <button class="btn" onclick="clearKey()">清除</button>
         </div>
         <div id="key-status" style="font-size:10px; color:var(--primary); font-weight:700; margin-top:6px;"></div>
+
+        <!-- 💾 免刪捷徑更新 ＆ 跨日餐食資料備份還原 -->
+        <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
+          <div style="font-size:11px; font-weight:700; color:var(--text-main); margin-bottom:6px;">
+            🛡️ 主畫面捷徑保護（⚠️ 請勿刪除桌面圖示，點上方「🔄 更新」即可保留資料升級！）
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn" style="flex:1; font-size:11px;" onclick="exportMealBackup()">💾 複製餐食備份碼</button>
+            <button class="btn" style="flex:1; font-size:11px;" onclick="importMealBackup()">📥 貼上備份碼還原</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -709,6 +723,61 @@
       }
     }
 
+    // 🔄 免刪桌面捷徑：一鍵強制拉取 GitHub 最新版（100% 保留 localStorage 餐食照片與金鑰）
+    async function forceUpdateMealApp() {
+      showToast('🔄 正在從雲端更新至最新版（資料 100% 保留）...');
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        await fetch(window.location.pathname + '?_t=' + Date.now(), { cache: 'no-store' });
+      } catch (e) {}
+      const url = new URL(window.location.href);
+      url.searchParams.set('v', Date.now());
+      window.location.replace(url.toString());
+    }
+
+    // 💾 一鍵備份餐食紀錄（不含巨量原圖以確保剪貼簿秒複製，完整保留所有日期文字與 4 點成績單）
+    function exportMealBackup() {
+      const liteHist = {};
+      Object.keys(mealHistoryByDate || {}).forEach(d => {
+        liteHist[d] = (mealHistoryByDate[d] || []).map(item => ({
+          ...item,
+          photos: []
+        }));
+      });
+      const payload = '【VITALSTEP_MEAL_BACKUP】' + JSON.stringify({
+        history: liteHist,
+        exportedAt: new Date().toISOString()
+      });
+      copyTextToClipboard(payload);
+      alert('💾 已複製所有日期的「餐食文字與 4 點成績單備份碼」到剪貼簿！\n\n您可以貼在 iPhone 備忘錄保存，萬一換手機或重設捷徑，點「📥 貼上備份碼還原」即可秒速救回！');
+    }
+
+    function importMealBackup() {
+      const raw = prompt('請貼上先前複製的【VITALSTEP_MEAL_BACKUP】備份碼：');
+      if (!raw || !raw.trim()) return;
+      const clean = raw.trim().replace(/^【VITALSTEP_MEAL_BACKUP】/, '');
+      try {
+        const parsed = JSON.parse(clean);
+        if (parsed && parsed.history && typeof parsed.history === 'object') {
+          Object.keys(parsed.history).forEach(d => {
+            if (!mealHistoryByDate[d] || mealHistoryByDate[d].length === 0) {
+              mealHistoryByDate[d] = parsed.history[d];
+            }
+          });
+          selectMealDate(selectedDate);
+          showToast('🎉 餐食歷史備份還原成功！');
+        } else {
+          alert('備份碼格式不正確，請確認是否複製完整喔！');
+        }
+      } catch (e) {
+        alert('備份碼解析失敗，請確認複製內容完整！');
+      }
+    }
+
+    // 🔌 零額度測試連線（優先使用不扣每日 20 次額度的 ListModels 驗證金鑰並清除冷卻快取）
     async function testGeminiKey() {
       const inpVal = document.getElementById('isolated-gemini-key')?.value?.trim();
       if (inpVal) {
@@ -721,14 +790,28 @@
         return;
       }
       const st = document.getElementById('key-status');
-      if (st) st.textContent = '⏳ 正在測試雲端 Gemini AI 連線...';
-      const res = await callGeminiVisionAndOcr('午餐', '無糖綠茶、煎魚便當', [], k);
-      if (res.ok) {
-        if (st) st.textContent = '🎉 測試成功！您的 Gemini API Key 連線正常，拍照與截圖都會由 AI 辨識！';
-        showToast('🎉 Gemini AI 金鑰連線成功！');
-      } else {
-        if (st) st.textContent = `❌ 連線失敗：${res.error || '請檢查金鑰是否正確'}`;
-        alert(`❌ API Key 連線測試失敗：\n${res.error || '請確認金鑰是否有效'}`);
+      if (st) st.textContent = '⏳ 正在進行零額度金鑰驗證與可用模型掃描...';
+      try {
+        localStorage.removeItem('vitalstep_quota_cooldown_map');
+        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${k}`);
+        const listData = await listResp.json();
+        if (listData && Array.isArray(listData.models)) {
+          const flashList = listData.models
+            .filter(x => x.name && x.name.includes('gemini') && (x.supportedGenerationMethods || []).includes('generateContent'))
+            .map(x => x.name.replace(/^models\//, ''))
+            .filter(n => n.includes('flash'));
+          if (st) {
+            st.textContent = `🎉 金鑰驗證成功（零額度消耗）！共偵測到 ${flashList.length} 組可用 Flash/Lite 接力模型！`;
+          }
+          showToast('🎉 金鑰有效！已開啟多模型自動接力保護');
+          return;
+        } else if (listData?.error?.message) {
+          if (st) st.textContent = `❌ 金鑰無效：${listData.error.message}`;
+          alert(`❌ 金鑰驗證失敗：\n${listData.error.message}`);
+          return;
+        }
+      } catch (e) {
+        if (st) st.textContent = `❌ 網路連線失敗：${e.message || '請檢查網路'}`;
       }
     }
 
@@ -925,7 +1008,27 @@
       parts.push({ text: prompt });
 
       let lastErrMsg = '';
-      // 極速呼叫單一主力模型 gemini-3.8-flash（拿掉會拖慢速度的 responseSchema 編譯，並加上 15 秒超時保護，絕不卡住 5 分鐘！）
+      let hitQuotaLimit = false;
+
+      // 讀取單一模型免費額度冷卻表（若某模型今日 20 次滿額，暫時冷卻 45 分鐘直接改派 Lite/其他模型接力）
+      let cooldownMap = {};
+      try {
+        cooldownMap = JSON.parse(localStorage.getItem('vitalstep_quota_cooldown_map') || '{}') || {};
+      } catch (e) { cooldownMap = {}; }
+      const nowTs = Date.now();
+
+      function isModelInCooldown(mName) {
+        const until = cooldownMap[mName];
+        return until && until > nowTs;
+      }
+
+      function markModelQuotaCooldown(mName) {
+        cooldownMap[mName] = Date.now() + 45 * 60 * 1000;
+        try {
+          localStorage.setItem('vitalstep_quota_cooldown_map', JSON.stringify(cooldownMap));
+        } catch (e) {}
+      }
+
       async function tryGenerateWithModel(modelName) {
         const cleanName = modelName.replace(/^models\//, '');
         const controller = new AbortController();
@@ -954,12 +1057,30 @@
         }
       }
 
+      // 🛡️ 多模型免費額度自動接力池：
+      // 當 gemini-3.8-flash 免費版滿每日 20 次 (Quota exceeded) 時，自動無縫切換至獨立免費額度更高的 flash-lite 與其他可用模型！
+      const defaultRelayPool = [
+        'gemini-3.8-flash',
+        'gemini-3.8-flash-lite',
+        'gemini-flash-lite-latest',
+        'gemini-flash-latest',
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite'
+      ];
       const cachedModel = localStorage.getItem('vitalstep_working_gemini_model');
-      const primaryModels = cachedModel && cachedModel !== 'gemini-3.8-flash'
-        ? [cachedModel, 'gemini-3.8-flash']
-        : ['gemini-3.8-flash'];
+      const rawPool = cachedModel ? [cachedModel, ...defaultRelayPool] : defaultRelayPool;
+      const uniquePool = [...new Set(rawPool)];
+      // 未進入額度冷卻的模型優先排前面，冷卻中的排最後保底
+      const orderedPool = [
+        ...uniquePool.filter(m => !isModelInCooldown(m)),
+        ...uniquePool.filter(m => isModelInCooldown(m))
+      ];
 
-      for (const m of primaryModels) {
+      const triedModels = new Set();
+
+      for (const m of orderedPool) {
+        triedModels.add(m);
         try {
           const resData = await tryGenerateWithModel(m);
           if (resData && !resData.error) {
@@ -972,25 +1093,35 @@
               return { ok: true, parsed, usedModel: m };
             }
           } else if (resData?.error?.message) {
-            lastErrMsg = resData.error.message;
+            const msg = resData.error.message;
+            lastErrMsg = msg;
+            if (msg.includes('Quota exceeded') || msg.includes('limit:') || resData.error.code === 429) {
+              hitQuotaLimit = true;
+              markModelQuotaCooldown(m);
+              // 繼續迴圈自動換下一棒模型接力！
+            }
           }
         } catch (err) {
           lastErrMsg = err.message || '連線或解析錯誤';
         }
       }
 
-      // 🔄 自動保底機制：若 Google 未來又改模型版號，自動呼叫 ListModels 查詢該金鑰目前支援的最新 Flash 模型並記住！
+      // 🔄 動態掃描 ListModels：找出帳號內所有支援 generateContent 的 Flash / Lite 模型繼續接力！
       try {
         const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
         const listData = await listResp.json();
         if (listData && Array.isArray(listData.models)) {
-          const availableFlash = listData.models
+          const availableDynamic = listData.models
             .filter(x => x.name && x.name.includes('gemini') && (x.supportedGenerationMethods || []).includes('generateContent'))
             .map(x => x.name.replace(/^models\//, ''))
-            .sort((a, b) => (b.includes('flash') ? 1 : 0) - (a.includes('flash') ? 1 : 0));
+            .filter(n => !n.includes('1.5') && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
+            .sort((a, b) => {
+              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3.8') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
+              return score(b) - score(a);
+            });
 
-          for (const dynModel of availableFlash.slice(0, 2)) {
-            if (primaryModels.includes(dynModel)) continue;
+          for (const dynModel of availableDynamic.slice(0, 5)) {
+            triedModels.add(dynModel);
             const resData = await tryGenerateWithModel(dynModel);
             if (resData && !resData.error) {
               const partsArr = resData.candidates?.[0]?.content?.parts || [];
@@ -1001,10 +1132,25 @@
                 localStorage.setItem('vitalstep_working_gemini_model', dynModel);
                 return { ok: true, parsed, usedModel: dynModel };
               }
+            } else if (resData?.error?.message) {
+              const msg = resData.error.message;
+              lastErrMsg = msg;
+              if (msg.includes('Quota exceeded') || msg.includes('limit:') || resData.error.code === 429) {
+                hitQuotaLimit = true;
+                markModelQuotaCooldown(dynModel);
+              }
             }
           }
         }
       } catch (e) {}
+
+      if (hitQuotaLimit) {
+        return {
+          ok: false,
+          isQuota: true,
+          error: '今日雲端免費額度（單一模型每日 20 次）暫時滿載（美西午夜／台灣時間下午 15:00～16:00 自動重置），已自動切換為「本機智慧營養師判讀」保護您的紀錄！'
+        };
+      }
 
       return { ok: false, error: lastErrMsg || 'API 呼叫失敗，請檢查網路或金鑰額度' };
     }
@@ -1134,14 +1280,19 @@
           swap: parsed.swap || item.report?.swap,
           autoTags: combinedForTags.autoTags,
           summaryBadge: parsed.summaryBadge || combinedForTags.summaryBadge,
-          modeText: '✨ Gemini 視覺+營養判讀'
+          modeText: `✨ Gemini 視覺+營養判讀`
         };
         saveDailyMealLogs();
         renderMealHistory();
         copySingleMealSync(item.id, false);
         showToast('🎉 AI 視覺與營養判讀成功，並已複製同步碼！');
       } else {
-        alert(`雲端 AI 辨識失敗：${aiRes.error || '請確認 API Key 是否正確或稍後再試'}`);
+        // 若所有雲端接力模型皆暫時額度滿載，自動更新本機智慧營養師判讀，確保新改的 note 立即生效！
+        item.report = generateLocalReport(item.mealType, item.note || '', (item.photos || []).length);
+        saveDailyMealLogs();
+        renderMealHistory();
+        copySingleMealSync(item.id, false);
+        alert(`💡 ${aiRes.error || '雲端 AI 暫時無法連線'}\n\n系統已先根據您的文字為您更新「本機營養師 4 點成績單」並複製同步碼，資料完全不會遺失！`);
       }
     }
 
