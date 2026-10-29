@@ -1611,17 +1611,32 @@
       throw new Error('所有 Gemini 備援模型額度均用盡或網路超時，請稍後重試！');
     }
 
+    function getApiKey() {
+      return (localStorage.getItem(ISOLATED_KEY_NAME) || localStorage.getItem('vitalstep_gemini_key') || (document.getElementById('api-key-input')?.value || '')).trim();
+    }
+
     let currentWeeklyReviewData = null;
 
     // 📊 隨時生成本週目前外食 AI 深度診斷（告別罐頭，分析偏食與漏掉的營養）
     async function generateWeeklyAiReview() {
+      const btn = document.getElementById('weekly-ai-gen-btn');
+      const originalText = btn ? btn.textContent : '🤖 生成本週 AI 總結';
+      if (btn) {
+        btn.textContent = '⏳ AI 統整分析中...';
+        btn.disabled = true;
+      }
+
       const key = getApiKey();
       if (!key) {
         showToast('💡 請先在下方設定 Gemini API Key 才能呼叫 AI 分析喔！');
         const box = document.getElementById('key-box');
         if (box) box.style.display = 'block';
+        if (btn) { btn.textContent = originalText; btn.disabled = false; }
         return;
       }
+
+      // 確保今日目前已記錄之餐點也及時存入歷史抽屜
+      mealHistoryByDate[selectedDate] = dailyMealLogs;
 
       // 1. 抓取所選日期所在的「週一 ～ 今天（或週日）」7 天餐食清單
       const refDate = parseLocalDateStr(selectedDate || TODAY);
@@ -1649,14 +1664,10 @@
       }
 
       if (weekLogs.length === 0) {
-        alert('本週目前尚無已儲存的餐點紀錄喔！請先在上方拍幾餐或補充文字後再來分析！');
+        showToast('💡 本週目前尚無餐點記錄，請先拍幾餐或補充文字喔！');
+        if (btn) { btn.textContent = originalText; btn.disabled = false; }
         return;
       }
-
-      const btn = document.getElementById('weekly-ai-gen-btn');
-      const originalText = btn.textContent;
-      btn.textContent = '⏳ AI 統整分析中...';
-      btn.disabled = true;
 
       const prompt = `你是一位溫暖、務實的專業減脂與護肝營養教練。
 使用者的健康防線與日常：體重約 93.5kg，三酸甘油酯(TG) 260，HbA1c 5.7%，通勤長達 3~4 小時(20:00~20:30 到家)，午餐多吃公司週邊便當/外食。
@@ -1689,10 +1700,14 @@ ${weekLogs.join('\n')}
         copyWeeklyAiReview(true);
         showToast('🎉 本週 AI 飲食總評已產出，並已自動複製同步碼！');
       } catch (err) {
-        alert('生成本週 AI 總結失敗：' + (err.message || err));
+        showToast('⚠️ 生成本週 AI 總結失敗：' + (err.message || err));
+        const desc = document.getElementById('weekly-ai-review-desc');
+        if (desc) desc.innerHTML = `<span style="color:var(--danger);">⚠️ 生成失敗：${err.message || err}</span>`;
       } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
+        if (btn) {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
       }
     }
 
