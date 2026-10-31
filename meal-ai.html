@@ -340,7 +340,7 @@
       </div>
 
       <!-- 輸入列 -->
-      <div style="display:flex; gap:6px; margin-bottom:8px;">
+      <div style="display:flex; gap:6px; margin-bottom:12px;">
         <input type="time" id="activity-time-input" style="padding:6px 8px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
         <input type="text" id="activity-text-input" placeholder="例如：捷運走去客戶公司 15 分鐘 / 洗碗擦桌 15 分鐘"
           style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main); outline:none;"
@@ -348,22 +348,34 @@
         <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="addActivityLog()">＋ 記一筆</button>
       </div>
 
-      <!-- 快速情境膠囊 -->
-      <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:12px;">
-        <span class="quick-chip" onclick="quickFillActivity('🍽️ 洗碗收拾廚房 15 分鐘')">🍽️ 洗碗收拾15分</span>
-        <span class="quick-chip" onclick="quickFillActivity('🚶 出門平地步行 15 分鐘')">🚶 出門步行15分</span>
-        <span class="quick-chip" onclick="quickFillActivity('🚌 搭車移動 (坐著休息)')">🚌 搭車移動(休息)</span>
-        <span class="quick-chip" onclick="quickFillActivity('🧹 洗衣服整理家務 20 分鐘')">🧹 做家事整理</span>
-        <span class="quick-chip" onclick="quickFillActivity('🛍️ 採買提重走動 30 分鐘')">🛍️ 採買提重走動</span>
-        <span class="quick-chip" onclick="quickFillActivity('🛋️ 追劇沙發踢腿伸展 15 分鐘')">🛋️ 沙發踢腿伸展</span>
-        <span class="quick-chip" onclick="quickFillActivity('👟 穿厚底拖鞋微踏步 15 分鐘')">👟 厚拖鞋微踏步</span>
-      </div>
-
       <!-- 已記錄時間軸清單 -->
       <div id="activity-timeline-list" style="font-size:12px;"></div>
     </div>
 
-    <!-- 3. 📚 本日已記錄餐食相簿 ＆ AI 總結歷史列表（照片按日保留！） -->
+    <!-- 3. 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・晚上一次結算） -->
+    <div class="card">
+      <div class="card-title">
+        <span>🍵 今日飲水與飲品隨手記</span>
+        <span style="font-size:11px; color:var(--accent); font-weight:800;" id="drink-total-badge">💧 累計 0 ml</span>
+      </div>
+      <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
+        拿鐵、自調芭樂綠茶、超商茶或白開水隨手打字（不用拍照、不耗額度），晚上結算一次同步回主頁！
+      </div>
+
+      <!-- 輸入列 -->
+      <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <input type="time" id="drink-time-input" style="padding:6px 8px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
+        <input type="text" id="drink-text-input" placeholder="例如：芭樂綠茶 350ml / 溫開水 500ml / 拿鐵 250ml"
+          style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main); outline:none;"
+          onkeydown="if(event.key==='Enter') addDrinkLog()">
+        <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="addDrinkLog()">＋ 記一杯</button>
+      </div>
+
+      <!-- 已記錄飲品清單 -->
+      <div id="drink-timeline-list" style="font-size:12px;"></div>
+    </div>
+
+    <!-- 4. 📚 本日已記錄餐食相簿 ＆ AI 總結歷史列表（照片按日保留！） -->
     <div class="card">
       <div class="card-title">
         <span id="meal-history-card-title">📚 本日已拍餐食 & AI 總結</span>
@@ -462,6 +474,7 @@
     const MEAL_AI_DATE_KEY = 'vitalstep_meal_ai_date';
     const MEAL_AI_HISTORY_BY_DATE_KEY = 'vitalstep_meal_ai_history_by_date';
     const ACTIVITY_HISTORY_BY_DATE_KEY = 'vitalstep_activity_history_by_date';
+    const DRINK_HISTORY_BY_DATE_KEY = 'vitalstep_drink_history_by_date';
     const DAY_MODE_BY_DATE_KEY = 'vitalstep_day_mode_by_date';
     const DAILY_AI_SUMMARY_BY_DATE_KEY = 'vitalstep_daily_ai_summary_by_date';
     const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
@@ -488,10 +501,19 @@
         .replace(/"/g, '&quot;');
     }
 
+    function getApiKey() {
+      const inpVal = document.getElementById('isolated-gemini-key')?.value?.trim();
+      if (inpVal) {
+        localStorage.setItem(ISOLATED_KEY_NAME, inpVal);
+      }
+      return localStorage.getItem(ISOLATED_KEY_NAME) || '';
+    }
+
     const TODAY = getLocalDateStr();
     let selectedDate = TODAY;
     let mealHistoryByDate = {};
     let activityHistoryByDate = {};
+    let drinkHistoryByDate = {};
     let dayModeByDate = {};
     let dailyAiSummaryByDate = {};
     let currentDailySummaryData = null;
@@ -499,6 +521,7 @@
     let photos = [];
     let dailyMealLogs = []; // 指向當前所選日期的餐食陣列
     let dailyActivityLogs = []; // 指向當前所選日期的行程清單
+    let dailyDrinkLogs = []; // 指向當前所選日期的飲水清單
 
     function initPage() {
       const now = new Date();
@@ -517,6 +540,8 @@
       document.getElementById('meal-time').value = timeStr;
       const actTimeEl = document.getElementById('activity-time-input');
       if (actTimeEl) actTimeEl.value = timeStr;
+      const drinkTimeEl = document.getElementById('drink-time-input');
+      if (drinkTimeEl) drinkTimeEl.value = timeStr;
 
       // 1. 讀取多日餐食歷史資料庫
       try {
@@ -532,6 +557,14 @@
         if (rawAct) activityHistoryByDate = JSON.parse(rawAct) || {};
       } catch (e) {
         activityHistoryByDate = {};
+      }
+
+      // 讀取飲水飲品資料庫
+      try {
+        const rawDrink = localStorage.getItem(DRINK_HISTORY_BY_DATE_KEY);
+        if (rawDrink) drinkHistoryByDate = JSON.parse(rawDrink) || {};
+      } catch (e) {
+        drinkHistoryByDate = {};
       }
 
       // 讀取生活模式資料庫
@@ -612,6 +645,11 @@
       }
       dailyActivityLogs = activityHistoryByDate[selectedDate];
 
+      if (!drinkHistoryByDate[selectedDate]) {
+        drinkHistoryByDate[selectedDate] = [];
+      }
+      dailyDrinkLogs = drinkHistoryByDate[selectedDate];
+
       if (!dayModeByDate[selectedDate]) {
         const d = parseLocalDateStr(selectedDate);
         const dow = d.getDay();
@@ -623,6 +661,7 @@
       renderModeButtons();
       renderMealHistory();
       renderActivityTimeline();
+      renderDrinkTimeline();
       renderDailyAiSummaryBox();
     }
 
@@ -804,6 +843,77 @@
       `).join('');
     }
 
+    // --- 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・晚上一次結算） ---
+    function extractMlFromText(text) {
+      if (!text) return 300;
+      const match = text.match(/(\d{2,4})\s*(ml|毫升|c\.?c\.?)?/i);
+      if (match) {
+        const val = parseInt(match[1], 10);
+        if (val >= 50 && val <= 3000) return val;
+      }
+      return 300; // 預設一杯約 300ml
+    }
+
+    function addDrinkLog() {
+      const textInp = document.getElementById('drink-text-input');
+      const timeInp = document.getElementById('drink-time-input');
+      const text = (textInp?.value || '').trim();
+      if (!text) {
+        showToast('請先輸入飲品或水分名稱喔！');
+        return;
+      }
+      const time = timeInp?.value || new Date().toTimeString().slice(0, 5);
+      const ml = extractMlFromText(text);
+      const newEntry = {
+        id: Date.now(),
+        time: time,
+        text: text,
+        ml: ml
+      };
+      dailyDrinkLogs.push(newEntry);
+      drinkHistoryByDate[selectedDate] = dailyDrinkLogs;
+      try {
+        localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate));
+      } catch (e) {}
+      textInp.value = '';
+      renderDrinkTimeline();
+      showToast(`✅ 已記錄一杯（約 ${ml}ml）！`);
+    }
+
+    function deleteDrinkLog(id) {
+      dailyDrinkLogs = dailyDrinkLogs.filter(item => item.id !== id);
+      drinkHistoryByDate[selectedDate] = dailyDrinkLogs;
+      try {
+        localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate));
+      } catch (e) {}
+      renderDrinkTimeline();
+    }
+
+    function renderDrinkTimeline() {
+      const container = document.getElementById('drink-timeline-list');
+      const badge = document.getElementById('drink-total-badge');
+      if (!container) return;
+      const totalMl = dailyDrinkLogs.reduce((sum, item) => sum + (item.ml || 0), 0);
+      if (badge) {
+        badge.textContent = `💧 累計 ${totalMl} ml`;
+      }
+      if (!dailyDrinkLogs.length) {
+        container.innerHTML = '<div style="color:var(--text-muted); font-size:11px; padding:6px 0; text-align:center;">尚無飲水記錄，拿鐵、茶飲、白開水隨手打字，晚上一次對齊！</div>';
+        return;
+      }
+      const sorted = dailyDrinkLogs.slice().sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      container.innerHTML = sorted.map(item => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; margin-bottom:6px; background:var(--bg); border:1px solid var(--border); border-radius:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11px; font-weight:800; color:var(--accent); background:var(--accent-light); padding:2px 6px; border-radius:6px; white-space:nowrap;">${item.time}</span>
+            <span style="font-size:12px; color:var(--text-main); font-weight:600;">${escapeHtml(item.text)}</span>
+            <span style="font-size:11px; color:var(--text-muted); font-weight:700;">(${item.ml}ml)</span>
+          </div>
+          <button onclick="deleteDrinkLog(${item.id})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:0 4px;">🗑️</button>
+        </div>
+      `).join('');
+    }
+
     // --- 🤖 今日全日生活與健康防線 AI 智能總結 ---
     function renderDailyAiSummaryBox() {
       const box = document.getElementById('daily-ai-result-box');
@@ -820,6 +930,7 @@
           <div style="margin-bottom:6px;"><strong>⏱️ 有效代謝微活動：</strong> 約 <span style="color:var(--primary); font-weight:800; font-size:13px;">${data.activeMinutes || 0}</span> 分鐘（${escapeHtml(data.activeSummary || '日常走動與家事收拾')}）</div>
           <div style="margin-bottom:6px;"><strong>🛡️ 血糖與 TG 阻斷：</strong> ${escapeHtml(data.glucoseIntercept || '良好')}</div>
           <div style="margin-bottom:6px;"><strong>🍱 飲食營養評定：</strong> ${escapeHtml(data.mealHighlight || '均衡無地雷')}</div>
+          <div style="margin-bottom:6px;"><strong>🍵 水分與飲品評定：</strong> ${escapeHtml(data.waterFeedback || '水分充足')}（今日累計約 <span style="color:var(--accent); font-weight:800;">${data.totalWater || 0}</span> ml）</div>
           <div style="background:var(--bg); padding:8px 10px; border-radius:8px; border-left:3px solid var(--primary); margin-top:8px; font-size:11.5px; line-height:1.6; color:var(--text-main);">
             💬 <strong>健康教練小結：</strong>${escapeHtml(data.coachFeedback || '')}
           </div>
@@ -844,11 +955,14 @@
       const mode = dayModeByDate[selectedDate] || '上班';
       const meals = dailyMealLogs || [];
       const activities = dailyActivityLogs || [];
+      const drinks = dailyDrinkLogs || [];
 
-      if (meals.length === 0 && activities.length === 0) {
-        alert('今日尚無餐食記錄或行程隨手記喔！請先記幾筆餐食或行程再來結算！');
+      if (meals.length === 0 && activities.length === 0 && drinks.length === 0) {
+        alert('今日尚無餐食記錄、行程隨手記或飲水記錄喔！請先記幾筆再來結算！');
         return;
       }
+
+      const totalWater = drinks.reduce((sum, item) => sum + (item.ml || 0), 0);
 
       const btn = document.getElementById('daily-ai-gen-btn');
       const origText = btn.textContent;
@@ -863,6 +977,7 @@
       }).join('\n');
 
       const actsDesc = activities.map(a => `• [${a.time}] ${a.text}`).join('\n');
+      const drinksDesc = drinks.map(d => `• [${d.time}] ${d.text} (${d.ml}ml)`).join('\n');
 
       const prompt = `你是一位溫暖、務實且懂人性的臨床減脂與代謝營養教練。
 使用者的健康數據與背景：
@@ -877,7 +992,10 @@ ${mealsDesc || '（今日尚未記錄餐點）'}
 以下是使用者【${selectedDate}】的真實行程與微活動隨手記流水帳：
 ${actsDesc || '（今日尚未記錄行程微活動）'}
 
-請你綜合分析今日「生活模式 ＋ 餐食 ＋ 行程活動」，以純 JSON 格式回覆：
+以下是使用者【${selectedDate}】的真實飲水與飲品記錄（共約 ${totalWater} ml）：
+${drinksDesc || '（今日尚未記錄飲品水份）'}
+
+請你綜合分析今日「生活模式 ＋ 餐食 ＋ 行程活動 ＋ 飲水飲品」，以純 JSON 格式回覆：
 【核心評估規則】：
 1. 【精準區分靜止 vs 有效代謝微活動】：
    - 自動過濾靜態時間（如：搭車坐著、開會坐著、躺著追劇）。
@@ -885,9 +1003,12 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
    - 洗碗收拾 10~15 分鐘在醫學上完全合格，能刺激比目魚肌與股四頭肌 GLUT-4 抽血糖，請給予明確肯定！
 2. 【餐後血糖與 TG 阻斷判定】：
    - 檢視午餐/早午餐或晚餐後，是否有走動或站立收拾洗碗？有則判定「⭕ 成功攔截血糖轉化為 TG」！
-3. 【疲勞保護機制（最高優先級）】：
+3. 【飲水與飲品評定（TG 260 關鍵阻斷）】：
+   - 檢視水分總量（目標 2000~2400ml）。
+   - 檢視飲品類型：若有拿鐵、自調茶飲（如抹茶對半稀釋芭樂原汁消庫存）、無糖茶或純水，給予溫暖且專業的點評（肯定稀釋減害喝法，提醒白天喝完、晚上純水潤喉）。
+4. 【疲勞保護機制（最高優先級）】：
    - 若使用者下午有外出辦事、採買提重或長時間走動，晚上已很累，請在評語中【強力表揚並指示晚上安心休息放空，絕對免做任何額外運動】！
-4. 【溫暖教練總評】：
+5. 【溫暖教練總評】：
    - 語氣溫暖、懂生活的辛苦，絕不說教、不派補吃補做功課，約 80~130 字。
 
 請以純 JSON 格式輸出（字串內部請勿使用雙引號，可用「」代替）：
@@ -897,6 +1018,7 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
   "activeSummary": "微活動項目加總說明",
   "glucoseIntercept": "血糖攔截評定",
   "mealHighlight": "飲食評定",
+  "waterFeedback": "飲水與飲品評定（含消庫存或補水建議）",
   "coachFeedback": "給 Cherry 的溫暖總評與休息建議（80~130字）",
   "summaryBadge": "15字以內成果徽章"
 }`;
@@ -918,6 +1040,9 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
           activeSummary: parsed.activeSummary || '日常微活動',
           glucoseIntercept: parsed.glucoseIntercept || '⭕ 已完成餐後活動防線',
           mealHighlight: parsed.mealHighlight || '飲食記錄完成',
+          waterFeedback: parsed.waterFeedback || `今日飲水約 ${totalWater}ml`,
+          totalWater: totalWater,
+          drinkLogs: drinks,
           coachFeedback: parsed.coachFeedback || '今天生活節奏調整得很棒，繼續保持！',
           summaryBadge: parsed.summaryBadge || '🌟 今日健康防線已達成',
           updatedAt: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
@@ -934,6 +1059,10 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
       } catch (err) {
         alert('生成今日 AI 總結失敗：' + (err.message || err));
       } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
         btn.textContent = origText;
         btn.disabled = false;
       }
@@ -1115,12 +1244,13 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
       const payload = '【VITALSTEP_MEAL_BACKUP】' + JSON.stringify({
         history: liteHist,
         activities: activityHistoryByDate || {},
+        drinks: drinkHistoryByDate || {},
         modes: dayModeByDate || {},
         summaries: dailyAiSummaryByDate || {},
         exportedAt: new Date().toISOString()
       });
       copyTextToClipboard(payload);
-      alert('💾 已複製所有日期的「餐食、行程微活動與 AI 總結備份碼」到剪貼簿！\n\n您可以貼在 iPhone 備忘錄保存，萬一換手機或重設捷徑，點「📥 貼上備份碼還原」即可秒速救回！');
+      alert('💾 已複製所有日期的「餐食、行程微活動、飲水飲品與 AI 總結備份碼」到剪貼簿！\n\n您可以貼在 iPhone 備忘錄保存，萬一換手機或重設捷徑，點「📥 貼上備份碼還原」即可秒速救回！');
     }
 
     function importMealBackup() {
@@ -1145,6 +1275,14 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
             });
             localStorage.setItem(ACTIVITY_HISTORY_BY_DATE_KEY, JSON.stringify(activityHistoryByDate));
           }
+          if (parsed.drinks && typeof parsed.drinks === 'object') {
+            Object.keys(parsed.drinks).forEach(d => {
+              if (!drinkHistoryByDate[d] || drinkHistoryByDate[d].length === 0) {
+                drinkHistoryByDate[d] = parsed.drinks[d];
+              }
+            });
+            localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate));
+          }
           if (parsed.modes && typeof parsed.modes === 'object') {
             dayModeByDate = { ...dayModeByDate, ...parsed.modes };
             localStorage.setItem(DAY_MODE_BY_DATE_KEY, JSON.stringify(dayModeByDate));
@@ -1154,7 +1292,7 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
             localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
           }
           selectMealDate(selectedDate);
-          showToast('🎉 生活日誌與餐食備份還原成功！');
+          showToast('🎉 生活日誌、餐食與飲水備份還原成功！');
         } else {
           alert('備份碼格式不正確，請確認是否複製完整喔！');
         }
@@ -1953,14 +2091,19 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
       ];
       const uniqueModels = [...new Set(modelsToTry)];
 
+      let lastErrMsg = '';
       for (const mName of uniqueModels) {
         if (isModelInCooldown(mName)) continue;
         try {
           const data = await tryTextGen(mName);
           if (data && data.error) {
+            lastErrMsg = data.error.message || 'API 錯誤';
             if ((data.error.message || '').includes('Quota exceeded') || data.error.code === 429) {
               markModelQuotaCooldown(mName);
               continue;
+            }
+            if ((data.error.message || '').includes('API key not valid') || data.error.code === 400 || data.error.code === 403) {
+              throw new Error(data.error.message || 'API Key 無效，請檢查下方金鑰！');
             }
             continue;
           }
@@ -1971,10 +2114,14 @@ ${actsDesc || '（今日尚未記錄行程微活動）'}
             return textPart.trim();
           }
         } catch (err) {
+          lastErrMsg = err.message || String(err);
+          if ((lastErrMsg || '').includes('API key not valid')) {
+            throw err;
+          }
           continue;
         }
       }
-      throw new Error('所有 Gemini 備援模型額度均用盡或網路超時，請稍後重試！');
+      throw new Error(lastErrMsg || '所有 Gemini 備援模型額度均用盡或網路超時，請稍後重試！');
     }
 
     let currentWeeklyReviewData = null;

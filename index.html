@@ -841,6 +841,15 @@
           </div>
         </div>
 
+        <!-- 📋 今日飲品與水分明細（由 meal-ai 同步匯入） -->
+        <div id="synced-drink-list-box" style="display:none; margin-top:10px; padding:9px 12px; background:var(--bg); border:1px solid var(--border); border-radius:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+            <span style="font-size:11px; font-weight:800; color:var(--accent);">📋 今日已記飲品明細：</span>
+            <span id="synced-drink-count-badge" style="font-size:10px; color:var(--text-muted); font-weight:700;">共 0 杯</span>
+          </div>
+          <div id="synced-drink-list" style="font-size:11px; line-height:1.6; color:var(--text-main);"></div>
+        </div>
+
         <!-- 💧 直接輸入目前總水量 ＆ 自由自訂加減水（打破只能 ±200ml） -->
         <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
           <!-- 第 1 排：直接修改總水量 -->
@@ -1378,6 +1387,7 @@
         weight: '',
         foodLogs: [],
         dayAiSummary: null,
+        drinkLogs: [],
         locked: false,
         lockedAt: null
       };
@@ -1396,6 +1406,7 @@
       streak: 0,
       foodLogs: [],
       dayAiSummary: null,
+      drinkLogs: [],
       pantryText: '',
       customMenuPlan: null,
       locked: false,
@@ -1445,6 +1456,7 @@
       state.weight = dayRec.weight !== undefined ? dayRec.weight : '';
       state.foodLogs = Array.isArray(dayRec.foodLogs) ? dayRec.foodLogs : [];
       state.dayAiSummary = dayRec.dayAiSummary || null;
+      state.drinkLogs = Array.isArray(dayRec.drinkLogs) ? dayRec.drinkLogs : [];
       state.locked = !!dayRec.locked;
       state.lockedAt = dayRec.lockedAt || null;
 
@@ -1901,6 +1913,12 @@
             }
             if (!historyByDate[targetDate].locked) {
               historyByDate[targetDate].dayAiSummary = sumData;
+              if (sumData.totalWater && sumData.totalWater > 0) {
+                historyByDate[targetDate].water = sumData.totalWater;
+              }
+              if (Array.isArray(sumData.drinkLogs)) {
+                historyByDate[targetDate].drinkLogs = sumData.drinkLogs;
+              }
               addedCount++;
             }
             return;
@@ -1949,6 +1967,7 @@
         weight: state.weight !== undefined ? state.weight : '',
         foodLogs: Array.isArray(state.foodLogs) ? state.foodLogs : [],
         dayAiSummary: state.dayAiSummary || null,
+        drinkLogs: Array.isArray(state.drinkLogs) ? state.drinkLogs : [],
         locked: !!state.locked,
         lockedAt: state.lockedAt || null
       };
@@ -2472,6 +2491,27 @@
       if (summaryText) {
         summaryText.textContent = `已喝約 ${(w / 600).toFixed(1)} 壺保溫杯`;
       }
+
+      // 渲染來自 meal-ai 同步的飲品明細清單
+      const drinkBox = document.getElementById('synced-drink-list-box');
+      const drinkList = document.getElementById('synced-drink-list');
+      const drinkCountBadge = document.getElementById('synced-drink-count-badge');
+      const drinks = Array.isArray(state.drinkLogs) ? state.drinkLogs : [];
+      if (drinkBox && drinkList) {
+        if (drinks.length > 0) {
+          if (drinkCountBadge) drinkCountBadge.textContent = `共 ${drinks.length} 杯`;
+          drinkList.innerHTML = drinks.map(d => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-bottom:1px dashed rgba(0,0,0,0.06); font-size:11px;">
+              <span><strong style="color:var(--accent); font-size:10px;">${escapeHtml(d.time || '')}</strong> ${escapeHtml(d.text || '')}</span>
+              <span style="font-weight:700; color:var(--text-muted); font-size:10px;">${d.ml || 0}ml</span>
+            </div>
+          `).join('');
+          drinkBox.style.display = 'block';
+        } else {
+          drinkBox.style.display = 'none';
+          drinkList.innerHTML = '';
+        }
+      }
     }
 
     // --- 每日步數、手錶運動圈與手動補記明細處理 ---
@@ -2850,12 +2890,27 @@
           historyByDate[targetDate] = createEmptyDayRecord();
         }
         historyByDate[targetDate].dayAiSummary = data;
+        if (data.totalWater && data.totalWater > 0) {
+          historyByDate[targetDate].water = data.totalWater;
+        }
+        if (Array.isArray(data.drinkLogs)) {
+          historyByDate[targetDate].drinkLogs = data.drinkLogs;
+        }
+
         if (targetDate === selectedDate) {
           state.dayAiSummary = data;
+          if (data.totalWater && data.totalWater > 0) {
+            state.water = data.totalWater;
+            state.thermosCount = Math.min(4, Math.floor(state.water / 600));
+          }
+          if (Array.isArray(data.drinkLogs)) {
+            state.drinkLogs = data.drinkLogs;
+          }
         }
 
         save();
         renderDayAiSummary();
+        renderWater();
         const input = document.getElementById('food-note-input');
         if (input && input.value.includes('【VITALSTEP_DAY_AI_SUMMARY】')) input.value = '';
         showToast('🎉 已成功匯入【今日生活與健康防線 AI 總結】！');
