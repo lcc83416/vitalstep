@@ -620,7 +620,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.6 <span class="tag">3大防線・每週AI診斷</span></div>
+        <div class="logo-title">微步輕健 5.7 <span class="tag">雙軌模式・生活隨手記</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -691,6 +691,15 @@
         </div>
       </div>
 
+      <!-- 🤖 今日全日 AI 生活與健康防線總結卡片（由 meal-ai 同步匯入） -->
+      <div id="day-ai-summary-card" class="card" style="display:none; background:linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08)); border:1.5px solid var(--primary);">
+        <div class="card-title" style="color:var(--primary); margin-bottom:6px;">
+          <span>🤖 今日生活與健康防線 AI 總結</span>
+          <span class="tag" id="day-ai-mode-tag">上班模式</span>
+        </div>
+        <div id="day-ai-summary-content" style="font-size:12px; line-height:1.6; color:var(--text-main);"></div>
+      </div>
+
       <!-- 每日步數、手錶運動圈與手動補記明細、體重記錄 -->
       <div class="card">
         <div class="card-title">
@@ -756,15 +765,15 @@
       <!-- 今日進度 -->
       <div class="card">
         <div class="card-title">
-          <span>🎯 今日 4 大時段防線達成率</span>
+          <span>🎯 今日時段防線達成率</span>
           <span id="progress-pct" style="color:var(--primary); font-weight:800;">0%</span>
         </div>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" id="progress-bar"></div>
         </div>
         <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
-          <span id="progress-count">完成 0 / 4 個時段行動</span>
-          <span id="encouragement">綁定飯後追劇與洗澡前，零裝備動滿 30 分鐘！</span>
+          <span id="progress-count">完成 0 / 3 個時段行動</span>
+          <span id="encouragement">順應真實作息：午餐動、晚餐動、睡前不宵夜！</span>
         </div>
       </div>
 
@@ -859,14 +868,14 @@
             </div>
           </div>
 
-          <!-- 第 3 排：常用容器快速加水膠囊 -->
-          <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+          <!-- 第 3 排：常用快速加水膠囊（純數字極簡） -->
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
             <span style="font-size:10px; color:var(--text-muted);">常用快捷：</span>
-            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(150)">+150ml (馬克杯)</span>
-            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(250)">+250ml (咖啡)</span>
-            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(350)">+350ml (茶杯)</span>
-            <span class="pantry-chip" style="padding:2px 7px; font-size:10px;" onclick="addWater(500)">+500ml (瓶裝茶)</span>
-            <span class="pantry-chip" style="padding:2px 7px; font-size:10px; color:var(--text-muted);" onclick="resetWaterZero()">🧹 歸零</span>
+            <span class="pantry-chip" style="padding:2px 9px; font-size:11px; font-weight:700;" onclick="addWater(150)">+150</span>
+            <span class="pantry-chip" style="padding:2px 9px; font-size:11px; font-weight:700;" onclick="addWater(250)">+250</span>
+            <span class="pantry-chip" style="padding:2px 9px; font-size:11px; font-weight:700;" onclick="addWater(350)">+350</span>
+            <span class="pantry-chip" style="padding:2px 9px; font-size:11px; font-weight:700;" onclick="addWater(500)">+500</span>
+            <span class="pantry-chip" style="padding:2px 9px; font-size:11px; color:var(--text-muted);" onclick="resetWaterZero()">🧹 歸零</span>
           </div>
         </div>
       </div>
@@ -912,18 +921,7 @@
               oninput="updateAiAdvice()">
           </div>
 
-          <!-- 常用飲食快速點選膠囊（1秒填入） -->
-          <div style="margin-bottom:10px;">
-            <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選一鍵填入常吃項目（會自動觸發上方健檢雷達）：</div>
-            <div>
-              <span class="pantry-chip" onclick="quickAddFoodText('無糖豆漿')">+ 無糖豆漿</span>
-              <span class="pantry-chip" onclick="quickAddFoodText('超商無糖綠茶')">+ 超商無糖綠茶</span>
-              <span class="pantry-chip" onclick="quickAddFoodText('煎魚便當(表面薄粉)')">+ 煎魚便當(薄粉)</span>
-              <span class="pantry-chip" onclick="quickAddFoodText('茶葉蛋')">+ 茶葉蛋</span>
-              <span class="pantry-chip" onclick="quickAddFoodText('滷雞腿去皮便當')">+ 滷雞腿去皮</span>
-              <span class="pantry-chip" onclick="quickAddFoodText('午餐吃飽後吃餅乾')">+ 午餐後吃餅乾</span>
-            </div>
-          </div>
+
 
           <div id="ai-advice-box" style="margin-bottom:10px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6; display:none; border:1px solid var(--border);"></div>
 
@@ -1379,6 +1377,7 @@
         exMins: '',
         weight: '',
         foodLogs: [],
+        dayAiSummary: null,
         locked: false,
         lockedAt: null
       };
@@ -1396,6 +1395,7 @@
       followup: '2027-01-26',
       streak: 0,
       foodLogs: [],
+      dayAiSummary: null,
       pantryText: '',
       customMenuPlan: null,
       locked: false,
@@ -1444,6 +1444,7 @@
       state.exMins = (wMins + mMins > 0) ? (wMins + mMins) : (dayRec.exMins !== undefined ? dayRec.exMins : '');
       state.weight = dayRec.weight !== undefined ? dayRec.weight : '';
       state.foodLogs = Array.isArray(dayRec.foodLogs) ? dayRec.foodLogs : [];
+      state.dayAiSummary = dayRec.dayAiSummary || null;
       state.locked = !!dayRec.locked;
       state.lockedAt = dayRec.lockedAt || null;
 
@@ -1602,9 +1603,46 @@
       renderDietAutoRadar();
       renderWater();
       renderFoodLogs();
+      renderDayAiSummary();
       updateProgress();
       renderStats();
       updateCoachFeedback();
+    }
+
+    function renderDayAiSummary() {
+      const card = document.getElementById('day-ai-summary-card');
+      const modeTag = document.getElementById('day-ai-mode-tag');
+      const contentEl = document.getElementById('day-ai-summary-content');
+      if (!card || !contentEl) return;
+      const data = state.dayAiSummary;
+      if (data && (data.coachFeedback || data.summaryBadge)) {
+        if (modeTag) {
+          modeTag.textContent = (data.mode || '上班') + '模式';
+          modeTag.style.background = (data.mode === '休假') ? 'var(--accent-light)' : 'var(--primary-light)';
+          modeTag.style.color = (data.mode === '休假') ? 'var(--accent)' : 'var(--primary)';
+        }
+        contentEl.innerHTML = `
+          <div style="font-weight:800; color:var(--primary); font-size:12px; margin-bottom:6px;">
+            ${escapeHtml(data.summaryBadge || '🌟 今日生活健康防線達成')}
+          </div>
+          <div style="font-size:11px; margin-bottom:5px;">
+            <strong>⏱️ 有效代謝微活動：</strong> 約 <span style="color:var(--primary); font-weight:800; font-size:13px;">${data.activeMinutes || 0}</span> 分鐘（${escapeHtml(data.activeSummary || '日常活動')}）
+          </div>
+          <div style="font-size:11px; margin-bottom:5px;">
+            <strong>🛡️ 血糖/TG阻斷：</strong> ${escapeHtml(data.glucoseIntercept || '良好')}
+          </div>
+          <div style="font-size:11px; margin-bottom:6px;">
+            <strong>🍱 飲食營養評定：</strong> ${escapeHtml(data.mealHighlight || '均衡無地雷')}
+          </div>
+          <div style="background:var(--bg); padding:8px 10px; border-radius:8px; border-left:3px solid var(--primary); font-size:11px; line-height:1.55; color:var(--text-main);">
+            💬 <strong>AI 教練小結：</strong>${escapeHtml(data.coachFeedback || '')}
+          </div>
+        `;
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+        contentEl.innerHTML = '';
+      }
     }
 
     function selectDate(dateStr) {
@@ -1757,7 +1795,7 @@
         }
       } else {
         const msg = `確定要結算並鎖定【${selectedDate}】的紀錄嗎？\n\n` +
-          `• 時段打卡：完成 ${doneCount} / 4 項\n` +
+          `• 時段打卡：完成 ${doneCount} / ${HABITS.length} 項\n` +
           `• 餐食記錄：共 ${foodCount} 筆\n` +
           `• 飲水紀錄：${waterVal} ml\n` +
           `• 活動時間：${state.exMins ? (state.manualExMins > 0 ? `${state.exMins} 分鐘 (錶${state.watchExMins || 0}+補${state.manualExMins})` : `${state.exMins} 分鐘`) : '未填'}\n\n` +
@@ -1855,6 +1893,19 @@
 
         let addedCount = 0;
         inbox.forEach(syncItem => {
+          if (syncItem.type === 'DAY_AI_SUMMARY' && syncItem.payload) {
+            const sumData = syncItem.payload;
+            const targetDate = sumData.date || selectedDate || TODAY;
+            if (!historyByDate[targetDate]) {
+              historyByDate[targetDate] = createEmptyDayRecord();
+            }
+            if (!historyByDate[targetDate].locked) {
+              historyByDate[targetDate].dayAiSummary = sumData;
+              addedCount++;
+            }
+            return;
+          }
+
           const targetDate = syncItem.date || selectedDate || TODAY;
           if (!historyByDate[targetDate]) {
             historyByDate[targetDate] = createEmptyDayRecord();
@@ -1878,7 +1929,7 @@
           loadDayIntoState(selectedDate);
           save();
           refreshAllDayUI();
-          showToast(`✅ 已自動從 AI 拍照頁同步 ${addedCount} 筆餐點成績單！`);
+          showToast(`✅ 已自動從生活/AI 頁面同步成果！`);
         }
       } catch (e) {
         console.warn('Sync inbox check error:', e);
@@ -1897,6 +1948,7 @@
         exMins: state.exMins !== undefined ? state.exMins : '',
         weight: state.weight !== undefined ? state.weight : '',
         foodLogs: Array.isArray(state.foodLogs) ? state.foodLogs : [],
+        dayAiSummary: state.dayAiSummary || null,
         locked: !!state.locked,
         lockedAt: state.lockedAt || null
       };
@@ -2154,7 +2206,7 @@
           const isSelected = (dStr === selectedDate);
           const isFuture = (dStr > TODAY);
 
-          // 計算長條高度（若完成打卡按 1~4 比例；若尚未勾打卡但有記餐點也給基礎高度顯示有紀錄）
+          // 計算長條高度（按打卡比例；若尚未勾打卡但有記餐點也給基礎高度顯示有紀錄）
           let barHeight = 10;
           let barBg = 'var(--border)';
           let topBadge = '-';
@@ -2162,13 +2214,13 @@
           if (doneCount > 0) {
             barHeight = Math.round(20 + (doneCount / HABITS.length) * 56); // 34px ~ 76px
             barBg = 'var(--primary)';
-            topBadge = `${isLocked ? '🔒' : ''}${doneCount}/4`;
+            topBadge = `${isLocked ? '🔒' : ''}${doneCount}/${HABITS.length}`;
           } else if (foodCount > 0 || (rec && (rec.steps || rec.exMins))) {
             barHeight = 20;
             barBg = 'var(--accent)';
             topBadge = `${isLocked ? '🔒' : ''}已記餐`;
           } else if (isLocked) {
-            topBadge = '🔒0/4';
+            topBadge = `🔒0/${HABITS.length}`;
           }
 
           const mmdd = `${dObj.getMonth() + 1}/${dObj.getDate()}`;
@@ -2564,8 +2616,10 @@
       }
 
       // 時段行動打卡綜合
-      if (doneHabits >= 3) {
-        msgs.push(`✨ 時段防線已完成 ${doneHabits} / 4 項，週末到「📊 每週統計」就能看見整週累積的成果！`);
+      if (doneHabits >= HABITS.length) {
+        msgs.push(`✨ 今日時段防線已全數達標（${doneHabits} / ${HABITS.length} 項）！飲食攔截與微活動都做得很扎實！`);
+      } else if (doneHabits > 0) {
+        msgs.push(`✨ 時段防線已完成 ${doneHabits} / ${HABITS.length} 項，週末到「📊 每週統計」就能看見整週累積的成果！`);
       }
 
       if (msgs.length === 0) {
@@ -2733,9 +2787,12 @@
       }, 2500);
     }
 
-    // 📋 跨 iPhone 雙桌面捷徑：從剪貼簿一鍵匯入 AI 餐食成績單（支援單筆或今日整批匯入）
+    // 📋 跨 iPhone 雙桌面捷徑：從剪貼簿一鍵匯入 AI 餐食成績單（支援單筆、今日整批或全日AI總結）
     function importSyncTokenString(rawStr) {
       if (!rawStr) return false;
+      if (rawStr.includes('【VITALSTEP_DAY_AI_SUMMARY】')) {
+        return importDailyAiSummaryTokenString(rawStr);
+      }
       if (rawStr.includes('【VITALSTEP_WEEKLY_AI_SUMMARY】')) {
         return importWeeklyAiSummaryTokenString(rawStr);
       }
@@ -2776,6 +2833,35 @@
         return true;
       } catch (e) {
         console.warn('Parse sync token failed:', e);
+        return false;
+      }
+    }
+
+    // 📋 匯入今日全日生活與健康防線 AI 智能總結
+    function importDailyAiSummaryTokenString(rawStr) {
+      if (!rawStr || !rawStr.includes('【VITALSTEP_DAY_AI_SUMMARY】')) return false;
+      try {
+        const jsonPart = rawStr.split('【VITALSTEP_DAY_AI_SUMMARY】')[1].trim();
+        const data = JSON.parse(jsonPart);
+        if (!data || !data.coachFeedback) return false;
+
+        const targetDate = data.date || selectedDate || TODAY;
+        if (!historyByDate[targetDate]) {
+          historyByDate[targetDate] = createEmptyDayRecord();
+        }
+        historyByDate[targetDate].dayAiSummary = data;
+        if (targetDate === selectedDate) {
+          state.dayAiSummary = data;
+        }
+
+        save();
+        renderDayAiSummary();
+        const input = document.getElementById('food-note-input');
+        if (input && input.value.includes('【VITALSTEP_DAY_AI_SUMMARY】')) input.value = '';
+        showToast('🎉 已成功匯入【今日生活與健康防線 AI 總結】！');
+        return true;
+      } catch (e) {
+        console.warn('Import daily AI summary failed:', e);
         return false;
       }
     }
