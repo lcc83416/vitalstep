@@ -1483,12 +1483,13 @@
           dayRec.habits = { ...state.habits };
         }
 
-        const sumActMins = Number(sum.activeMinutes) || 0;
-        if (sumActMins > 0 && (!state.manualExMins || Number(state.manualExMins) === 0)) {
-          state.manualExMins = sumActMins;
-          dayRec.manualExMins = sumActMins;
+        // 💡 智慧防線回正：手錶運動圈歸手錶，行程微活動歸 AI 評定！
+        // 若先前版本誤把 AI activeMinutes 塞入手動補記，且使用者有戴手錶(watchExMins > 0)，自動回正清空手動補記，拒絕雙倍灌水！
+        if (dayRec.watchExMins > 0 && dayRec.manualExMins && Number(dayRec.manualExMins) === Number(sum.activeMinutes)) {
+          dayRec.manualExMins = '';
+          state.manualExMins = '';
           const wM = parseInt(state.watchExMins, 10) || 0;
-          state.exMins = (wM + sumActMins > 0) ? (wM + sumActMins) : '';
+          state.exMins = wM > 0 ? wM : '';
           dayRec.exMins = state.exMins;
           autoUpdated = true;
         }
@@ -2952,15 +2953,13 @@
         targetRec.habits.bedtime_2hr_fast = true;
       }
 
-      // 2. ⏱️ 自動補入手動微活動分鐘數
-      const actMins = Number(data.activeMinutes) || 0;
-      if (actMins > 0) {
-        const curMins = parseInt(targetRec.manualExMins, 10) || 0;
-        if (actMins > curMins) {
-          targetRec.manualExMins = actMins;
-          const wM = parseInt(targetRec.watchExMins, 10) || 0;
-          targetRec.exMins = (wM + actMins > 0) ? (wM + actMins) : '';
-        }
+      // 2. ⏱️ 權責分明：手錶運動圈歸手錶，日誌微活動歸 AI 評定！
+      // 絕不自動強塞 manualExMins，避免與 Apple Watch 手錶運動圈重複雙倍灌水！
+      // 若先前曾被誤填 manualExMins 剛好等於 activeMinutes，且有戴手錶(watchExMins > 0)，自動清空回正
+      if (targetRec.watchExMins > 0 && Number(targetRec.manualExMins) === Number(data.activeMinutes)) {
+        targetRec.manualExMins = '';
+        const wM = parseInt(targetRec.watchExMins, 10) || 0;
+        targetRec.exMins = wM > 0 ? wM : '';
       }
 
       // 3. 🍱 自動補入三餐記錄（避免重複）
@@ -3014,7 +3013,7 @@
 
         const input = document.getElementById('food-note-input');
         if (input && input.value.includes('【VITALSTEP_DAY_AI_SUMMARY】')) input.value = '';
-        showToast(`🎉 今日成果已全面對齊同步！3大防線完成 ${res.habitsCount}/3 項${res.activeMinutes > 0 ? `、微活動 ${res.activeMinutes} 分` : ''}！`);
+        showToast(`🎉 今日成果已全面對齊同步！3大防線完成 ${res.habitsCount}/3 項！`);
         return true;
       } catch (e) {
         console.warn('Import daily AI summary failed:', e);
