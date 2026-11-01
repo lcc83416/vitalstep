@@ -244,7 +244,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & AI 總結 <span class="tag">v5.7.1 雙軌・隨手記</span></div>
+        <div class="logo-title">生活日誌 & AI 總結 <span class="tag">v5.8 智慧生活對齊</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -281,10 +281,23 @@
       </div>
     </div>
 
-    <!-- 🛡️ 物理隔離與自動留存說明 -->
-    <div style="background:var(--primary-light); border:1px solid rgba(5,150,105,0.3); color:var(--text-main); padding:10px 12px; border-radius:12px; font-size:11px; line-height:1.5; margin-bottom:12px;">
-      🛡️ <strong>生活隨手記 ＋ 物理隔離個資</strong><br>
-      在此頁拍照記餐食、記零碎行程微活動，晚上點<strong>「🤖 結算今日 AI 總結」</strong>一鍵對齊健康防線並同步回主頁！
+    <!-- 🤖 1. 今日生活與健康防線 AI 智能總結（置頂最上方，一鍵結算與複製最順手！） -->
+    <div class="card" style="margin-bottom:12px; background:linear-gradient(135deg, rgba(5,150,105,0.1), rgba(2,132,199,0.1)); border:1.5px solid var(--primary); padding:12px 14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <span style="font-size:13px; font-weight:800; color:var(--primary);">🤖 結算今日生活與健康防線 (AI 智能對齊)</span>
+        <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:6px 12px; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(5,150,105,0.25);" onclick="generateDailyAiReview()">
+          ✨ 生成今日 AI 總結
+        </button>
+      </div>
+      <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="daily-ai-review-desc">
+        白天可隨時結算！客觀整合已記餐食、行程微活動與飲水，自動對齊 3 大防線，一鍵複製同步回主頁！
+      </div>
+      <div id="daily-ai-result-box" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
+        <div id="daily-ai-result-content" style="font-size:11px; line-height:1.65; color:var(--text-main); margin-bottom:8px; background:var(--card-bg); padding:10px 12px; border-radius:10px; border:1px solid var(--border);"></div>
+        <button class="btn btn-primary" id="copy-daily-ai-btn" style="width:100%; padding:10px; font-size:12px; font-weight:800; background:linear-gradient(135deg, #059669, #0284c7);" onclick="copyDailyAiReview()">
+          📋 複製今日 AI 總結同步碼（回主頁貼上）
+        </button>
+      </div>
     </div>
 
     <!-- 1. 新增餐食拍照與補充文字卡片 -->
@@ -350,6 +363,9 @@
 
       <!-- 已記錄時間軸清單 -->
       <div id="activity-timeline-list" style="font-size:12px;"></div>
+
+      <!-- 🎯 3 大防線即時對齊預覽（由行程隨手記即時換算，不用等到晚上猜測） -->
+      <div id="activity-habits-preview" style="margin-top:8px; padding:8px 10px; background:var(--bg); border:1px dashed var(--border); border-radius:10px;"></div>
     </div>
 
     <!-- 3. 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・晚上一次結算） -->
@@ -375,32 +391,13 @@
       <div id="drink-timeline-list" style="font-size:12px;"></div>
     </div>
 
-    <!-- 4. 📚 本日已記錄餐食相簿 ＆ AI 總結歷史列表（照片按日保留！） -->
+    <!-- 4. 📚 本日已記錄餐食相簿 ＆ 本週總評（照片按日保留！） -->
     <div class="card">
       <div class="card-title">
-        <span id="meal-history-card-title">📚 本日已拍餐食 & AI 總結</span>
+        <span id="meal-history-card-title">📚 本日餐食紀錄相簿</span>
         <button class="btn btn-primary" style="padding:5px 10px; font-size:11px;" onclick="copyAllTodayMeals()">
           📋 複製本日全部餐食
         </button>
-      </div>
-
-      <!-- 🤖 今日全日生活與健康防線 AI 智能總結 -->
-      <div style="margin-bottom:12px; background:linear-gradient(135deg, rgba(5,150,105,0.1), rgba(2,132,199,0.1)); border:1.5px solid var(--primary); border-radius:12px; padding:12px 14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <span style="font-size:13px; font-weight:800; color:var(--primary);">🤖 結算今日生活與健康防線 (AI 智能對齊)</span>
-          <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:5px 11px; font-size:11px;" onclick="generateDailyAiReview()">
-            ✨ 生成今日 AI 總結
-          </button>
-        </div>
-        <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="daily-ai-review-desc">
-          結合今日「餐食內容 ＋ 行程微活動 ＋ 生活模式」，客觀計算代謝微活動時間，給予疲勞保護評價與血糖阻斷判定，一鍵同步回主頁！
-        </div>
-        <div id="daily-ai-result-box" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
-          <div id="daily-ai-result-content" style="font-size:11px; line-height:1.65; color:var(--text-main); margin-bottom:8px; background:var(--card-bg); padding:10px 12px; border-radius:10px; border:1px solid var(--border);"></div>
-          <button class="btn btn-primary" id="copy-daily-ai-btn" style="width:100%; padding:9px; font-size:11px;" onclick="copyDailyAiReview()">
-            📋 複製今日 AI 總結同步碼（回每日進度貼上）
-          </button>
-        </div>
       </div>
 
       <!-- 📊 本週飲食 AI 深度總評（隨時點選・不限週日・告別罐頭） -->
@@ -847,11 +844,97 @@
       renderActivityTimeline();
     }
 
+    // 💡 智慧防線與微活動本機自動對齊解析器（雙重保險：即使離線或不耗 AI 也能精準判定）
+    function evaluateDailyHabitsFromData(activities = [], meals = [], drinks = []) {
+      let lunchMove = false;
+      let lunchReason = '';
+      let dinnerStep = false;
+      let dinnerReason = '';
+      let bedtimeFast = false;
+      let bedtimeReason = '';
+      let totalActiveMinutes = 0;
+      let activityItems = [];
+
+      activities.forEach(item => {
+        const text = (item.text || '').toLowerCase();
+        const time = item.time || '';
+        
+        let mins = 0;
+        const minMatch = text.match(/(\d{1,3})\s*(分|分鐘|mins?|min|m\b)/i);
+        if (minMatch) {
+          mins = parseInt(minMatch[1], 10);
+        } else {
+          if (/洗碗|擦桌|收拾|整理|家事/.test(text)) mins = 12;
+          else if (/踏步|超慢跑|快走|散步|走路|步行/.test(text)) mins = 15;
+          else if (/提腿|甩腿|踢腿|椅子操|墊腳|提踵/.test(text)) mins = 10;
+        }
+        if (mins > 0) {
+          totalActiveMinutes += mins;
+          activityItems.push(`${item.text} (${mins}分)`);
+        }
+
+        const isLunchKeyword = /午餐|中午|午休/.test(text);
+        const isLunchTime = (time >= '11:00' && time <= '15:00');
+        const hasMoveAction = /收拾|踏步|散步|走|洗碗|動|操|踢腿|甩腿|墊腳|提踵|整理|家事/.test(text);
+        if ((isLunchKeyword && hasMoveAction) || (isLunchTime && hasMoveAction)) {
+          if (mins >= 10 || text.includes('踏步') || text.includes('散步') || text.includes('收拾') || text.includes('洗碗')) {
+            lunchMove = true;
+            lunchReason = `${time} ${item.text}`;
+          }
+        }
+
+        const isDinnerKeyword = /晚餐|晚上|追劇|沙發|看劇/.test(text);
+        const isDinnerTime = (time >= '17:00' && time <= '22:30');
+        if ((isDinnerKeyword && hasMoveAction) || (isDinnerTime && hasMoveAction)) {
+          if (mins >= 10 || text.includes('踏步') || text.includes('甩腿') || text.includes('踢腿') || text.includes('收拾') || text.includes('洗碗')) {
+            dinnerStep = true;
+            dinnerReason = `${time} ${item.text}`;
+          }
+        }
+      });
+
+      // 睡前防線檢驗：晚餐結束且無深夜高糖宵夜
+      const dinnerMeal = meals.find(m => (m.mealType === '晚餐' || (m.time && m.time >= '17:00' && m.time <= '21:00')));
+      const lateSnack = meals.find(m => {
+        if (m.mealType === '宵夜') return true;
+        if (m.mealType === '點心' || m.mealType === '點心零食') {
+          if (m.time && m.time >= '21:00') return true;
+        }
+        const note = (m.note || '').toLowerCase();
+        if (/宵夜|泡麵|炸雞|鹹酥雞|蛋糕|甜食|冰淇淋/.test(note) && m.time && m.time >= '21:00') return true;
+        return false;
+      });
+
+      if (dinnerMeal && !lateSnack) {
+        bedtimeFast = true;
+        bedtimeReason = `晚餐在 ${dinnerMeal.time || '傍晚'} 結束，零宵夜`;
+      } else if (!lateSnack && (lunchMove || dinnerStep || activities.length > 0)) {
+        bedtimeFast = true;
+        bedtimeReason = '今日未記任何宵夜，守住肝臟夜間燃脂';
+      }
+
+      return {
+        habits: {
+          lunch_move_15m: lunchMove,
+          dinner_step_15m: dinnerStep,
+          bedtime_2hr_fast: bedtimeFast
+        },
+        reasons: {
+          lunch: lunchReason,
+          dinner: dinnerReason,
+          bedtime: bedtimeReason
+        },
+        activeMinutes: totalActiveMinutes,
+        activeSummary: activityItems.length > 0 ? activityItems.join('、') : '日常微活動'
+      };
+    }
+
     function renderActivityTimeline() {
       const container = document.getElementById('activity-timeline-list');
       if (!container) return;
       if (!dailyActivityLogs.length) {
         container.innerHTML = '<div style="color:var(--text-muted); font-size:11px; padding:6px 0; text-align:center;">尚無行程記錄，洗碗、出門步行、做家事隨手記一筆，AI 會自動計算！</div>';
+        renderActivityHabitsPreview();
         return;
       }
       const sorted = dailyActivityLogs.slice().sort((a, b) => (a.time || '').localeCompare(b.time || ''));
@@ -864,6 +947,34 @@
           <button onclick="deleteActivityLog(${item.id})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:0 4px;">🗑️</button>
         </div>
       `).join('');
+      renderActivityHabitsPreview();
+    }
+
+    function renderActivityHabitsPreview() {
+      const previewEl = document.getElementById('activity-habits-preview');
+      if (!previewEl) return;
+      const res = evaluateDailyHabitsFromData(dailyActivityLogs, dailyMealLogs, dailyDrinkLogs);
+      const h = res.habits;
+      const doneCount = (h.lunch_move_15m ? 1 : 0) + (h.dinner_step_15m ? 1 : 0) + (h.bedtime_2hr_fast ? 1 : 0);
+      const pct = Math.round((doneCount / 3) * 100);
+
+      previewEl.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:11px; font-weight:800; color:var(--primary);">🎯 防線即時對齊預覽：完成 ${doneCount} / 3 項 (${pct}%)</span>
+          <span style="font-size:10px; color:var(--text-muted);">微活動約 ${res.activeMinutes} 分</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:10px;">
+          <span style="padding:2px 7px; border-radius:6px; background:${h.lunch_move_15m ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.lunch_move_15m ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.lunch_move_15m ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; font-weight:700;">
+            ${h.lunch_move_15m ? '✅' : '⚪'} 午餐微動${res.reasons.lunch ? ' (' + res.reasons.lunch.slice(0, 10) + ')' : ''}
+          </span>
+          <span style="padding:2px 7px; border-radius:6px; background:${h.dinner_step_15m ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.dinner_step_15m ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.dinner_step_15m ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; font-weight:700;">
+            ${h.dinner_step_15m ? '✅' : '⚪'} 晚餐微動${res.reasons.dinner ? ' (' + res.reasons.dinner.slice(0, 10) + ')' : ''}
+          </span>
+          <span style="padding:2px 7px; border-radius:6px; background:${h.bedtime_2hr_fast ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.bedtime_2hr_fast ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.bedtime_2hr_fast ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; font-weight:700;">
+            ${h.bedtime_2hr_fast ? '✅' : '⚪'} 睡前零宵夜
+          </span>
+        </div>
+      `;
     }
 
     // --- 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・晚上一次結算） ---
@@ -994,15 +1105,53 @@
     function renderDailyAiSummaryBox() {
       const box = document.getElementById('daily-ai-result-box');
       const contentEl = document.getElementById('daily-ai-result-content');
-      const data = dailyAiSummaryByDate[selectedDate];
+      let data = dailyAiSummaryByDate[selectedDate];
       if (!box || !contentEl) return;
       if (data) {
+        // 若歷史總結中遺漏 habits 或 activeMinutes，以本機智慧解析自動校準補正
+        if (!data.habits || Object.keys(data.habits).length === 0 || !data.foodLogs) {
+          const autoEval = evaluateDailyHabitsFromData(dailyActivityLogs, dailyMealLogs, dailyDrinkLogs);
+          data.habits = {
+            lunch_move_15m: Boolean(data.habits?.lunch_move_15m || autoEval.habits.lunch_move_15m),
+            dinner_step_15m: Boolean(data.habits?.dinner_step_15m || autoEval.habits.dinner_step_15m),
+            bedtime_2hr_fast: (data.habits?.bedtime_2hr_fast !== undefined) ? Boolean(data.habits.bedtime_2hr_fast) : autoEval.habits.bedtime_2hr_fast
+          };
+          if (!data.activeMinutes || data.activeMinutes < autoEval.activeMinutes) {
+            data.activeMinutes = autoEval.activeMinutes;
+          }
+          if (!data.foodLogs || data.foodLogs.length === 0) {
+            data.foodLogs = (dailyMealLogs || []).map(buildSyncPayloadItem);
+          }
+          dailyAiSummaryByDate[selectedDate] = data;
+          try {
+            localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
+          } catch (e) {}
+        }
+
         currentDailySummaryData = data;
+        const h = data.habits || {};
+        const doneCount = (h.lunch_move_15m ? 1 : 0) + (h.dinner_step_15m ? 1 : 0) + (h.bedtime_2hr_fast ? 1 : 0);
+        const donePct = Math.round((doneCount / 3) * 100);
+
         contentEl.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border);">
             <span style="font-weight:800; color:var(--primary); font-size:12px;">${escapeHtml(data.summaryBadge || '🌟 今日生活健康防線達成')}</span>
             <span class="tag" style="background:${data.mode === '休假' ? 'var(--accent-light)' : 'var(--primary-light)'}; color:${data.mode === '休假' ? 'var(--accent)' : 'var(--primary)'}; font-size:10px;">${data.mode || '上班'}模式</span>
           </div>
+
+          <!-- 🎯 3 大防線達成狀況視覺徽章 -->
+          <div style="background:rgba(5,150,105,0.08); border:1px solid rgba(5,150,105,0.25); border-radius:8px; padding:8px 10px; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:800; color:var(--primary);">🎯 今日時段防線：完成 ${doneCount} / 3 項 (${donePct}%)</span>
+              <span style="font-size:10px; font-weight:700; color:var(--text-muted);">${doneCount === 3 ? '🎉 滿分全數達成' : '穩健守護中'}</span>
+            </div>
+            <div style="font-size:11px; line-height:1.55; color:var(--text-main);">
+              <div>${h.lunch_move_15m ? '✅ 🍱 【午餐後】黃金 15 分鐘微活動（已完成）' : '⚪ 🍱 【午餐後】黃金 15 分鐘微活動（未達成）'}</div>
+              <div>${h.dinner_step_15m ? '✅ 🏠 【晚餐後】追劇舒心微動 15~20 分鐘（已完成）' : '⚪ 🏠 【晚餐後】追劇舒心微動 15~20 分鐘（未達成）'}</div>
+              <div>${h.bedtime_2hr_fast ? '✅ 🌙 【睡前防線】睡前 2 小時結束進食/零宵夜（已守住）' : '⚪ 🌙 【睡前防線】睡前 2 小時結束進食/零宵夜（未達成）'}</div>
+            </div>
+          </div>
+
           <div style="margin-bottom:6px;"><strong>⏱️ 有效代謝微活動：</strong> 約 <span style="color:var(--primary); font-weight:800; font-size:13px;">${data.activeMinutes || 0}</span> 分鐘（${escapeHtml(data.activeSummary || '日常走動與家事收拾')}）</div>
           <div style="margin-bottom:6px;"><strong>🛡️ 血糖與 TG 阻斷：</strong> ${escapeHtml(data.glucoseIntercept || '良好')}</div>
           <div style="margin-bottom:6px;"><strong>🍱 飲食營養評定：</strong> ${escapeHtml(data.mealHighlight || '均衡無地雷')}</div>
@@ -1077,19 +1226,28 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
    - 自動過濾靜態時間（如：搭車坐著、開會坐著、躺著追劇）。
    - 提取並加總真實活動（如：站著洗碗收拾10-15分、出門步行、採買提重、做家事整理、穿厚拖鞋踏步）。估算今日「代謝微活動總分鐘數（activeMinutes）」。
    - 洗碗收拾 10~15 分鐘在醫學上完全合格，能刺激比目魚肌與股四頭肌 GLUT-4 抽血糖，請給予明確肯定！
-2. 【餐後血糖與 TG 阻斷判定】：
+2. 【3 大時段健康防線嚴謹判定 (habits)】：
+   - lunch_move_15m (boolean): 午餐後是否有收拾洗碗、散步、厚拖鞋踏步等微活動 ≥ 10~15 分鐘？有則 true。
+   - dinner_step_15m (boolean): 晚餐後是否有收拾洗碗、追劇原地踏步、沙發踢腿或甩腿 ≥ 15~20 分鐘？有則 true。
+   - bedtime_2hr_fast (boolean): 晚餐後是否守住零宵夜、零高糖零食，讓肝臟夜間專心修復？有則 true。
+3. 【餐後血糖與 TG 阻斷判定】：
    - 檢視午餐/早午餐或晚餐後，是否有走動或站立收拾洗碗？有則判定「⭕ 成功攔截血糖轉化為 TG」！
-3. 【飲水與飲品評定（TG 260 關鍵阻斷）】：
+4. 【飲水與飲品評定（TG 260 關鍵阻斷）】：
    - 檢視水分總量（目標 2000~2400ml）。
-   - 檢視飲品類型：若有拿鐵、自調茶飲（如抹茶對半稀釋芭樂原汁消庫存）、無糖茶或純水，給予溫暖且專業的點評（肯定稀釋減害喝法，提醒白天喝完、晚上純水潤喉）。
-4. 【疲勞保護機制（最高優先級）】：
+   - 檢視飲品類型：若有拿鐵、自調茶飲（如抹茶對半稀釋芭樂原汁消庫存）、無糖茶或純水，給予溫暖且專業的點評。
+5. 【疲勞保護機制（最高優先級）】：
    - 若使用者下午有外出辦事、採買提重或長時間走動，晚上已很累，請在評語中【強力表揚並指示晚上安心休息放空，絕對免做任何額外運動】！
-5. 【溫暖教練總評】：
+6. 【溫暖教練總評】：
    - 語氣溫暖、懂生活的辛苦，絕不說教、不派補吃補做功課，約 80~130 字。
 
 請以純 JSON 格式輸出（字串內部請勿使用雙引號，可用「」代替）：
 {
   "mode": "${mode}",
+  "habits": {
+    "lunch_move_15m": true,
+    "dinner_step_15m": true,
+    "bedtime_2hr_fast": true
+  },
   "activeMinutes": 30,
   "activeSummary": "微活動項目加總說明",
   "glucoseIntercept": "血糖攔截評定",
@@ -1098,6 +1256,63 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
   "coachFeedback": "給 Cherry 的溫暖總評與休息建議（80~130字）",
   "summaryBadge": "15字以內成果徽章"
 }`;
+
+      try {
+        const rawJsonText = await callGeminiTextWithFallback(prompt, key);
+        let parsed = robustParseGeminiJson(rawJsonText);
+        if (!parsed || !parsed.coachFeedback) {
+          try { parsed = JSON.parse(rawJsonText); } catch(e){}
+        }
+        if (!parsed) {
+          throw new Error('AI 回傳格式解析失敗，請再點一次重試');
+        }
+
+        // 結合本機智慧解析作為雙重保險
+        const localEval = evaluateDailyHabitsFromData(activities, meals, drinks);
+        const aiHabits = parsed.habits || {};
+        const finalHabits = {
+          lunch_move_15m: Boolean(aiHabits.lunch_move_15m || localEval.habits.lunch_move_15m),
+          dinner_step_15m: Boolean(aiHabits.dinner_step_15m || localEval.habits.dinner_step_15m),
+          bedtime_2hr_fast: (aiHabits.bedtime_2hr_fast !== undefined) ? Boolean(aiHabits.bedtime_2hr_fast) : localEval.habits.bedtime_2hr_fast
+        };
+        if (localEval.habits.lunch_move_15m) finalHabits.lunch_move_15m = true;
+        if (localEval.habits.dinner_step_15m) finalHabits.dinner_step_15m = true;
+        if (localEval.habits.bedtime_2hr_fast) finalHabits.bedtime_2hr_fast = true;
+
+        const actMins = Math.max(Number(parsed.activeMinutes) || 0, localEval.activeMinutes);
+
+        const summaryData = {
+          date: selectedDate,
+          mode: mode,
+          habits: finalHabits,
+          activeMinutes: actMins,
+          activeSummary: parsed.activeSummary || localEval.activeSummary,
+          glucoseIntercept: parsed.glucoseIntercept || ((finalHabits.lunch_move_15m || finalHabits.dinner_step_15m) ? '⭕ 已完成餐後活動防線' : '日常微活動'),
+          mealHighlight: parsed.mealHighlight || '飲食記錄完成',
+          waterFeedback: parsed.waterFeedback || `今日飲水約 ${totalWater}ml`,
+          totalWater: totalWater,
+          drinkLogs: drinks,
+          foodLogs: meals.map(buildSyncPayloadItem), // 今日全部餐食一併打包！
+          coachFeedback: parsed.coachFeedback || '今天生活節奏調整得很棒，繼續保持！',
+          summaryBadge: parsed.summaryBadge || ((finalHabits.lunch_move_15m && finalHabits.dinner_step_15m) ? '🌟 今日健康防線全數達成' : '🌱 微步輕健穩步前進'),
+          updatedAt: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+
+        dailyAiSummaryByDate[selectedDate] = summaryData;
+        try {
+          localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
+        } catch (e) {}
+
+        renderDailyAiSummaryBox();
+        copyDailyAiReview(true);
+        showToast('🎉 今日生活總結已生成！3大防線已智慧對齊，已自動複製同步碼！');
+      } catch (err) {
+        alert('生成今日 AI 總結失敗：' + (err.message || err));
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }`;
 
       try {
         const rawJsonText = await callGeminiTextWithFallback(prompt, key);
@@ -1141,11 +1356,31 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
     }
 
     function copyDailyAiReview(isAuto) {
-      const data = dailyAiSummaryByDate[selectedDate];
+      let data = dailyAiSummaryByDate[selectedDate];
       if (!data) {
         alert('今日尚未生成 AI 總結喔！');
         return;
       }
+      // 確保 habits, activeMinutes 與 foodLogs 完整打包
+      if (!data.habits || Object.keys(data.habits).length === 0 || !data.foodLogs) {
+        const autoEval = evaluateDailyHabitsFromData(dailyActivityLogs, dailyMealLogs, dailyDrinkLogs);
+        data.habits = {
+          lunch_move_15m: Boolean(data.habits?.lunch_move_15m || autoEval.habits.lunch_move_15m),
+          dinner_step_15m: Boolean(data.habits?.dinner_step_15m || autoEval.habits.dinner_step_15m),
+          bedtime_2hr_fast: (data.habits?.bedtime_2hr_fast !== undefined) ? Boolean(data.habits.bedtime_2hr_fast) : autoEval.habits.bedtime_2hr_fast
+        };
+        if (!data.activeMinutes || data.activeMinutes < autoEval.activeMinutes) {
+          data.activeMinutes = autoEval.activeMinutes;
+        }
+        if (!data.foodLogs || data.foodLogs.length === 0) {
+          data.foodLogs = (dailyMealLogs || []).map(buildSyncPayloadItem);
+        }
+        dailyAiSummaryByDate[selectedDate] = data;
+        try {
+          localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
+        } catch (e) {}
+      }
+
       const token = '【VITALSTEP_DAY_AI_SUMMARY】' + JSON.stringify(data);
       copyTextToClipboard(token);
 
@@ -1157,7 +1392,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       } catch (e) {}
 
       if (!isAuto) {
-        showToast('📋 已複製今日 AI 總結同步碼！請回「每日進度」貼上！');
+        showToast('📋 已複製今日 AI 總結同步碼（含3大防線打卡＋三餐＋微活動）！請回主頁貼上！');
       }
     }
 
