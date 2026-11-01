@@ -1312,47 +1312,6 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         btn.textContent = origText;
         btn.disabled = false;
       }
-    }`;
-
-      try {
-        const rawJsonText = await callGeminiTextWithFallback(prompt, key);
-        let parsed = robustParseGeminiJson(rawJsonText);
-        if (!parsed || !parsed.coachFeedback) {
-          try { parsed = JSON.parse(rawJsonText); } catch(e){}
-        }
-        if (!parsed) {
-          throw new Error('AI 回傳格式解析失敗，請再點一次重試');
-        }
-
-        const summaryData = {
-          date: selectedDate,
-          mode: mode,
-          activeMinutes: Number(parsed.activeMinutes) || 0,
-          activeSummary: parsed.activeSummary || '日常微活動',
-          glucoseIntercept: parsed.glucoseIntercept || '⭕ 已完成餐後活動防線',
-          mealHighlight: parsed.mealHighlight || '飲食記錄完成',
-          waterFeedback: parsed.waterFeedback || `今日飲水約 ${totalWater}ml`,
-          totalWater: totalWater,
-          drinkLogs: drinks,
-          coachFeedback: parsed.coachFeedback || '今天生活節奏調整得很棒，繼續保持！',
-          summaryBadge: parsed.summaryBadge || '🌟 今日健康防線已達成',
-          updatedAt: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
-        };
-
-        dailyAiSummaryByDate[selectedDate] = summaryData;
-        try {
-          localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
-        } catch (e) {}
-
-        renderDailyAiSummaryBox();
-        copyDailyAiReview(true);
-        showToast('🎉 今日 AI 生活與健康防線總結已生成，已自動複製同步碼！');
-      } catch (err) {
-        alert('生成今日 AI 總結失敗：' + (err.message || err));
-      } finally {
-        btn.textContent = origText;
-        btn.disabled = false;
-      }
     }
 
     function copyDailyAiReview(isAuto) {
