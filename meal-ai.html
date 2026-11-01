@@ -244,7 +244,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & AI 總結 <span class="tag">v5.7 雙軌・隨手記</span></div>
+        <div class="logo-title">生活日誌 & AI 總結 <span class="tag">v5.7.1 雙軌・隨手記</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -563,6 +563,29 @@
       try {
         const rawDrink = localStorage.getItem(DRINK_HISTORY_BY_DATE_KEY);
         if (rawDrink) drinkHistoryByDate = JSON.parse(rawDrink) || {};
+
+        // 智慧校準：若有因舊版正則被括號數字帶偏的紀錄（如 "冷泡綠茶+半瓶芭樂汁(約140) 850" 誤判為 140），自動升級校正
+        let hasDrinkFix = false;
+        Object.keys(drinkHistoryByDate).forEach(dateKey => {
+          const list = drinkHistoryByDate[dateKey];
+          if (Array.isArray(list)) {
+            list.forEach(item => {
+              if (item && item.text) {
+                const corrected = extractMlFromText(item.text);
+                if (corrected !== item.ml) {
+                  const innerMatch = item.text.match(/\(([^)]*)\)|（([^）]*)）/);
+                  if (innerMatch && (innerMatch[1] || innerMatch[2] || '').includes(String(item.ml))) {
+                    item.ml = corrected;
+                    hasDrinkFix = true;
+                  }
+                }
+              }
+            });
+          }
+        });
+        if (hasDrinkFix) {
+          try { localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate)); } catch(e){}
+        }
       } catch (e) {
         drinkHistoryByDate = {};
       }
@@ -846,11 +869,43 @@
     // --- 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・晚上一次結算） ---
     function extractMlFromText(text) {
       if (!text) return 300;
-      const match = text.match(/(\d{2,4})\s*(ml|毫升|c\.?c\.?)?/i);
-      if (match) {
-        const val = parseInt(match[1], 10);
-        if (val >= 50 && val <= 3000) return val;
+
+      // 1. 優先檢查明確的「共 / 總共 / 合計 / 整杯」數字（例如：綠茶+芭樂汁 共850）
+      const totalMatch = text.match(/(?:共|總共|合計|整杯)\s*(\d{2,4})\s*(?:ml|毫升|c\.?c\.?)?/i);
+      if (totalMatch) {
+        const v = parseInt(totalMatch[1], 10);
+        if (v >= 50 && v <= 3000) return v;
       }
+
+      // 2. 移除半形與全形括號內的附註干擾（例如 (約140)、（140ml）、(熱)、(微糖)），優先在括號外尋找容量
+      const cleanOuter = text.replace(/\([^)]*\)|（[^）]*）/g, ' ').trim();
+
+      // 2a. 括號外有明確帶單位的數字（ml / 毫升 / cc）
+      const unitMatches = cleanOuter.match(/(\d{2,4})\s*(?:ml|毫升|c\.?c\b)/gi);
+      if (unitMatches && unitMatches.length > 0) {
+        const lastUnitStr = unitMatches[unitMatches.length - 1];
+        const v = parseInt(lastUnitStr, 10);
+        if (v >= 50 && v <= 3000) return v;
+      }
+
+      // 2b. 括號外所有 2~4 位數字，取最後一個（中文習慣品項在前後綴容量：如 "抹茶850", "冷泡綠茶+半瓶芭樂汁 850"）
+      const numMatches = cleanOuter.match(/\d{2,4}/g);
+      if (numMatches && numMatches.length > 0) {
+        for (let i = numMatches.length - 1; i >= 0; i--) {
+          const v = parseInt(numMatches[i], 10);
+          if (v >= 50 && v <= 3000) return v;
+        }
+      }
+
+      // 3. 若括號外找不到合法數字，才回退看全句（包含括號內）的數字
+      const allMatches = text.match(/\d{2,4}/g);
+      if (allMatches && allMatches.length > 0) {
+        for (let i = allMatches.length - 1; i >= 0; i--) {
+          const v = parseInt(allMatches[i], 10);
+          if (v >= 50 && v <= 3000) return v;
+        }
+      }
+
       return 300; // 預設一杯約 300ml
     }
 
@@ -880,6 +935,25 @@
       showToast(`✅ 已記錄一杯（約 ${ml}ml）！`);
     }
 
+    function editDrinkLogMl(id) {
+      const item = dailyDrinkLogs.find(d => d.id === id);
+      if (!item) return;
+      const promptRes = prompt(`修改「${item.text}」的水分/容量 (ml)：`, item.ml);
+      if (promptRes === null) return;
+      const newMl = parseInt(promptRes.trim(), 10);
+      if (isNaN(newMl) || newMl < 10 || newMl > 5000) {
+        showToast('⚠️ 請輸入有效的毫升數（10 ~ 5000）喔！');
+        return;
+      }
+      item.ml = newMl;
+      drinkHistoryByDate[selectedDate] = dailyDrinkLogs;
+      try {
+        localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate));
+      } catch (e) {}
+      renderDrinkTimeline();
+      showToast(`✅ 已更新容量為 ${newMl}ml！`);
+    }
+
     function deleteDrinkLog(id) {
       dailyDrinkLogs = dailyDrinkLogs.filter(item => item.id !== id);
       drinkHistoryByDate[selectedDate] = dailyDrinkLogs;
@@ -907,9 +981,11 @@
           <div style="display:flex; align-items:center; gap:8px;">
             <span style="font-size:11px; font-weight:800; color:var(--accent); background:var(--accent-light); padding:2px 6px; border-radius:6px; white-space:nowrap;">${item.time}</span>
             <span style="font-size:12px; color:var(--text-main); font-weight:600;">${escapeHtml(item.text)}</span>
-            <span style="font-size:11px; color:var(--text-muted); font-weight:700;">(${item.ml}ml)</span>
+            <button onclick="editDrinkLogMl(${item.id})" title="點擊直接修改容量" style="background:var(--accent-light); border:1px solid rgba(0,0,0,0.08); color:var(--accent); font-size:11px; font-weight:800; padding:2px 7px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
+              ${item.ml}ml <span style="font-size:9px; opacity:0.75;">✏️</span>
+            </button>
           </div>
-          <button onclick="deleteDrinkLog(${item.id})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:0 4px;">🗑️</button>
+          <button onclick="deleteDrinkLog(${item.id})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:0 4px;" title="刪除此筆">🗑️</button>
         </div>
       `).join('');
     }
