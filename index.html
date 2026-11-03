@@ -636,7 +636,7 @@
     <div class="top-segment-bar">
       <div class="segment-btn active" data-tab="today" onclick="switchTab('today')">每日打卡</div>
       <div class="segment-btn" data-tab="stats" onclick="switchTab('stats')">每週統計</div>
-      <div class="segment-btn" data-tab="recipes" onclick="switchTab('recipes')">暖胃廚房</div>
+      <div class="segment-btn" data-tab="recipes" onclick="switchTab('recipes')">採買食譜</div>
       <div class="segment-btn" data-tab="health" onclick="switchTab('health')">健檢放鬆</div>
     </div>
 
@@ -1030,138 +1030,31 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 3: 暖胃廚房與一週晚餐菜單 ==================== -->
+    <!-- ==================== TAB 3: 採買診斷與食譜顧問 ==================== -->
     <div id="tab-recipes" class="tab-pane">
 
-      <!-- 🛒 食材採買與冰箱庫存輸入區（支援打字 + 拍照） -->
-      <div class="card" style="border: 2px solid rgba(5,150,105,0.3); background: linear-gradient(180deg, var(--card-bg), var(--primary-light));">
-        <div class="card-title" style="color:var(--primary);">
-          <span>🛒 週末採買與食材庫存</span>
-          <span class="tag" style="background:var(--primary); color:white;">打字 / 拍照排菜單</span>
+      <!-- 🛒 食材採買診斷 ＆ 簡易食譜體檢（升級導覽至餐食 AI 模組） -->
+      <div class="card" style="border: 2px solid var(--accent); background: linear-gradient(180deg, var(--card-bg), var(--accent-light)); margin-bottom:12px;">
+        <div class="card-title" style="color:var(--accent);">
+          <span>🛒 智能食材採買 ＆ 簡易食譜體檢</span>
+          <span class="tag" style="background:var(--accent); color:white;">已升級至餐食 AI</span>
         </div>
-        <div style="font-size:11px; color:var(--text-main); margin-bottom:8px; line-height:1.5;">
-          去超市買了什麼食材、或拍下冰箱庫存，AI 主廚為您量身規劃<strong>「平日晚歸免洗切」</strong>與<strong>「週末自煮暖鍋」</strong>晚餐：
+        <div style="font-size:12px; color:var(--text-main); margin-bottom:10px; line-height:1.6;">
+          原暖胃廚房排菜功能已全面升級整合至<strong>【餐食 AI 模組】</strong>（已掛好 Gemini 視覺與文字 API，內建多模型自動接力）！<br>
+          更符合真實生活節奏，隨手打字或拍照即可為您深入把關：
         </div>
-
-        <!-- 常用食材快速點選標籤 -->
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 點選快速加入食材：</div>
-        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px;">
-          <span class="pantry-chip" onclick="addPantryChip('嫩豆腐')">+ 嫩豆腐</span>
-          <span class="pantry-chip" onclick="addPantryChip('雞里肌/雞肉')">+ 雞里肌/雞肉</span>
-          <span class="pantry-chip" onclick="addPantryChip('大燕麥片')">+ 大燕麥片</span>
-          <span class="pantry-chip" onclick="addPantryChip('免洗高麗菜')">+ 免洗高麗菜</span>
-          <span class="pantry-chip" onclick="addPantryChip('雞蛋')">+ 雞蛋</span>
-          <span class="pantry-chip" onclick="addPantryChip('金針菇/洋菇')">+ 金針菇/香菇</span>
-          <span class="pantry-chip" onclick="addPantryChip('牛番茄')">+ 牛番茄</span>
-          <span class="pantry-chip" onclick="addPantryChip('冷凍水餃')">+ 冷凍水餃</span>
-          <span class="pantry-chip" onclick="addPantryChip('無糖黑豆漿')">+ 無糖黑豆漿</span>
-          <span class="pantry-chip" onclick="addPantryChip('關東煮蘿蔔蒟蒻')">+ 關東煮</span>
-          <span class="pantry-chip" onclick="addPantryChip('外食加熱滷味')">+ 加熱滷味</span>
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.6; margin-bottom:14px; background:var(--card-bg); padding:10px 12px; border-radius:10px; border:1px solid var(--border);">
+          • <strong>🛒 食材採買診斷</strong>：超市看中某食材？打字或拍外包裝成分表，立即判斷<strong>能不能買、適不適合我</strong>（TG 260・HbA1c 5.7%・晚歸免洗切）！<br>
+          • <strong>🍳 簡易食譜體檢</strong>：想煮的簡餐或網路食譜，貼上來檢查<strong>安排上有無盲點</strong>（是否缺耐放優質纖維、油脂或果糖是否過量、1~2 步極簡微調）！
         </div>
 
-        <!-- 食材打字輸入框 -->
-        <div style="margin-bottom:8px;">
-          <textarea id="pantry-text-input" rows="2" 
-            placeholder="打字輸入現有食材，例如：嫩豆腐、大燕麥片、雞里肌、牛番茄、高麗菜、金針菇、蛋、冷凍水餃..." 
-            style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"
-            oninput="savePantryText()"></textarea>
-        </div>
-
-        <!-- 照片上傳區 (支援多張) -->
-        <input type="file" id="pantry-photo-input" accept="image/*" multiple style="display:none;" onchange="handlePantryPhotosUpload(event)">
-        <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-          <button class="btn" style="flex:1; padding:8px; font-size:11px;" onclick="triggerPantryPhotoUpload()">
-            📷 <span id="pantry-photo-btn-text">拍照 / 上傳採買照（可多張，如超市採買袋、冰箱）</span>
-          </button>
-        </div>
-
-        <!-- 食材照片縮圖預覽列 -->
-        <div id="pantry-photos-preview-container" style="display:none; margin-bottom:10px;">
-          <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">採買照片預覽（點 × 可移除）：</div>
-          <div id="pantry-photos-grid" style="display:flex; gap:8px; overflow-x:auto; padding:4px 0;"></div>
-        </div>
-
-        <!-- 智能排菜按鈕列（100% 本機離線演算，零網路、無需金鑰） -->
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px;">
-          <button class="btn btn-primary" style="padding:10px 4px; font-size:11px; font-weight:700; line-height:1.3;" onclick="generateMenuPlan('weekdays')">
-            ⚡ 產生平日晚歸菜單<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週一至五・本機零洗切免開火)</span>
-          </button>
-          <button class="btn" style="padding:10px 4px; font-size:11px; font-weight:700; line-height:1.3; background:linear-gradient(135deg, #0284c7, #6366f1); color:white; border:none;" onclick="generateMenuPlan('weekend')">
-            🍲 產生週末暖鍋食譜<br><span style="font-size:9px; font-weight:normal; opacity:0.9;">(週六日・本機自煮療癒小鍋)</span>
-          </button>
-        </div>
-        <button class="btn" style="width:100%; margin-top:8px; padding:8px; font-size:11px; font-weight:700; background:var(--card-bg); border:1px solid var(--primary); color:var(--primary);" onclick="generateMenuPlan('fullweek')">
-          📅 一鍵排滿「一週 7 天晚餐靈感」（本機秒配・買現成+自己煮均衡）
-        </button>
-
-        <!-- ✨ 暖胃廚房專屬：AI 主廚深度排餐按鈕（僅在暖胃廚房單獨設定 API Key 時顯示） -->
-        <div id="recipe-ai-btn-container" style="display:none; margin-top:8px;">
-          <button class="btn" style="width:100%; padding:9px; font-size:12px; background:linear-gradient(135deg, #059669, #0284c7); color:white; border:none; font-weight:700;" onclick="generateRecipeWithGemini()">
-            ✨ 呼叫雲端 AI 主廚客製深度排餐（嚴格僅傳此食材與照片）
-          </button>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-top:1px dashed var(--border); padding-top:8px;">
-          <button class="btn" style="font-size:10px; color:var(--text-muted); padding:4px 8px;" onclick="clearPantryInput()">
-            🧹 清空輸入食材
-          </button>
-          <button class="btn" style="font-size:10px; color:var(--text-muted); padding:4px 8px;" onclick="resetMenuPlan()">
-            🔄 還原示範菜單
-          </button>
-        </div>
-
-        <!-- ⚙️ 暖胃廚房專屬：獨立 AI 金鑰授權（與餐食拍照徹底物理隔離） -->
-        <div style="margin-top:10px; border-top:1px dashed var(--border); padding-top:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleRecipeAiKeyPanel()">
-            <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-              ⚙️ 暖胃廚房 AI 主廚設定 <span class="tag" style="font-size:9px; background:#ecfdf5; color:#059669;">選填・獨立隔離金鑰</span>
-            </span>
-            <span id="recipe-ai-key-toggle-arrow" style="font-size:11px; color:var(--text-muted);">▼</span>
-          </div>
-
-          <!-- 展開面板 -->
-          <div id="recipe-ai-key-panel" style="display:none; margin-top:10px; background:var(--bg); padding:10px; border-radius:10px; border:1px solid var(--border);">
-            <div style="font-size:11px; line-height:1.6; color:var(--text-main); margin-bottom:8px;">
-              🛡️ <strong>100% 獨立模組隔離保證</strong>：<br>
-              此處金鑰與「今日打卡照片分析」<strong>完全獨立分開儲存</strong>！<br>
-              若此處未單獨輸入金鑰，暖胃廚房<strong>100% 採用本機純離線演算法</strong>（不連網、零個資）。即使設定金鑰，也<strong>僅會單純傳送食材名稱與照片</strong>，嚴格隔離任何個人數值！
-            </div>
-            <div style="display:flex; gap:6px;">
-              <input type="password" id="recipe-gemini-key-input" placeholder="貼上此模組專屬 Gemini API Key" 
-                style="flex:1; padding:7px 10px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--card-bg); color:var(--text-main); outline:none;">
-              <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="saveRecipeGeminiKey()">儲存</button>
-              <button class="btn" style="padding:6px 10px; font-size:11px;" onclick="clearRecipeGeminiKey()">清除</button>
-            </div>
-            <div id="recipe-gemini-key-status" style="font-size:10px; color:var(--primary); margin-top:5px; font-weight:700;"></div>
-          </div>
-        </div>
-
-        <div id="menu-gen-status" style="margin-top:8px; font-size:11px; display:none;"></div>
-      </div>
-
-      <!-- 🍽️ 菜單瀏覽與一週排程 -->
-      <div class="card">
-        <div class="card-title">
-          <span>🍽️ 晚餐計畫庫（買現成 vs 自己煮）</span>
-          <span style="font-size:10px; color:var(--primary);">一鍵帶入今晚打卡</span>
-        </div>
-
-        <!-- 次級分段切換導航 (平日 / 週末 / 一週) -->
-        <div class="menu-sub-bar">
-          <button class="menu-sub-btn active" id="btn-sub-weekdays" onclick="switchMenuTab('weekdays')">
-            🌙 平日晚歸 (一至五)
-          </button>
-          <button class="menu-sub-btn" id="btn-sub-weekend" onclick="switchMenuTab('weekend')">
-            🍲 週末自煮 (六日)
-          </button>
-          <button class="menu-sub-btn" id="btn-sub-fullweek" onclick="switchMenuTab('fullweek')">
-            📅 一週 7 天排程
-          </button>
-        </div>
-
-        <!-- 動態菜單卡片容器 -->
-        <div id="menu-cards-container">
-          <!-- 由 JavaScript renderMenuCards() 動態填入 -->
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <a href="meal-ai.html?tab=consult" class="btn btn-primary" style="width:100%; padding:12px; font-size:13px; font-weight:800; background:linear-gradient(135deg, #0284c7, #059669); box-shadow:0 3px 10px rgba(2,132,199,0.25); text-decoration:none; text-align:center;">
+            🚀 前往「餐食 AI」：食材採買診斷 ＆ 食譜體檢
+          </a>
+          <a href="meal-ai.html" class="btn" style="width:100%; padding:10px; font-size:12px; font-weight:700; border:1px solid var(--border); text-decoration:none; text-align:center;">
+            📸 開啟「餐食 AI」：生活日誌與每日總結
+          </a>
         </div>
       </div>
 
@@ -1335,7 +1228,7 @@
     </div>
     <div class="nav-item" data-tab="recipes" onclick="switchTab('recipes')">
       <span class="icon">🍲</span>
-      <span>暖胃廚房</span>
+      <span>採買食譜</span>
     </div>
     <div class="nav-item" data-tab="health" onclick="switchTab('health')">
       <span class="icon">🩺</span>

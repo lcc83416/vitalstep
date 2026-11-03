@@ -202,6 +202,38 @@
     .report-good { border-left-color: #10b981; background: rgba(16,185,129,0.06); }
     .report-ng { border-left-color: #f59e0b; background: rgba(245,158,11,0.06); }
     .report-swap { border-left-color: #6366f1; }
+
+    .main-segment-wrap {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      background: var(--card-bg);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .main-segment-btn {
+      flex: 1;
+      padding: 8px 0;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      background: transparent;
+      color: var(--text-muted);
+    }
+    .main-segment-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 6px rgba(5,150,105,0.25);
+    }
+    .main-segment-btn.active.consult-active {
+      background: var(--accent);
+      box-shadow: 0 2px 6px rgba(2,132,199,0.25);
+    }
   </style>
 </head>
 <body>
@@ -244,7 +276,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & AI 總結 <span class="tag">v5.8.1 智慧生活對齊</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v5.9 採買食譜雙分頁</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -255,6 +287,19 @@
   </header>
 
   <div class="container">
+
+    <!-- 🔀 主分頁切換：生活日誌 ｜ 採買診斷 & 食譜體檢 -->
+    <div class="main-segment-wrap">
+      <button id="view-tab-logs" class="main-segment-btn active" onclick="switchMealAiView('logs')">
+        📸 餐食日誌與總結
+      </button>
+      <button id="view-tab-consult" class="main-segment-btn" onclick="switchMealAiView('consult')">
+        🛒 採買診斷 & 食譜體檢
+      </button>
+    </div>
+
+    <!-- ==================== VIEW 1: 📸 生活日誌與餐食相簿 (原主功能) ==================== -->
+    <div id="view-logs-panel">
 
     <!-- 📅 跨日選擇與歷史餐食檢視列（雙排防斷行設計） -->
     <div class="card" style="padding:11px 14px; border:1.5px solid var(--primary); background:linear-gradient(180deg, var(--card-bg), var(--primary-light));">
@@ -427,6 +472,165 @@
       <!-- 每日餐食歷史卡片容器（保留所有照片與每餐 4 點分析！） -->
       <div id="meal-history-list"></div>
     </div>
+    </div> <!-- end view-logs-panel -->
+
+    <!-- ==================== VIEW 2: 🛒 採買診斷 & 食譜體檢 (全新分頁) ==================== -->
+    <div id="view-consult-panel" style="display:none;">
+
+      <!-- 模式切換卡片：採買診斷 vs 簡易食譜體檢 -->
+      <div class="card" style="padding:12px; border:1.5px solid var(--accent); background:linear-gradient(180deg, var(--card-bg), var(--accent-light)); margin-bottom:12px;">
+        <div style="font-size:13px; font-weight:800; color:var(--accent); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+          <span>🛒 智能食材顧問 & 食譜體檢</span>
+          <span class="tag" style="background:var(--accent); color:white;">TG 260・HbA1c 5.7% 量身</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
+          在超市想買某食材？猶豫適不適合？或者想煮一道簡易晚餐？AI 結合<strong>三酸甘油酯、血糖、晚歸免洗切</strong>為您把關！
+        </div>
+
+        <div style="display:flex; gap:6px;">
+          <button id="consult-mode-btn-ingredient" class="btn" style="flex:1; padding:8px 0; font-size:12px; font-weight:800; border-radius:8px; background:var(--accent); color:white; border:none;" onclick="switchConsultMode('ingredient')">
+            🛒 食材採買診斷 (能不能買)
+          </button>
+          <button id="consult-mode-btn-recipe" class="btn" style="flex:1; padding:8px 0; font-size:12px; font-weight:800; border-radius:8px; background:var(--card-bg); color:var(--text-muted); border:1px solid var(--border);" onclick="switchConsultMode('recipe')">
+            🍳 簡易食譜體檢 (安排盲點)
+          </button>
+        </div>
+      </div>
+
+      <!-- 模式 A：🛒 食材採買診斷區塊 -->
+      <div id="consult-section-ingredient" class="card">
+        <div class="card-title">
+          <span>🛒 食材採買診斷（能買嗎？適合我嗎？）</span>
+          <span style="font-size:10px; color:var(--accent); font-weight:700;">支持打字 + 拍成分表</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:8px;">
+          去全聯、超市、菜市場看到想買的食材、醬汁或點心？打字輸入或拍包裝營養表，AI 幫您攔截隱形果糖與高飽和脂肪！
+        </div>
+
+        <!-- 常用食材膠囊速點 -->
+        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 常用食材快速加入：</div>
+        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">
+          <span class="quick-chip" onclick="addConsultChip('免洗高麗菜')">+ 免洗高麗菜</span>
+          <span class="quick-chip" onclick="addConsultChip('櫛瓜')">+ 櫛瓜</span>
+          <span class="quick-chip" onclick="addConsultChip('杏鮑菇')">+ 杏鮑菇</span>
+          <span class="quick-chip" onclick="addConsultChip('牛番茄')">+ 牛番茄</span>
+          <span class="quick-chip" onclick="addConsultChip('冷凍毛豆')">+ 冷凍毛豆</span>
+          <span class="quick-chip" onclick="addConsultChip('去皮雞肉')">+ 去皮雞肉</span>
+          <span class="quick-chip" onclick="addConsultChip('嫩豆腐')">+ 嫩豆腐</span>
+          <span class="quick-chip" onclick="addConsultChip('鯛魚片')">+ 鯛魚片</span>
+          <span class="quick-chip" onclick="addConsultChip('大燕麥片')">+ 大燕麥片</span>
+          <span class="quick-chip" onclick="addConsultChip('杜蘭小麥義大利麵')">+ 杜蘭小麥麵</span>
+          <span class="quick-chip" onclick="addConsultChip('柴魚薄鹽醬油')">+ 柴魚薄鹽醬油</span>
+          <span class="quick-chip" onclick="addConsultChip('焙煎胡麻醬')">+ 焙煎胡麻醬</span>
+          <span class="quick-chip" onclick="addConsultChip('牛五花肉片')">+ 牛五花肉片</span>
+          <span class="quick-chip" onclick="addConsultChip('日式照燒醬')">+ 日式照燒醬</span>
+        </div>
+
+        <!-- 食材打字輸入框 -->
+        <div style="margin-bottom:10px;">
+          <textarea id="consult-ingredient-input" rows="2" placeholder="打字輸入想評估的食材或醬料，例如：櫛瓜、杏鮑菇、冷壓橄欖油、日式照燒醬、牛五花肉片..."
+            style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"></textarea>
+        </div>
+
+        <!-- 拍照選填（拍營養標籤或食材外觀） -->
+        <input type="file" id="consult-ingredient-photo-input" accept="image/*" style="display:none;" onchange="handleConsultPhotoUpload(event, 'ingredient')">
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="btn" style="flex:1; padding:9px; font-size:11px;" onclick="document.getElementById('consult-ingredient-photo-input').click()">
+            📷 <span id="consult-ingredient-photo-label">選填：拍食材外包裝／營養成分表</span>
+          </button>
+          <button class="btn" style="padding:9px 12px; font-size:11px;" onclick="clearConsultIngredientInput()">清空</button>
+        </div>
+
+        <!-- 照片預覽 -->
+        <div id="consult-ingredient-preview" style="display:none; margin-bottom:10px; position:relative; width:80px; height:80px;">
+          <img id="consult-ingredient-img" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+          <span onclick="removeConsultPhoto('ingredient')" style="position:absolute; top:-6px; right:-6px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer;">&times;</span>
+        </div>
+
+        <button id="run-ingredient-consult-btn" class="btn btn-primary" style="width:100%; padding:12px; font-size:13px; font-weight:800; background:linear-gradient(135deg, #0284c7, #059669); box-shadow:0 3px 10px rgba(2,132,199,0.25);" onclick="runIngredientConsult()">
+          🔍 立即進行「能不能買・食材診斷」
+        </button>
+      </div>
+
+      <!-- 模式 B：🍳 簡易食譜體檢區塊 -->
+      <div id="consult-section-recipe" class="card" style="display:none;">
+        <div class="card-title">
+          <span>🍳 簡易食譜體檢（安排上有沒有不足的點？）</span>
+          <span style="font-size:10px; color:var(--primary); font-weight:700;">支持打字 + 貼上食譜</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:8px;">
+          自己想煮的簡餐、或網路/朋友分享的食譜，貼上來檢查：蔬菜夠不夠？油脂會不會太高？是否隱藏高果糖醬料？晚歸能不能快速完成？
+        </div>
+
+        <!-- 常用簡易食譜靈感速點 -->
+        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 快速帶入示範食譜靈感：</div>
+        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">
+          <span class="quick-chip" onclick="addRecipePreset('微波暖鍋版：免洗高麗菜鋪底＋嫩豆腐半盒＋去皮雞肉片＋金針菇，微波 3 分鐘淋柴魚薄鹽醬油')">+ 暖鍋微波版 (免開火)</span>
+          <span class="quick-chip" onclick="addRecipePreset('熱燕麥鹹粥：大燕麥片4湯匙沖熱水＋無糖高纖黑豆漿＋茶葉蛋1顆壓碎＋少許白胡椒')">+ 豆漿燕麥熱鹹粥</span>
+          <span class="quick-chip" onclick="addRecipePreset('杜蘭小麥義大利麵 70g 快煮，配平底鍋微油乾煎櫛瓜、杏鮑菇與去皮雞腿肉丁，灑黑胡椒')">+ 櫛瓜雞肉快炒義麵</span>
+          <span class="quick-chip" onclick="addRecipePreset('超商緊急救急：茶葉蛋2顆＋無糖高纖豆漿＋地瓜一小條＋超商生菜沙拉（不淋千島醬改和風醬半分）')">+ 超商晚歸救急組合</span>
+        </div>
+
+        <!-- 食譜輸入框 -->
+        <div style="margin-bottom:10px;">
+          <textarea id="consult-recipe-input" rows="3" placeholder="打字或直接貼上食譜做法與配料，例如：免洗高麗菜鋪底＋嫩豆腐＋去皮雞肉微波 3 分鐘淋柴魚醬油..."
+            style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"></textarea>
+        </div>
+
+        <!-- 拍照選填（拍食譜截圖或食譜書） -->
+        <input type="file" id="consult-recipe-photo-input" accept="image/*" style="display:none;" onchange="handleConsultPhotoUpload(event, 'recipe')">
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="btn" style="flex:1; padding:9px; font-size:11px;" onclick="document.getElementById('consult-recipe-photo-input').click()">
+            📷 <span id="consult-recipe-photo-label">選填：拍食譜照片或截圖</span>
+          </button>
+          <button class="btn" style="padding:9px 12px; font-size:11px;" onclick="clearConsultRecipeInput()">清空</button>
+        </div>
+
+        <!-- 照片預覽 -->
+        <div id="consult-recipe-preview" style="display:none; margin-bottom:10px; position:relative; width:80px; height:80px;">
+          <img id="consult-recipe-img" style="width:100%; height:100%; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+          <span onclick="removeConsultPhoto('recipe')" style="position:absolute; top:-6px; right:-6px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer;">&times;</span>
+        </div>
+
+        <button id="run-recipe-consult-btn" class="btn btn-primary" style="width:100%; padding:12px; font-size:13px; font-weight:800; background:linear-gradient(135deg, #059669, #0284c7); box-shadow:0 3px 10px rgba(5,150,105,0.25);" onclick="runRecipeConsult()">
+          🩺 立即進行「簡易食譜體檢・安排盲點」
+        </button>
+      </div>
+
+      <!-- 體檢診斷結果呈現卡片 -->
+      <div id="consult-result-card" class="card" style="display:none; border:2px solid var(--primary); background:linear-gradient(180deg, var(--card-bg), rgba(5,150,105,0.04));">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:13px; font-weight:800; color:var(--text-main);" id="consult-result-title">📋 AI 診斷報告</span>
+          <span id="consult-result-badge" class="tag" style="font-size:11px; padding:3px 8px;">🟢 推薦購買</span>
+        </div>
+
+        <!-- 結果各項目內容 -->
+        <div id="consult-result-body" style="font-size:12px; line-height:1.6; margin-bottom:12px;"></div>
+
+        <!-- 結果快捷操作 -->
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" style="flex:1; padding:9px; font-size:11px;" onclick="copyCurrentConsultResult()">
+            📋 複製診斷文字
+          </button>
+          <button class="btn" style="flex:1; padding:9px; font-size:11px; border-color:var(--primary); color:var(--primary);" onclick="saveCurrentConsultToHistory()">
+            💾 存入體檢歷史庫
+          </button>
+        </div>
+      </div>
+
+      <!-- 📚 過去體檢歷史清單庫 -->
+      <div class="card">
+        <div class="card-title">
+          <span>📚 食材與食譜體檢歷史庫</span>
+          <button class="btn" style="padding:3px 8px; font-size:10px;" onclick="clearAllConsultHistory()">清空歷史</button>
+        </div>
+        <div id="consult-history-empty" style="font-size:11px; color:var(--text-muted); text-align:center; padding:16px 0;">
+          尚未儲存任何食材採買或食譜體檢紀錄～隨時診斷並點擊「存入體檢歷史庫」！
+        </div>
+        <div id="consult-history-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+
+    </div> <!-- end view-consult-panel -->
 
     <!-- 3. Gemini API Key 設定（獨立儲存＋多模型免費額度自動接力） -->
     <div class="card">
@@ -475,6 +679,7 @@
     const DAY_MODE_BY_DATE_KEY = 'vitalstep_day_mode_by_date';
     const DAILY_AI_SUMMARY_BY_DATE_KEY = 'vitalstep_daily_ai_summary_by_date';
     const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
+    const CONSULT_HISTORY_KEY = 'vitalstep_pantry_consult_history';
 
     function getLocalDateStr(d = new Date()) {
       const y = d.getFullYear();
@@ -519,6 +724,11 @@
     let dailyMealLogs = []; // 指向當前所選日期的餐食陣列
     let dailyActivityLogs = []; // 指向當前所選日期的行程清單
     let dailyDrinkLogs = []; // 指向當前所選日期的飲水清單
+    let consultHistory = [];
+    let currentConsultData = null;
+    let consultIngredientPhotoBase64 = null;
+    let consultRecipePhotoBase64 = null;
+    let activeConsultMode = 'ingredient'; // 'ingredient' | 'recipe'
 
     function initPage() {
       const now = new Date();
@@ -645,6 +855,23 @@
         localStorage.setItem(ISOLATED_KEY_NAME, existing);
       }
       updateKeyStatus();
+
+      // 讀取食材採買與食譜體檢歷史庫
+      try {
+        const rawConsult = localStorage.getItem(CONSULT_HISTORY_KEY);
+        if (rawConsult) consultHistory = JSON.parse(rawConsult) || [];
+      } catch (e) {
+        consultHistory = [];
+      }
+      renderConsultHistory();
+
+      // 檢查 URL 參數是否指定開啟 consult 頁籤
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'consult') {
+          switchMealAiView('consult');
+        }
+      } catch (e) {}
     }
 
     function selectMealDate(dateStr) {
@@ -1513,6 +1740,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         drinks: drinkHistoryByDate || {},
         modes: dayModeByDate || {},
         summaries: dailyAiSummaryByDate || {},
+        consults: consultHistory || [],
         exportedAt: new Date().toISOString()
       });
       copyTextToClipboard(payload);
@@ -1557,6 +1785,11 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
             dailyAiSummaryByDate = { ...dailyAiSummaryByDate, ...parsed.summaries };
             localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
           }
+          if (parsed.consults && Array.isArray(parsed.consults)) {
+            consultHistory = parsed.consults;
+            try { localStorage.setItem(CONSULT_HISTORY_KEY, JSON.stringify(consultHistory)); } catch(e){}
+            renderConsultHistory();
+          }
           selectMealDate(selectedDate);
           showToast('🎉 生活日誌、餐食與飲水備份還原成功！');
         } else {
@@ -1565,6 +1798,721 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       } catch (e) {
         alert('備份碼解析失敗，請確認複製內容完整！');
       }
+    }
+
+    // ==================== 🛒 採買顧問與食譜體檢核心模組 ====================
+
+    // 🔀 主分頁切換：生活日誌 ｜ 採買診斷 & 食譜體檢
+    function switchMealAiView(viewName) {
+      const btnLogs = document.getElementById('view-tab-logs');
+      const btnConsult = document.getElementById('view-tab-consult');
+      const panelLogs = document.getElementById('view-logs-panel');
+      const panelConsult = document.getElementById('view-consult-panel');
+
+      if (viewName === 'consult') {
+        if (btnLogs) { btnLogs.classList.remove('active'); }
+        if (btnConsult) { btnConsult.classList.add('active', 'consult-active'); }
+        if (panelLogs) panelLogs.style.display = 'none';
+        if (panelConsult) panelConsult.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        if (btnLogs) { btnLogs.classList.add('active'); }
+        if (btnConsult) { btnConsult.classList.remove('active', 'consult-active'); }
+        if (panelLogs) panelLogs.style.display = 'block';
+        if (panelConsult) panelConsult.style.display = 'none';
+      }
+    }
+
+    // 🔀 顧問子模式切換：食材採買 vs 簡易食譜
+    function switchConsultMode(mode) {
+      activeConsultMode = mode;
+      const btnIng = document.getElementById('consult-mode-btn-ingredient');
+      const btnRec = document.getElementById('consult-mode-btn-recipe');
+      const secIng = document.getElementById('consult-section-ingredient');
+      const secRec = document.getElementById('consult-section-recipe');
+
+      if (mode === 'recipe') {
+        if (btnIng) {
+          btnIng.style.background = 'var(--card-bg)';
+          btnIng.style.color = 'var(--text-muted)';
+          btnIng.style.border = '1px solid var(--border)';
+        }
+        if (btnRec) {
+          btnRec.style.background = 'var(--primary)';
+          btnRec.style.color = 'white';
+          btnRec.style.border = 'none';
+        }
+        if (secIng) secIng.style.display = 'none';
+        if (secRec) secRec.style.display = 'block';
+      } else {
+        if (btnIng) {
+          btnIng.style.background = 'var(--accent)';
+          btnIng.style.color = 'white';
+          btnIng.style.border = 'none';
+        }
+        if (btnRec) {
+          btnRec.style.background = 'var(--card-bg)';
+          btnRec.style.color = 'var(--text-muted)';
+          btnRec.style.border = '1px solid var(--border)';
+        }
+        if (secIng) secIng.style.display = 'block';
+        if (secRec) secRec.style.display = 'none';
+      }
+    }
+
+    // 常用食材膠囊速點
+    function addConsultChip(chipText) {
+      const inp = document.getElementById('consult-ingredient-input');
+      if (!inp) return;
+      const cur = inp.value.trim();
+      if (!cur) {
+        inp.value = chipText;
+      } else if (!cur.includes(chipText)) {
+        inp.value = cur + '、' + chipText;
+      }
+      inp.focus();
+    }
+
+    function clearConsultIngredientInput() {
+      const inp = document.getElementById('consult-ingredient-input');
+      if (inp) inp.value = '';
+      removeConsultPhoto('ingredient');
+    }
+
+    // 常用食譜靈感速點
+    function addRecipePreset(presetText) {
+      const inp = document.getElementById('consult-recipe-input');
+      if (!inp) return;
+      inp.value = presetText;
+      inp.focus();
+    }
+
+    function clearConsultRecipeInput() {
+      const inp = document.getElementById('consult-recipe-input');
+      if (inp) inp.value = '';
+      removeConsultPhoto('recipe');
+    }
+
+    // 處理選填照片上傳（食材營養標籤或食譜）
+    function handleConsultPhotoUpload(e, mode) {
+      const file = (e.target.files || [])[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        compressImage(evt.target.result, 768, 0.75, function(compressed) {
+          if (mode === 'recipe') {
+            consultRecipePhotoBase64 = compressed;
+            const img = document.getElementById('consult-recipe-img');
+            const preview = document.getElementById('consult-recipe-preview');
+            const label = document.getElementById('consult-recipe-photo-label');
+            if (img) img.src = compressed;
+            if (preview) preview.style.display = 'inline-block';
+            if (label) label.textContent = '📷 已選食譜照片（點 × 可移除）';
+          } else {
+            consultIngredientPhotoBase64 = compressed;
+            const img = document.getElementById('consult-ingredient-img');
+            const preview = document.getElementById('consult-ingredient-preview');
+            const label = document.getElementById('consult-ingredient-photo-label');
+            if (img) img.src = compressed;
+            if (preview) preview.style.display = 'inline-block';
+            if (label) label.textContent = '📷 已選包裝/成分表照片（點 × 可移除）';
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    function removeConsultPhoto(mode) {
+      if (mode === 'recipe') {
+        consultRecipePhotoBase64 = null;
+        const preview = document.getElementById('consult-recipe-preview');
+        const label = document.getElementById('consult-recipe-photo-label');
+        if (preview) preview.style.display = 'none';
+        if (label) label.textContent = '選填：拍食譜照片或截圖';
+      } else {
+        consultIngredientPhotoBase64 = null;
+        const preview = document.getElementById('consult-ingredient-preview');
+        const label = document.getElementById('consult-ingredient-photo-label');
+        if (preview) preview.style.display = 'none';
+        if (label) label.textContent = '選填：拍食材外包裝／營養成分表';
+      }
+    }
+
+    // 呼叫 Gemini 進行顧問診斷（支援多模型自動接力）
+    async function callGeminiConsultApi(parts, key) {
+      let cooldownMap = {};
+      try {
+        cooldownMap = JSON.parse(localStorage.getItem('vitalstep_quota_cooldown_map') || '{}') || {};
+      } catch (e) { cooldownMap = {}; }
+      const nowTs = Date.now();
+
+      function isModelInCooldown(mName) {
+        const until = cooldownMap[mName];
+        return until && until > nowTs;
+      }
+      function markModelQuotaCooldown(mName) {
+        cooldownMap[mName] = Date.now() + 45 * 60 * 1000;
+        try { localStorage.setItem('vitalstep_quota_cooldown_map', JSON.stringify(cooldownMap)); } catch (e) {}
+      }
+
+      async function tryGenerate(modelName) {
+        const cleanName = modelName.replace(/^models\//, '');
+        const controller = new AbortController();
+        const timerId = setTimeout(() => controller.abort(), 20000);
+        try {
+          const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${key}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [{ parts }],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.2
+              }
+            })
+          });
+          clearTimeout(timerId);
+          return await resp.json();
+        } catch (err) {
+          clearTimeout(timerId);
+          throw err;
+        }
+      }
+
+      const rememberWorkingModel = localStorage.getItem('vitalstep_working_gemini_model') || 'gemini-3.8-flash';
+      const modelsToTry = [
+        rememberWorkingModel,
+        'gemini-3.8-flash',
+        'gemini-3.8-flash-lite',
+        'gemini-flash-lite-latest',
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash'
+      ];
+      const uniqueModels = [...new Set(modelsToTry)];
+
+      let lastErrMsg = '';
+      for (const mName of uniqueModels) {
+        if (isModelInCooldown(mName)) continue;
+        try {
+          const data = await tryGenerate(mName);
+          if (data && data.error) {
+            lastErrMsg = data.error.message || 'API 錯誤';
+            if ((data.error.message || '').includes('Quota exceeded') || data.error.code === 429) {
+              markModelQuotaCooldown(mName);
+              continue;
+            }
+            if ((data.error.message || '').includes('API key not valid') || data.error.code === 400 || data.error.code === 403) {
+              throw new Error(data.error.message || 'API Key 無效，請檢查下方金鑰！');
+            }
+            continue;
+          }
+          const cand = data.candidates?.[0];
+          const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
+          if (textPart) {
+            localStorage.setItem('vitalstep_working_gemini_model', mName);
+            return robustParseGeminiJson(textPart);
+          }
+        } catch (err) {
+          lastErrMsg = err.message || String(err);
+          if ((lastErrMsg || '').includes('API key not valid')) {
+            throw err;
+          }
+          continue;
+        }
+      }
+      throw new Error(lastErrMsg || '所有 Gemini 備援模型額度均用盡或網路超時！');
+    }
+
+    // 🔍 執行食材採買診斷（能買嗎？適合我嗎？）
+    async function runIngredientConsult() {
+      const query = document.getElementById('consult-ingredient-input')?.value?.trim() || '';
+      const photo = consultIngredientPhotoBase64;
+      if (!query && !photo) {
+        alert('請先打字輸入想評估的食材或醬料名稱，或點選上方食材標籤，或拍照上傳包裝！');
+        return;
+      }
+
+      const btn = document.getElementById('run-ingredient-consult-btn');
+      const origText = btn.textContent;
+      btn.textContent = '⏳ AI 正在診斷食材對 TG 與血糖的影響...';
+      btn.disabled = true;
+
+      const key = getApiKey();
+      try {
+        let resultObj = null;
+        if (key) {
+          const promptText = `你是一位精通代謝醫學與實戰營養的專家，正在為一位台灣上班族進行超市食材採買診斷。
+使用者核心健康防線與作息特質：
+1. 健檢指標：三酸甘油酯 (TG) 260（去年 169，中度脂肪肝主因，急需切斷精緻果糖、反式脂肪與過量飽和脂肪）；糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣，需平穩血糖，優先慢速複合碳水）。
+2. 生活型態：每日通勤 3~4 小時，晚歸 20:00~20:30 到家，極度疲勞，烹調追求「零洗切、免開火或微波 ≤ 3 分鐘出餐」；下樓梯膝蓋承重逼近 400kg，運動以穿厚底拖鞋微踏步 15 分鐘為主。
+3. 蔬菜認知原則：高麗菜/白菜（護胃防逆流）、菇類/木耳（多醣體吸油脂降TG）、瓜果（高鉀排鈉代謝），全為合格優質纖維，不強求深綠色葉菜。
+
+待診斷食材或問題：
+「${query}」
+${photo ? '（附帶使用者拍攝之食材或包裝營養成分表圖片）' : ''}
+
+請務必輸出繁體中文 JSON 格式：
+{
+  "rating": "🟢 推薦購買" 或 "🟡 可以買，留意細節" 或 "🔴 地雷建議避開",
+  "summary": "一句話總結此食材是否適合買（先肯定優勢或明確指出關鍵風險）",
+  "metabolic_impact": "深入解析對 TG 260、HbA1c 5.7% 與脂肪肝的代謝影響（為什麼適合？或成分中是否含隱形果糖/飽和脂肪/高GI）",
+  "convenience_tip": "針對晚歸上班族的極簡省時烹調技巧（零洗切、微波 ≤ 3 分鐘出餐法）",
+  "swap_alternative": "若含地雷或需注意項，推薦全聯/超市隨手可買的更佳減害替代品；若全數推薦則推薦加分搭檔"
+}`;
+
+          const parts = [{ text: promptText }];
+          if (photo) {
+            parts.push({
+              inlineData: {
+                mimeType: 'image/jpeg',
+                data: photo.split(',')[1] || photo
+              }
+            });
+          }
+          resultObj = await callGeminiConsultApi(parts, key);
+        } else {
+          resultObj = runOfflineIngredientConsult(query);
+        }
+
+        currentConsultData = {
+          id: Date.now(),
+          type: 'ingredient',
+          query: query || '食材/成分表照片',
+          photo: photo ? true : false,
+          rating: resultObj.rating || '🟢 推薦購買',
+          summary: resultObj.summary || '此食材整體搭配得宜，對肝臟與代謝負擔輕！',
+          metabolic_impact: resultObj.metabolic_impact || '有益於維持飽足感與血脂穩定。',
+          convenience_tip: resultObj.convenience_tip || '免洗切或微波快煮即可快速出餐。',
+          swap_alternative: resultObj.swap_alternative || '目前搭配已很均衡，無需替換。',
+          timestamp: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+
+        renderConsultResult(currentConsultData);
+        showToast('🎉 食材採買診斷已完成！');
+      } catch (err) {
+        // API 連線失敗時無縫 fallback 到本機智慧規則
+        const offlineRes = runOfflineIngredientConsult(query);
+        currentConsultData = {
+          id: Date.now(),
+          type: 'ingredient',
+          query: query || '食材/成分表照片',
+          photo: photo ? true : false,
+          rating: offlineRes.rating,
+          summary: offlineRes.summary + '（本機智慧備援）',
+          metabolic_impact: offlineRes.metabolic_impact,
+          convenience_tip: offlineRes.convenience_tip,
+          swap_alternative: offlineRes.swap_alternative,
+          timestamp: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+        renderConsultResult(currentConsultData);
+        showToast('⚡ 已為您切換至本機專業代謝規則庫完成診斷！');
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+
+    // 🩺 執行簡易食譜體檢（安排上有沒有不足的點？）
+    async function runRecipeConsult() {
+      const recipeText = document.getElementById('consult-recipe-input')?.value?.trim() || '';
+      const photo = consultRecipePhotoBase64;
+      if (!recipeText && !photo) {
+        alert('請先打字或貼上食譜做法與配料，或點選上方示範食譜靈感，或拍照上傳！');
+        return;
+      }
+
+      const btn = document.getElementById('run-recipe-consult-btn');
+      const origText = btn.textContent;
+      btn.textContent = '⏳ AI 正在深入體檢食譜安排與營養盲點...';
+      btn.disabled = true;
+
+      const key = getApiKey();
+      try {
+        let resultObj = null;
+        if (key) {
+          const promptText = `你是一位精通代謝醫學與實戰營養的專家，正在為一位台灣上班族體檢簡易食譜或晚餐安排。
+使用者核心健康防線與作息特質：
+1. 健檢指標：三酸甘油酯 (TG) 260（去年 169，中度脂肪肝發炎期，需阻斷果糖、反式脂肪與高飽和脂肪）；糖化血色素 (HbA1c) 5.7%（控糖防線，避免精緻碳水震盪）。
+2. 生活型態：每日通勤長達 3~4 小時，20:00~20:30 到家，極度疲倦，追求睡前 2 小時結束進食、免開火或微波 ≤ 3 分鐘，護膝不彈跳。
+3. 蔬菜多樣性與份量客觀原則：高麗菜、瓜果、菇類、木耳皆為合格優質纖維，不強求深綠色葉菜；但【必須客觀檢視蔬菜總份量】！若全餐只有單一小樣蔬菜（或便當配菜只有1格青菜），相較於澱粉總量明顯偏少（外食便當建議至少挑 2 格蔬菜），必須在盲點中誠實提醒，不可因有一點青菜就盲目認定份量合格。
+
+待體檢食譜文字：
+「${recipeText}」
+${photo ? '（附帶使用者拍攝之食譜書籍或網頁截圖）' : ''}
+
+體檢重點：
+1. 肯定安排上的優點（好的蛋白質、好油、慢速碳水、抗發炎成分）。
+2. 客觀指出安排上的不足或盲點（是否缺少優質纖維？醬料是否含果糖/蜜汁/照燒/過量鈉？飽和脂肪是否偏厚？晚歸做會不會太繁瑣？）。
+3. 給予 1~2 步最小阻力極簡微調建議（不推翻原本菜單，維持美味但讓肝臟與胰島素零負擔）。
+
+請務必輸出繁體中文 JSON 格式：
+{
+  "summary": "一句話體檢總結（先肯定優點，客觀定調）",
+  "pros": "安排上的亮點與好處（蛋白質純度、好碳水、抗氧化、護胃等）",
+  "blindspots": "安排上的不足與盲點（缺了什麼？或哪裡隱藏了糖份/油脂/繁瑣步驟）",
+  "quick_tweaks": "1~2 步極簡護肝微調建議（最小動作達到最高護肝減脂效果）"
+}`;
+
+          const parts = [{ text: promptText }];
+          if (photo) {
+            parts.push({
+              inlineData: {
+                mimeType: 'image/jpeg',
+                data: photo.split(',')[1] || photo
+              }
+            });
+          }
+          resultObj = await callGeminiConsultApi(parts, key);
+        } else {
+          resultObj = runOfflineRecipeConsult(recipeText);
+        }
+
+        currentConsultData = {
+          id: Date.now(),
+          type: 'recipe',
+          query: recipeText || '食譜照片/截圖',
+          photo: photo ? true : false,
+          rating: '🍳 食譜體檢報告',
+          summary: resultObj.summary || '此食譜整體搭配得宜，只需留意微調細節！',
+          pros: resultObj.pros || '具備優質蛋白質與基礎飽足感。',
+          blindspots: resultObj.blindspots || '無明顯地雷，可留意蔬菜份量是否充足。',
+          quick_tweaks: resultObj.quick_tweaks || '可手撕耐放免洗蔬菜一起微波加熱，營養更完整。',
+          timestamp: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+
+        renderConsultResult(currentConsultData);
+        showToast('🎉 簡易食譜體檢已完成！');
+      } catch (err) {
+        const offlineRes = runOfflineRecipeConsult(recipeText);
+        currentConsultData = {
+          id: Date.now(),
+          type: 'recipe',
+          query: recipeText || '食譜照片/截圖',
+          photo: photo ? true : false,
+          rating: '🍳 食譜體檢報告',
+          summary: offlineRes.summary + '（本機智慧備援）',
+          pros: offlineRes.pros,
+          blindspots: offlineRes.blindspots,
+          quick_tweaks: offlineRes.quick_tweaks,
+          timestamp: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+        renderConsultResult(currentConsultData);
+        showToast('⚡ 已為您切換至本機專業食譜規則庫完成體檢！');
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+
+    // 渲染診斷結果卡片
+    function renderConsultResult(data) {
+      if (!data) return;
+      const card = document.getElementById('consult-result-card');
+      const titleEl = document.getElementById('consult-result-title');
+      const badgeEl = document.getElementById('consult-result-badge');
+      const bodyEl = document.getElementById('consult-result-body');
+      if (!card || !bodyEl) return;
+
+      const isIngredient = (data.type === 'ingredient');
+      titleEl.textContent = isIngredient ? '🛒 食材採買診斷報告' : '🍳 簡易食譜安排體檢報告';
+
+      if (badgeEl) {
+        const ratingStr = data.rating || '';
+        badgeEl.textContent = ratingStr;
+        if (ratingStr.includes('地雷') || ratingStr.includes('避開')) {
+          badgeEl.style.background = 'var(--danger-bg)';
+          badgeEl.style.color = 'var(--danger-text)';
+        } else if (ratingStr.includes('留意')) {
+          badgeEl.style.background = 'var(--warning-bg)';
+          badgeEl.style.color = 'var(--warning-text)';
+        } else {
+          badgeEl.style.background = 'var(--primary-light)';
+          badgeEl.style.color = 'var(--primary)';
+        }
+      }
+
+      let html = '';
+      html += `
+        <div style="background:var(--card-bg); padding:10px 12px; border-radius:10px; border:1px solid var(--border); margin-bottom:8px;">
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:2px;">📌 診斷標的：</div>
+          <div style="font-weight:700; color:var(--text-main); font-size:13px;">${escapeHtml(data.query)}</div>
+        </div>
+        <div style="background:linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08)); padding:10px 12px; border-radius:10px; border:1px solid var(--primary); margin-bottom:8px;">
+          <div style="font-size:11px; font-weight:800; color:var(--primary); margin-bottom:2px;">💡 核心結論：</div>
+          <div style="font-size:12px; font-weight:700; color:var(--text-main); line-height:1.5;">${escapeHtml(data.summary)}</div>
+        </div>
+      `;
+
+      if (isIngredient) {
+        html += `
+          <div class="report-section report-good">
+            <div style="font-weight:800; color:#059669; margin-bottom:3px;">🧬 對 TG 260 與 HbA1c 5.7% 的代謝影響：</div>
+            <div>${escapeHtml(data.metabolic_impact)}</div>
+          </div>
+          <div class="report-section report-what">
+            <div style="font-weight:800; color:#0284c7; margin-bottom:3px;">⏱️ 晚歸上班族極簡吃法（免洗切・微波 ≤3 分鐘）：</div>
+            <div>${escapeHtml(data.convenience_tip)}</div>
+          </div>
+          <div class="report-section report-swap">
+            <div style="font-weight:800; color:#6366f1; margin-bottom:3px;">🔄 超市減害替換或加分搭檔：</div>
+            <div>${escapeHtml(data.swap_alternative)}</div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="report-section report-good">
+            <div style="font-weight:800; color:#059669; margin-bottom:3px;">🎯 安排優點與好習慣肯定：</div>
+            <div>${escapeHtml(data.pros)}</div>
+          </div>
+          <div class="report-section report-ng">
+            <div style="font-weight:800; color:#d97706; margin-bottom:3px;">🔍 安排上的不足或盲點檢視：</div>
+            <div>${escapeHtml(data.blindspots)}</div>
+          </div>
+          <div class="report-section report-swap">
+            <div style="font-weight:800; color:#6366f1; margin-bottom:3px;">🛠️ 1~2 步極簡護肝微調建議：</div>
+            <div>${escapeHtml(data.quick_tweaks)}</div>
+          </div>
+        `;
+      }
+
+      bodyEl.innerHTML = html;
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // 📋 複製當前診斷結果文字
+    function copyCurrentConsultResult() {
+      if (!currentConsultData) return;
+      const d = currentConsultData;
+      let text = '';
+      if (d.type === 'ingredient') {
+        text = `【微步輕健・食材採買診斷】
+📌 標的：${d.query}
+🚦 評級：${d.rating}
+💡 結論：${d.summary}
+🧬 代謝影響：${d.metabolic_impact}
+⏱️ 晚歸吃法：${d.convenience_tip}
+🔄 替代搭檔：${d.swap_alternative}
+⏱️ 診斷時間：${d.timestamp}`;
+      } else {
+        text = `【微步輕健・簡易食譜體檢】
+📌 食譜：${d.query}
+💡 體檢總結：${d.summary}
+🎯 安排亮點：${d.pros}
+🔍 盲點檢視：${d.blindspots}
+🛠️ 極簡微調：${d.quick_tweaks}
+⏱️ 診斷時間：${d.timestamp}`;
+      }
+      copyTextToClipboard(text);
+      showToast('📋 已複製診斷報告文字到剪貼簿！');
+    }
+
+    // 💾 存入體檢歷史庫
+    function saveCurrentConsultToHistory() {
+      if (!currentConsultData) return;
+      // 避免重複加入
+      const exists = consultHistory.some(h => h.id === currentConsultData.id);
+      if (!exists) {
+        consultHistory.unshift(currentConsultData);
+        // 上限保留 40 筆
+        if (consultHistory.length > 40) consultHistory = consultHistory.slice(0, 40);
+        try {
+          localStorage.setItem(CONSULT_HISTORY_KEY, JSON.stringify(consultHistory));
+        } catch (e) {}
+      }
+      renderConsultHistory();
+      showToast('💾 已成功存入下方「食材與食譜體檢歷史庫」！');
+    }
+
+    // 📚 渲染體檢歷史庫
+    function renderConsultHistory() {
+      const listEl = document.getElementById('consult-history-list');
+      const emptyEl = document.getElementById('consult-history-empty');
+      if (!listEl) return;
+
+      if (!consultHistory || consultHistory.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        listEl.innerHTML = '';
+        return;
+      }
+
+      if (emptyEl) emptyEl.style.display = 'none';
+      listEl.innerHTML = consultHistory.map(item => {
+        const isIng = (item.type === 'ingredient');
+        const badgeColor = (item.rating || '').includes('地雷') ? '#ef4444' : ((item.rating || '').includes('留意') ? '#f59e0b' : '#059669');
+        return `
+          <div class="card" style="margin-bottom:6px; padding:10px 12px; border:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:11px; font-weight:800; color:${isIng ? 'var(--accent)' : 'var(--primary)'};">
+                  ${isIng ? '🛒 採買診斷' : '🍳 食譜體檢'}
+                </span>
+                <span class="tag" style="background:${badgeColor}15; color:${badgeColor}; font-size:9px; padding:2px 6px;">
+                  ${escapeHtml(item.rating || '體檢')}
+                </span>
+              </div>
+              <span style="font-size:10px; color:var(--text-muted);">${item.timestamp || ''}</span>
+            </div>
+
+            <div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:4px; line-height:1.4;">
+              ${escapeHtml(item.query)}
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); line-height:1.4; margin-bottom:6px;">
+              💡 ${escapeHtml(item.summary)}
+            </div>
+
+            <div id="consult-hist-detail-${item.id}" style="display:none; font-size:11px; line-height:1.55; padding-top:6px; border-top:1px dashed var(--border); margin-top:6px;">
+              ${isIng ? `
+                <div style="color:#059669; font-weight:700; margin-bottom:2px;">🧬 代謝影響：</div>
+                <div style="margin-bottom:4px;">${escapeHtml(item.metabolic_impact || '')}</div>
+                <div style="color:#0284c7; font-weight:700; margin-bottom:2px;">⏱️ 晚歸省時吃法：</div>
+                <div style="margin-bottom:4px;">${escapeHtml(item.convenience_tip || '')}</div>
+                <div style="color:#6366f1; font-weight:700; margin-bottom:2px;">🔄 替代搭檔：</div>
+                <div>${escapeHtml(item.swap_alternative || '')}</div>
+              ` : `
+                <div style="color:#059669; font-weight:700; margin-bottom:2px;">🎯 安排亮點：</div>
+                <div style="margin-bottom:4px;">${escapeHtml(item.pros || '')}</div>
+                <div style="color:#d97706; font-weight:700; margin-bottom:2px;">🔍 盲點檢視：</div>
+                <div style="margin-bottom:4px;">${escapeHtml(item.blindspots || '')}</div>
+                <div style="color:#6366f1; font-weight:700; margin-bottom:2px;">🛠️ 極簡微調：</div>
+                <div>${escapeHtml(item.quick_tweaks || '')}</div>
+              `}
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:10px;">
+              <button class="btn" style="padding:3px 7px; font-size:10px;" onclick="toggleConsultHistoryDetail(${item.id})">
+                <span id="consult-hist-btn-text-${item.id}">▼ 展開詳情</span>
+              </button>
+              <div style="display:flex; gap:6px;">
+                <button class="btn" style="padding:3px 7px; font-size:10px;" onclick="copyConsultHistoryItem(${item.id})">📋 複製</button>
+                <button class="btn" style="padding:3px 7px; font-size:10px; color:#ef4444;" onclick="deleteConsultHistoryItem(${item.id})">🗑️ 刪除</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleConsultHistoryDetail(id) {
+      const detailEl = document.getElementById(`consult-hist-detail-${id}`);
+      const btnTextEl = document.getElementById(`consult-hist-btn-text-${id}`);
+      if (!detailEl) return;
+      if (detailEl.style.display === 'none') {
+        detailEl.style.display = 'block';
+        if (btnTextEl) btnTextEl.textContent = '▲ 收合詳情';
+      } else {
+        detailEl.style.display = 'none';
+        if (btnTextEl) btnTextEl.textContent = '▼ 展開詳情';
+      }
+    }
+
+    function copyConsultHistoryItem(id) {
+      const item = consultHistory.find(h => h.id === id);
+      if (!item) return;
+      currentConsultData = item;
+      copyCurrentConsultResult();
+    }
+
+    function deleteConsultHistoryItem(id) {
+      consultHistory = consultHistory.filter(h => h.id !== id);
+      try {
+        localStorage.setItem(CONSULT_HISTORY_KEY, JSON.stringify(consultHistory));
+      } catch (e) {}
+      renderConsultHistory();
+      showToast('已刪除該筆紀錄');
+    }
+
+    function clearAllConsultHistory() {
+      if (!consultHistory.length) return;
+      if (confirm('確定要清空所有的食材與食譜體檢歷史紀錄嗎？')) {
+        consultHistory = [];
+        try {
+          localStorage.removeItem(CONSULT_HISTORY_KEY);
+        } catch (e) {}
+        renderConsultHistory();
+        showToast('已清空體檢歷史紀錄');
+      }
+    }
+
+    // ⚡ 100% 本機離線食材採買規則庫（備援保證）
+    function runOfflineIngredientConsult(text) {
+      const t = (text || '').toLowerCase();
+      let rating = '🟢 推薦購買';
+      let summary = '此食材成分天然單純，具備良好蛋白質或纖維，適合減脂護肝！';
+      let impact = '富含優質蛋白或水溶性纖維，能延緩血糖上升並幫助吸附多餘膽固醇，對三酸甘油酯 (260) 與脂肪肝極具修復效益。';
+      let tip = '建議採用零洗切快煮或微波 2~3 分鐘，加少許柴魚薄鹽醬油或黑胡椒調味即可。';
+      let swap = '可搭配免洗高麗菜或無糖黑豆漿，營養更完整。';
+
+      if (t.includes('牛五花') || t.includes('豬五花') || t.includes('三層肉') || t.includes('培根') || t.includes('香腸') || t.includes('貢丸') || t.includes('熱狗')) {
+        rating = '🔴 地雷建議避開';
+        summary = '飽和脂肪酸過高！直接進入肝臟轉化為三酸甘油酯 (TG)，是造成脂肪肝與發炎的主要元兇。';
+        impact = '五花肉與加工肉品的飽和脂肪與反式脂肪易造成血液黏稠與胰島素阻抗，對於 TG 260 的族群極度不友善。';
+        tip = '若非吃不可，請先汆燙濾掉厚油；日常自煮請完全避開。';
+        swap = '強力推薦替換為：【全聯去皮雞腿肉片】、【冷藏鯛魚片】或【嫩豆腐】，油脂少 70% 但蛋白質同樣充足！';
+      } else if (t.includes('照燒') || t.includes('蜜汁') || t.includes('甜辣') || t.includes('沙拉醬') || t.includes('千島') || t.includes('果糖') || t.includes('奶精') || t.includes('泡麵')) {
+        rating = '🔴 地雷建議避開';
+        summary = '隱形糖分與劣質油脂陷阱！果糖只能由肝臟代謝並直衝 TG，強烈建議避免。';
+        impact = '高果糖糖漿與精緻糖會直接促進肝臟脂肪新生 (DNL)，直接導致 TG 居高不下與血糖波動。';
+        tip = '市售調味醬包大多含糖量驚人，外食或自煮時勿整包倒入。';
+        swap = '推薦調味替換：【柴魚薄鹽醬油＋白胡椒】、【少許焙煎胡麻醬對半加開水稀釋】或【冷壓橄欖油＋少許鹽】。';
+      } else if (t.includes('高麗菜') || t.includes('白菜') || t.includes('櫛瓜') || t.includes('杏鮑菇') || t.includes('香菇') || t.includes('金針菇') || t.includes('木耳') || t.includes('番茄')) {
+        rating = '🟢 推薦購買';
+        summary = '優質耐放蔬菜與真菌多醣體！瓜果菇類高纖低卡，大幅減輕肝臟代謝負擔！';
+        impact = '多醣體與膳食纖維可在腸道包覆油脂排出，且高麗菜富含維生素U能保護胃黏膜，抑制胃食道逆流。';
+        tip = '全聯免洗蔬菜撕開即可丟微波盒，微波 2 分鐘加滴香油與白胡椒，零洗切免開火！';
+        swap = '與去皮雞肉或嫩豆腐同煮，是晚歸 3 分鐘暖鍋的完美搭檔。';
+      } else if (t.includes('豆腐') || t.includes('豆漿') || t.includes('雞') || t.includes('魚') || t.includes('蝦') || t.includes('蛋') || t.includes('毛豆')) {
+        rating = '🟢 推薦購買';
+        summary = '低脂優質白肉與植物大豆蛋白！修復肝細胞、穩定血糖的黃金基底！';
+        impact = '充足蛋白質提供肝臟修復原料，且大豆異黃酮與卵磷脂有助於脂肪乳化與代謝，對改善脂肪肝極有幫助。';
+        tip = '嫩豆腐直接淋醬油即食；雞肉與毛豆可微波或快炒 3 分鐘出餐。';
+        swap = '加一份杏鮑菇或高麗菜，就是標準低卡控糖晚餐。';
+      } else if (t.includes('燕麥') || t.includes('義大利麵') || t.includes('蕎麥') || t.includes('地瓜')) {
+        rating = '🟢 推薦購買';
+        summary = '低 GI 慢速複合碳水化合物！延緩吸收、攔截餐後血糖高峰。';
+        impact = '大燕麥片的 β-聚葡萄糖與杜蘭小麥麵的緊密澱粉結構，能穩定釋放能量，避免胰島素驟升引發脂肪囤積。';
+        tip = '燕麥片沖熱水 2 分鐘化為鹹粥底；義大利麵可假日預煮分裝冷凍。';
+        swap = '搭配雞蛋或豆腐，提供持久飽足感。';
+      }
+
+      return { rating, summary, metabolic_impact: impact, convenience_tip: tip, swap_alternative: swap };
+    }
+
+    // ⚡ 100% 本機離線簡易食譜體檢規則庫
+    function runOfflineRecipeConsult(text) {
+      const t = (text || '').toLowerCase();
+      let summary = '食譜架構實用，烹調速度快，整體符合晚歸減負擔原則！';
+      let pros = '具備良好飽足感，蛋白質搭配適當，能避免宵夜飢餓。';
+      let blindspots = '請檢查是否有搭配足量蔬菜（高麗菜、菇類或瓜果），避免單純攝取澱粉與油脂。';
+      let tweaks = '蔬菜免洗切直接手撕鋪底一起加熱；調味以柴魚醬油或白胡椒為主，避開勾芡與蜜汁。';
+
+      if (!t.includes('菜') && !t.includes('菇') && !t.includes('瓜') && !t.includes('木耳') && !t.includes('番茄') && !t.includes('豆')) {
+        blindspots = '⚠️ 【蔬菜纖維缺乏】：此食譜缺少足夠的膳食纖維！缺乏纖維會使餐後血糖升得較快，不利於抑制脂肪囤積。';
+        tweaks = '【微調 1 步】：抓一把超市免洗高麗菜或金針菇丟入一起微波 2 分鐘，立刻補齊水溶性纖維！';
+      } else {
+        let offlineVegCount = 0;
+        ['青江菜', '高麗菜', '白菜', '空心菜', '地瓜葉', '菠菜', '四季豆', '豆芽', '海帶', '木耳', '菇', '櫛瓜', '番茄'].forEach(k => {
+          if (t.includes(k)) offlineVegCount++;
+        });
+        if (offlineVegCount === 1 && (t.includes('飯') || t.includes('便當') || t.includes('麵'))) {
+          blindspots = '⚠️ 【蔬菜份量偏少】：此搭配中蔬菜種類僅有 1 種（便當約僅佔 1 格），相較於大碗主食澱粉，纖維總量偏少，無法完全平穩餐後血糖衝擊。便當配菜建議『至少挑選 2 格蔬菜』！';
+          tweaks = '【微調 1 步】：維持 1 格蛋白質，另外 2 格挑蔬菜；這餐吃完穿厚底拖鞋微踏步 15 分鐘幫忙抽走血糖！';
+        }
+      }
+
+      if (t.includes('炸') || t.includes('五花') || t.includes('香腸') || t.includes('培根')) {
+        blindspots = '⚠️ 【飽和脂肪與反式油脂過高】：含有高溫油炸裹粉或肥肉加工品，會直衝三酸甘油酯 (TG 260)。';
+        tweaks = '【微調 1 步】：肉品改選去皮雞腿肉或鯛魚片；若外食請剝除炸皮後再食用。';
+      }
+
+      if (t.includes('甜辣') || t.includes('照燒') || t.includes('蜜汁') || t.includes('糖')) {
+        blindspots = '⚠️ 【醬料含隱形果糖】：調味醬汁糖分偏高，容易在肝臟轉化為內臟脂肪。';
+        tweaks = '【微調 1 步】：醬料減半使用，或換成柴魚薄鹽醬油加白胡椒、少許純橄欖油。';
+      }
+
+      return { summary, pros, blindspots, quick_tweaks: tweaks };
     }
 
     // 🔌 零額度測試連線（優先使用不扣每日 20 次額度的 ListModels 驗證金鑰並清除冷卻快取）
@@ -1648,9 +2596,29 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         if (t.includes('高麗菜') || t.includes('白菜')) vegDetails.push('高麗菜/白菜（含維生素U修復胃黏膜護胃）');
         if (t.includes('菇') || t.includes('木耳')) vegDetails.push('菇類/木耳（含多醣體吸附油脂降TG）');
         if (t.includes('櫛瓜') || t.includes('瓜')) vegDetails.push('瓜果類（高鉀排鈉代謝水腫）');
+        if (t.includes('青江菜') || t.includes('空心菜') || t.includes('菠菜') || t.includes('地瓜葉')) vegDetails.push('深色葉菜（高鉀與葉黃素）');
         const detailStr = vegDetails.length > 0 ? vegDetails.join('、') : '蔬菜植化素與膳食纖維';
         goods.push(`🥬 <strong>補足優質纖維與植化素</strong>：攝取 ${detailStr}，能在腸道形成保護網，減緩油脂與醣分被肝臟吸收。`);
         autoTags.push('✅高纖/植化素');
+      }
+
+      // 便當 / 正餐 配菜結構客觀體檢（防範：3配菜中只有1格菜，另外都是豆干、蛋、肉，蔬菜總量偏少）
+      const isMealBoxOrDinner = (t.includes('便當') || t.includes('飯') || mealType === '午餐' || mealType === '晚餐');
+      if (isMealBoxOrDinner) {
+        let vegCount = 0;
+        const vegKeywords = ['青江菜', '高麗菜', '白菜', '空心菜', '地瓜葉', '菠菜', '萵苣', '花椰菜', '四季豆', '豆芽', '海帶', '木耳', '菇', '櫛瓜', '黃瓜', '絲瓜', '冬瓜', '蘿蔔', '番茄', '秋葵', '洋蔥'];
+        vegKeywords.forEach(k => {
+          if (t.includes(k)) vegCount++;
+        });
+        if (vegCount === 0 && t.includes('菜')) vegCount = 1;
+
+        const hasOtherProteins = (t.includes('蛋') || t.includes('豆干') || t.includes('豆乾') || t.includes('豆腐') || t.includes('香腸') || t.includes('肉'));
+
+        if (vegCount === 1 && hasOtherProteins) {
+          ngs.push('🥬 <strong>便當配菜提醒（蔬菜份量偏少）</strong>：便當通常配有一整盒白飯（精緻碳水），此餐配菜中真正的蔬菜只有 1 樣（其餘如豆干、炒蛋皆為蛋白質），單一格蔬菜約僅 50~70g，纖維總量偏少，無法完全平穩白飯帶來的血糖震盪（HbA1c 5.7% 防線）。便當 3 格配菜<strong>『至少要選 2 格蔬菜』</strong>才達標！');
+          swaps.push('下次買便當選菜撇步：維持 1 格蛋白質（如吻仔魚炒蛋或豆干），另外 2 格挑蔬菜（如青江菜＋高麗菜/豆芽菜/海帶絲）；這餐吃完後穿厚底拖鞋原地踏步 15 分鐘，小腿大肌肉能有效幫忙抽走血糖！');
+          autoTags.push('⚠️便當菜量偏少(建議2格)');
+        }
       }
       if (t.includes('飯減半') || t.includes('半碗飯') || t.includes('燕麥') || t.includes('去皮') || t.includes('去裹粉')) {
         goods.push('🍚 <strong>聰明減害好習慣</strong>：主動去皮去裹粉、份量減半或替換為高纖燕麥，直接大幅減輕胰島素與肝臟負擔！');
@@ -1783,27 +2751,32 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       });
 
       const prompt = `你是一位溫暖、務實且懂生活限制的臨床減脂與護肝營養師，同時具備高精準度的繁體中文 OCR 文字辨識能力。
-使用者的健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、溫和護胃防逆流」。
-重要判讀原則：
-1. 【保留使用者手打內容＋結合照片/外送截圖 OCR】：使用者手打補充為「${mealToSave}：${note || '（未打字，請從圖片辨識）'}」。若使用者有打字（例如寫了「無糖豆漿+茶葉蛋+草莓吐司」或「氣炸櫛瓜+杏鮑菇+雞腿排去皮」），請務必 100% 完整納入判讀，絕對不要漏掉使用者寫的任何一項食材、去皮去醬或份量說明！若上傳的是外送訂單截圖或餐點照，請一併辨識圖片中的餐點品項。
-2. 【多元蔬菜皆是寶，拒絕單一深綠葉菜偏見】：
-   - 常見耐放蔬菜各有神級功效：高麗菜/大白菜（含維生素U修復胃黏膜、防逆流）、菇類/木耳（含β-葡聚醣多醣體吸附油脂降TG）、櫛瓜/瓜果（高鉀排鈉代謝水腫）、海帶/海藻（高水溶性纖維阻糖）。
-   - 只要餐點中包含上述任何蔬菜/菇類，即為【合格且優質的纖維攝取】，請在 good 欄位肯定其具體功效，【嚴格禁止】挑刺批評「缺少深綠色葉菜」！
-3. 【抓大放小，允許滿分（禁止強迫找碴）】：
-   - 外食與自煮最核心的防線是：避開精緻糖/含糖飲料、避開厚裹粉油炸、原塊肉優先、去皮去沙拉醬、飽足停筷。
-   - 若這餐搭配良好且無油炸/含糖地雷（例如去皮肉排+全麥/燕麥+瓜菇），ng 欄位請直接給予肯定：「🎉 本餐搭配均衡優秀，無明顯代謝地雷！」，【絕對不要】為了填滿欄位而無事生非硬找缺點！
+使用者的健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、攔截血糖峰值(HbA1c 5.7%糖尿病前期警戒)」。
+重要判讀原則（拒絕強迫找碴，但【嚴格拒絕盲目自我感覺良好】）：
+1. 【保留使用者手打內容＋結合照片/外送截圖 OCR】：使用者手打補充為「${mealToSave}：${note || '（未打字，請從圖片辨識）'}」。若使用者有打字（例如「青江菜、吻仔魚炒蛋、豆干」或「無糖豆漿+茶葉蛋」），請 100% 完整納入判讀，不可漏掉任何一項配菜或食材！
+2. 【多元蔬菜皆是寶，但絕不可因有一點青菜就盲目認定份量合格】：
+   - 多元蔬菜皆是寶：高麗菜/白菜（護胃防逆流）、菇類/木耳（多醣體吸油脂降TG）、櫛瓜/瓜果（高鉀排鈉代謝水腫）、海帶/海藻（水溶性纖維阻糖）、青江菜等皆為合格優質纖維，【嚴格禁止】挑刺批評「缺少深綠色葉菜」！
+   - 但【必須客觀檢視蔬菜總份量與多樣性】（絕不可有中 1 個就算沒問題）：
+     * 【外食便當 2 格蔬菜防線】：台灣便當通常有一大盒白飯（精緻高GI碳水），需要足夠體積的膳食纖維網才能攔截葡萄糖與脂肪吸收。
+     * 若為外食便當/正餐結構，3 格配菜中【只有 1 種蔬菜】（其餘是豆干、炒蛋、香腸、麵筋等蛋白質或加工品），單一格蔬菜約僅 50~70g，相較於大盒白飯【份量明顯偏少】！
+     * 此時 ng 欄位【必須客觀指出】：「⚠️ 蔬菜份量偏少：便當 3 格配菜中僅有 1 格青江菜（豆干、吻仔魚炒蛋為蛋白質），相對於一整盒白飯，單一格青菜的纖維量不足以完全平穩餐後血糖衝擊（HbA1c 5.7% 防線）。建議下次便當配菜『至少挑 2 格蔬菜』！」
+     * 只有當餐點中【蔬菜種類 ≥ 2 種】（如便當挑了 2 格蔬菜、或自煮一大盤瓜菇）且份量足夠、無油炸、無含糖飲時，ng 欄位才可給予滿分肯定！
+3. 【抓大放小，客觀講真話】：
+   - good 欄位：真誠肯定選對的亮點（如吻仔魚炒蛋提供高鈣優質蛋白、豆干大豆異黃酮、無油炸厚粉主菜、無含糖飲品，肝臟免受油炸果糖暴擊）。
+   - ng 欄位：若無油炸無糖，但【蔬菜份量偏少/僅 1 格蔬菜】或【精緻澱粉比例高】，務必實話實說點出份量盲點，絕不盲目說「完美無缺」！只有真正菜量充足且無地雷時，才寫「🎉 搭配均衡無地雷，肝臟負擔輕！」。
 4. 【接地氣的外食與下一餐建議】：
-   - 杜蘭小麥義大利麵為低GI慢速澱粉，若搭配多種蔬菜肉類為優良地中海餐；全麥吐司亦優於白吐司。
-   - 若該餐真的完全缺乏纖維，swap 欄位請給出【便當店/超商真實買得到】的建議（如便當店好夾的青江菜、海帶絲、四季豆，或超商無糖豆漿/毛豆），並以「餐後穿厚底拖鞋微踏步 15 分鐘代謝」為核心提醒，絕不給脫離現實的空泛作業。
+   - 若該餐蔬菜份量偏少（如便當只有 1 格青菜），swap 欄位請給出：
+     1. 便當挑菜撇步：「下次便當 3 配菜維持『2 格蔬菜＋1 格蛋白質（蛋豆魚肉）』」。
+     2. 這餐吃完補救：「餐後穿厚底拖鞋微踏步 15 分鐘，利用小腿比目魚肌與腿部大肌肉代償抽走血糖、消解內臟脂肪」！
 
 請以純 JSON 格式回覆（字串內部請使用「」代替雙引號）：
 {
   "extractedItems": "餐點完整品項清單（結合使用者手打文字與圖片辨識結果）",
-  "what": "結合使用者手打文字、份量說明（如去皮、剩1/3）與照片/截圖，清楚列出這餐實際吃了什麼",
-  "good": "⭕ 選對亮點 & 這餐補足了什麼營養（具體肯定：如去皮減油、高麗菜護胃、菇類多醣體降TG、無糖豆漿、低GI澱粉等）",
-  "ng": "🧩 這餐注意事項（若搭配良好無地雷請直接寫：🎉 搭配均衡無地雷，肝臟負擔輕！）",
+  "what": "結合使用者手打文字、份量說明與照片/截圖，清楚列出這餐實際吃了什麼",
+  "good": "⭕ 選對亮點 & 這餐補足了什麼營養（具體肯定：如蛋白質質量、無油炸、無糖飲、蔬菜功效等）",
+  "ng": "🧩 這餐注意事項（若蔬菜份量偏少或僅1格菜，請客觀提醒；若真正菜量足且無地雷才寫：🎉 搭配均衡無地雷，肝臟負擔輕！）",
   "swap": "🔄 下一餐建議 / 餐後活動（給予 1~2 句務實好執行的外食挑選撇步，搭配餐後微踏步 15 分鐘）",
-  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕去皮減油+瓜菇護肝"
+  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕蛋豆優蛋白⚠️菜量偏少"
 }`;
 
       parts.push({ text: prompt });
