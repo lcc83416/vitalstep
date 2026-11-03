@@ -620,7 +620,7 @@
     <div class="logo-badge">
       <div class="logo-icon">🌱</div>
       <div>
-        <div class="logo-title">微步輕健 5.8 <span class="tag">生活智慧對齊</span></div>
+        <div class="logo-title">微步輕健 5.9 <span class="tag">三頁極簡專注</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -636,7 +636,6 @@
     <div class="top-segment-bar">
       <div class="segment-btn active" data-tab="today" onclick="switchTab('today')">每日打卡</div>
       <div class="segment-btn" data-tab="stats" onclick="switchTab('stats')">每週統計</div>
-      <div class="segment-btn" data-tab="recipes" onclick="switchTab('recipes')">採買食譜</div>
       <div class="segment-btn" data-tab="health" onclick="switchTab('health')">健檢放鬆</div>
     </div>
 
@@ -1030,103 +1029,7 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 3: 採買診斷與食譜顧問 ==================== -->
-    <div id="tab-recipes" class="tab-pane">
-
-      <!-- 🛒 食材採買診斷 ＆ 簡易食譜體檢（升級導覽至餐食 AI 模組） -->
-      <div class="card" style="border: 2px solid var(--accent); background: linear-gradient(180deg, var(--card-bg), var(--accent-light)); margin-bottom:12px;">
-        <div class="card-title" style="color:var(--accent);">
-          <span>🛒 智能食材採買 ＆ 簡易食譜體檢</span>
-          <span class="tag" style="background:var(--accent); color:white;">已升級至餐食 AI</span>
-        </div>
-        <div style="font-size:12px; color:var(--text-main); margin-bottom:10px; line-height:1.6;">
-          原暖胃廚房排菜功能已全面升級整合至<strong>【餐食 AI 模組】</strong>（已掛好 Gemini 視覺與文字 API，內建多模型自動接力）！<br>
-          更符合真實生活節奏，隨手打字或拍照即可為您深入把關：
-        </div>
-        <div style="font-size:11px; color:var(--text-muted); line-height:1.6; margin-bottom:14px; background:var(--card-bg); padding:10px 12px; border-radius:10px; border:1px solid var(--border);">
-          • <strong>🛒 食材採買診斷</strong>：超市看中某食材？打字或拍外包裝成分表，立即判斷<strong>能不能買、適不適合我</strong>（TG 260・HbA1c 5.7%・晚歸免洗切）！<br>
-          • <strong>🍳 簡易食譜體檢</strong>：想煮的簡餐或網路食譜，貼上來檢查<strong>安排上有無盲點</strong>（是否缺耐放優質纖維、油脂或果糖是否過量、1~2 步極簡微調）！
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <a href="meal-ai.html?tab=consult" class="btn btn-primary" style="width:100%; padding:12px; font-size:13px; font-weight:800; background:linear-gradient(135deg, #0284c7, #059669); box-shadow:0 3px 10px rgba(2,132,199,0.25); text-decoration:none; text-align:center;">
-            🚀 前往「餐食 AI」：食材採買診斷 ＆ 食譜體檢
-          </a>
-          <a href="meal-ai.html" class="btn" style="width:100%; padding:10px; font-size:12px; font-weight:700; border:1px solid var(--border); text-decoration:none; text-align:center;">
-            📸 開啟「餐食 AI」：生活日誌與每日總結
-          </a>
-        </div>
-      </div>
-
-      <!-- 椅子全身操動作圖解 -->
-      <div class="card">
-        <div class="card-title">
-          <span>🪑 4 分鐘椅子操動作解析</span>
-          <span style="font-size:10px; color:var(--primary);">膝蓋 0 壓迫</span>
-        </div>
-        <div style="font-size:11px; line-height:1.6; color:var(--text-main);">
-          1. <strong>坐姿開合擺臂 (45s)</strong>：雙手向上拍手，雙腳開合踏地，啟動心肺。<br>
-          2. <strong>坐姿抬膝擊掌 (45s)</strong>：單膝向上抬高，雙手膝下拍手，壓迫深層下腹脂肪。<br>
-          3. <strong>坐姿快速出拳 (45s)</strong>：核心收緊雙手交替快速前衝，放鬆久坐緊繃肩膀。<br>
-          4. <strong>坐姿水平伸腿 (45s)</strong>：單腿向前踢直停留 2 秒，強化大腿股四頭肌護膝。
-        </div>
-      </div>
-
-      <!-- 熱鹹燕麥專題 -->
-      <div class="card">
-        <div class="card-title">
-          <span>🍲 告別冰優格！暖胃「熱鹹燕麥粥」食譜</span>
-          <span style="font-size:10px; color:var(--primary);">3~5 分鐘免廚藝</span>
-        </div>
-        
-        <div class="menu-item-card">
-          <div class="menu-header-row">
-            <span class="menu-item-title">🥚 香菇雞肉豆腐熱燕麥粥</span>
-            <span class="menu-badge badge-cook">暖胃第一名</span>
-          </div>
-          <div class="menu-desc">
-            1. 碗中加入大燕麥片 4~5 湯匙，沖入熱開水淹過燕麥，靜置 2 分鐘化為綿密粥底。<br>
-            2. 放入全聯/超商嫩豆腐半盒（或即食雞胸肉丁）、茶葉蛋一顆壓碎。<br>
-            3. 調味：灑<strong>白胡椒粉、少許鹽花、蔥花或海苔絲</strong>。<br>
-            👉 像廣東廣式雞蓉蛋花粥一樣滑順，完全不冰冷，低卡高纖排宿便！
-          </div>
-          <button class="btn-apply-dinner" onclick="setAsTonightDinner('香菇雞肉豆腐熱燕麥粥', '大燕麥片4匙+嫩豆腐半盒+即食雞肉+白胡椒')">
-            📌 設為今晚晚餐（帶入打卡）
-          </button>
-        </div>
-
-        <div class="menu-item-card">
-          <div class="menu-header-row">
-            <span class="menu-item-title">🍅 番茄蛋花熱燕麥粥</span>
-            <span class="menu-badge badge-ready">抗氧化護肝</span>
-          </div>
-          <div class="menu-desc">
-            1. 鍋中水煮滾，丟入牛番茄切丁煮軟（釋放豐富茄紅素）。<br>
-            2. 淋入一顆打散的蛋花，加入燕麥片拌勻微滾 1 分鐘關火。<br>
-            3. 調味：黑胡椒粒、少許鹽、幾滴香油。完全不用醬油，酸香清爽暖呼呼！
-          </div>
-          <button class="btn-apply-dinner" onclick="setAsTonightDinner('番茄蛋花熱燕麥粥', '牛番茄+蛋花+燕麥片+黑胡椒')">
-            📌 設為今晚晚餐（帶入打卡）
-          </button>
-        </div>
-      </div>
-
-      <!-- 🍪 甜點、優格飲與零食消庫存真相指南 -->
-      <div class="card" style="border-left: 4px solid #f59e0b; background:linear-gradient(to bottom, var(--card-bg), var(--warning-bg));">
-        <div class="card-title">
-          <span>🍪 甜點、優格飲與零食「消庫存」指南</span>
-          <span style="font-size:10px; color:#b45309;">TG 260 避坑</span>
-        </div>
-        <div style="font-size:11px; line-height:1.6; color:var(--text-main);">
-          • <strong>市售優格飲/果醬優格真相</strong>：很多優格飲雖然標榜助消化，但為了掩蓋發酵酸味，每瓶常加入高達 <strong>20~30g 的精緻糖（相當於 5~6 顆方糖！）</strong>，果醬也是高果糖糖漿熬煮，是三酸甘油酯飆到 260 的隱形推手！<br>
-          • <strong>想助消化怎麼喝？</strong>：中午配「無糖茶」或「無糖高纖豆漿」；若想吃優格改買<strong>「無糖希臘優格」</strong>，自己撒幾顆冷凍藍莓或小把堅果，既有豐富蛋白質又完全不傷肝！<br>
-          • <strong>家裡餅乾零食怎麼消？</strong>：想吃甜食很正常，請把握<strong>「放在午餐正餐剛吃飽後立刻吃」</strong>！利用正餐的蔬菜纖維與蛋白質延緩糖分吸收，<strong>絕對不要在下午空腹或晚上宵夜吃</strong>！
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ==================== TAB 4: 健檢與身心放鬆 ==================== -->
+    <!-- ==================== TAB 3: 健檢與身心放鬆 ==================== -->
     <div id="tab-health" class="tab-pane">
 
       <!-- 血壓焦慮破解專區 -->
@@ -1212,6 +1115,64 @@
         </div>
       </div>
 
+      <!-- 🪑 4 分鐘椅子操動作圖解 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🪑 4 分鐘椅子操動作解析</span>
+          <span style="font-size:10px; color:var(--primary);">膝蓋 0 壓迫</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-main);">
+          1. <strong>坐姿開合擺臂 (45s)</strong>：雙手向上拍手，雙腳開合踏地，啟動心肺。<br>
+          2. <strong>坐姿抬膝擊掌 (45s)</strong>：單膝向上抬高，雙手膝下拍手，壓迫深層下腹脂肪。<br>
+          3. <strong>坐姿快速出拳 (45s)</strong>：核心收緊雙手交替快速前衝，放鬆久坐緊繃肩膀。<br>
+          4. <strong>坐姿水平伸腿 (45s)</strong>：單腿向前踢直停留 2 秒，強化大腿股四頭肌護膝。
+        </div>
+      </div>
+
+      <!-- 🍲 熱鹹燕麥專題 -->
+      <div class="card">
+        <div class="card-title">
+          <span>🍲 告別冰優格！暖胃「熱鹹燕麥粥」食譜</span>
+          <span style="font-size:10px; color:var(--primary);">3~5 分鐘免廚藝</span>
+        </div>
+        <div class="menu-item-card">
+          <div class="menu-header-row">
+            <span class="menu-item-title">🥚 香菇雞肉豆腐熱燕麥粥</span>
+            <span class="menu-badge badge-cook">暖胃第一名</span>
+          </div>
+          <div class="menu-desc">
+            1. 碗中加入大燕麥片 4~5 湯匙，沖入熱開水淹過燕麥，靜置 2 分鐘化為綿密粥底。<br>
+            2. 放入全聯/超商嫩豆腐半盒（或即食雞胸肉丁）、茶葉蛋一顆壓碎。<br>
+            3. 調味：灑<strong>白胡椒粉、少許鹽花、蔥花或海苔絲</strong>。<br>
+            👉 像廣東廣式雞蓉蛋花粥一樣滑順，完全不冰冷，低卡高纖排宿便！
+          </div>
+        </div>
+        <div class="menu-item-card" style="margin-top:8px;">
+          <div class="menu-header-row">
+            <span class="menu-item-title">🍅 番茄蛋花熱燕麥粥</span>
+            <span class="menu-badge badge-ready">抗氧化護肝</span>
+          </div>
+          <div class="menu-desc">
+            1. 鍋中水煮滾，丟入牛番茄切丁煮軟（釋放豐富茄紅素）。<br>
+            2. 淋入一顆打散的蛋花，加入燕麥片拌勻微滾 1 分鐘關火。<br>
+            3. 調味：黑胡椒粒、少許鹽、幾滴香油。完全不用醬油，酸香清爽暖呼呼！
+          </div>
+        </div>
+      </div>
+
+      <!-- 🍪 甜點、優格飲與零食消庫存真相指南 -->
+      <div class="card" style="border-left: 4px solid #f59e0b; background:linear-gradient(to bottom, var(--card-bg), var(--warning-bg));">
+        <div class="card-title">
+          <span>🍪 甜點、優格飲與零食「消庫存」指南</span>
+          <span style="font-size:10px; color:#b45309;">TG 260 避坑</span>
+        </div>
+        <div style="font-size:11px; line-height:1.6; color:var(--text-main);">
+          • <strong>市售優格飲/果醬優格真相</strong>：很多優格飲雖然標榜助消化，但為了掩蓋發酵酸味，每瓶常加入高達 <strong>20~30g 的精緻糖（相當於 5~6 顆方糖！）</strong>，果醬也是高果糖糖漿熬煮，是三酸甘油酯飆到 260 的隱形推手！<br>
+          • <strong>想助消化怎麼喝？</strong>：中午配「無糖茶」或「無糖高纖豆漿」；若想吃優格改買<strong>「無糖希臘優格」</strong>，自己撒幾顆冷凍藍莓或小把堅果，既有豐富蛋白質又完全不傷肝！<br>
+          • <strong>家裡餅乾零食怎麼消？</strong>：想吃甜食很正常，請把握<strong>「放在午餐正餐剛吃飽後立刻吃」</strong>！利用正餐的蔬菜纖維與蛋白質延緩糖分吸收，<strong>絕對不要在下午空腹或晚上宵夜吃</strong>！
+        </div>
+      </div>
+
     </div>
 
   </div>
@@ -1225,10 +1186,6 @@
     <div class="nav-item" data-tab="stats" onclick="switchTab('stats')">
       <span class="icon">📊</span>
       <span>每週統計</span>
-    </div>
-    <div class="nav-item" data-tab="recipes" onclick="switchTab('recipes')">
-      <span class="icon">🍲</span>
-      <span>採買食譜</span>
     </div>
     <div class="nav-item" data-tab="health" onclick="switchTab('health')">
       <span class="icon">🩺</span>
