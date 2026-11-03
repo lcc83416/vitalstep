@@ -503,32 +503,13 @@
           <span>🛒 食材採買診斷（能買嗎？適合我嗎？）</span>
           <span style="font-size:10px; color:var(--accent); font-weight:700;">支持打字 + 拍成分表</span>
         </div>
-        <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:8px;">
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
           去全聯、超市、菜市場看到想買的食材、醬汁或點心？打字輸入或拍包裝營養表，AI 幫您攔截隱形果糖與高飽和脂肪！
-        </div>
-
-        <!-- 常用食材膠囊速點 -->
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 常用食材快速加入：</div>
-        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">
-          <span class="quick-chip" onclick="addConsultChip('免洗高麗菜')">+ 免洗高麗菜</span>
-          <span class="quick-chip" onclick="addConsultChip('櫛瓜')">+ 櫛瓜</span>
-          <span class="quick-chip" onclick="addConsultChip('杏鮑菇')">+ 杏鮑菇</span>
-          <span class="quick-chip" onclick="addConsultChip('牛番茄')">+ 牛番茄</span>
-          <span class="quick-chip" onclick="addConsultChip('冷凍毛豆')">+ 冷凍毛豆</span>
-          <span class="quick-chip" onclick="addConsultChip('去皮雞肉')">+ 去皮雞肉</span>
-          <span class="quick-chip" onclick="addConsultChip('嫩豆腐')">+ 嫩豆腐</span>
-          <span class="quick-chip" onclick="addConsultChip('鯛魚片')">+ 鯛魚片</span>
-          <span class="quick-chip" onclick="addConsultChip('大燕麥片')">+ 大燕麥片</span>
-          <span class="quick-chip" onclick="addConsultChip('杜蘭小麥義大利麵')">+ 杜蘭小麥麵</span>
-          <span class="quick-chip" onclick="addConsultChip('柴魚薄鹽醬油')">+ 柴魚薄鹽醬油</span>
-          <span class="quick-chip" onclick="addConsultChip('焙煎胡麻醬')">+ 焙煎胡麻醬</span>
-          <span class="quick-chip" onclick="addConsultChip('牛五花肉片')">+ 牛五花肉片</span>
-          <span class="quick-chip" onclick="addConsultChip('日式照燒醬')">+ 日式照燒醬</span>
         </div>
 
         <!-- 食材打字輸入框 -->
         <div style="margin-bottom:10px;">
-          <textarea id="consult-ingredient-input" rows="2" placeholder="打字輸入想評估的食材或醬料，例如：櫛瓜、杏鮑菇、冷壓橄欖油、日式照燒醬、牛五花肉片..."
+          <textarea id="consult-ingredient-input" rows="2" placeholder="打字輸入想評估的食材或醬料，例如：生吐司、胡麻醬、日式照燒醬、牛五花肉片、燕麥奶..."
             style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"></textarea>
         </div>
 
@@ -558,17 +539,8 @@
           <span>🍳 簡易食譜體檢（安排上有沒有不足的點？）</span>
           <span style="font-size:10px; color:var(--primary); font-weight:700;">支持打字 + 貼上食譜</span>
         </div>
-        <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:8px;">
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
           自己想煮的簡餐、或網路/朋友分享的食譜，貼上來檢查：蔬菜夠不夠？油脂會不會太高？是否隱藏高果糖醬料？晚歸能不能快速完成？
-        </div>
-
-        <!-- 常用簡易食譜靈感速點 -->
-        <div style="font-size:10px; color:var(--text-muted); margin-bottom:4px;">💡 快速帶入示範食譜靈感：</div>
-        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;">
-          <span class="quick-chip" onclick="addRecipePreset('微波暖鍋版：免洗高麗菜鋪底＋嫩豆腐半盒＋去皮雞肉片＋金針菇，微波 3 分鐘淋柴魚薄鹽醬油')">+ 暖鍋微波版 (免開火)</span>
-          <span class="quick-chip" onclick="addRecipePreset('熱燕麥鹹粥：大燕麥片4湯匙沖熱水＋無糖高纖黑豆漿＋茶葉蛋1顆壓碎＋少許白胡椒')">+ 豆漿燕麥熱鹹粥</span>
-          <span class="quick-chip" onclick="addRecipePreset('杜蘭小麥義大利麵 70g 快煮，配平底鍋微油乾煎櫛瓜、杏鮑菇與去皮雞腿肉丁，灑黑胡椒')">+ 櫛瓜雞肉快炒義麵</span>
-          <span class="quick-chip" onclick="addRecipePreset('超商緊急救急：茶葉蛋2顆＋無糖高纖豆漿＋地瓜一小條＋超商生菜沙拉（不淋千島醬改和風醬半分）')">+ 超商晚歸救急組合</span>
         </div>
 
         <!-- 食譜輸入框 -->
@@ -2615,9 +2587,9 @@ ${photo ? '（附帶使用者拍攝之食譜書籍或網頁截圖）' : ''}
         const hasOtherProteins = (t.includes('蛋') || t.includes('豆干') || t.includes('豆乾') || t.includes('豆腐') || t.includes('香腸') || t.includes('肉'));
 
         if (vegCount === 1 && hasOtherProteins) {
-          ngs.push('🥬 <strong>便當配菜提醒（蔬菜份量偏少）</strong>：便當通常配有一整盒白飯（精緻碳水），此餐配菜中真正的蔬菜只有 1 樣（其餘如豆干、炒蛋皆為蛋白質），單一格蔬菜約僅 50~70g，纖維總量偏少，無法完全平穩白飯帶來的血糖震盪（HbA1c 5.7% 防線）。便當 3 格配菜<strong>『至少要選 2 格蔬菜』</strong>才達標！');
-          swaps.push('下次買便當選菜撇步：維持 1 格蛋白質（如吻仔魚炒蛋或豆干），另外 2 格挑蔬菜（如青江菜＋高麗菜/豆芽菜/海帶絲）；這餐吃完後穿厚底拖鞋原地踏步 15 分鐘，小腿大肌肉能有效幫忙抽走血糖！');
-          autoTags.push('⚠️便當菜量偏少(建議2格)');
+          ngs.push('🥬 <strong>餐盤平衡提醒（蔬菜比例偏少）</strong>：以健康餐盤「飯菜等量」來看，豆干與炒蛋屬於蛋白質，此餐真正的蔬菜只有 1 樣，相對於大盒白飯比例偏低，纖維較難及時平穩餐後血糖（HbA1c 5.7% 防線）。建議挑配菜時可挑 2 種蔬菜，讓蔬菜份量更接近白飯！');
+          swaps.push('下次挑便當配菜小撇步：維持 1 樣蛋白質（如炒蛋或豆干），另外 2 樣選蔬菜；這餐吃完穿厚底拖鞋微踏步 15 分鐘，小腿與大腿肌肉能有效幫忙抽走血糖！');
+          autoTags.push('⚠️蔬菜比例偏少(建議飯菜等量)');
         }
       }
       if (t.includes('飯減半') || t.includes('半碗飯') || t.includes('燕麥') || t.includes('去皮') || t.includes('去裹粉')) {
@@ -2754,13 +2726,15 @@ ${photo ? '（附帶使用者拍攝之食譜書籍或網頁截圖）' : ''}
 使用者的健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、攔截血糖峰值(HbA1c 5.7%糖尿病前期警戒)」。
 重要判讀原則（拒絕強迫找碴，但【嚴格拒絕盲目自我感覺良好】）：
 1. 【保留使用者手打內容＋結合照片/外送截圖 OCR】：使用者手打補充為「${mealToSave}：${note || '（未打字，請從圖片辨識）'}」。若使用者有打字（例如「青江菜、吻仔魚炒蛋、豆干」或「無糖豆漿+茶葉蛋」），請 100% 完整納入判讀，不可漏掉任何一項配菜或食材！
-2. 【多元蔬菜皆是寶，但絕不可因有一點青菜就盲目認定份量合格】：
-   - 多元蔬菜皆是寶：高麗菜/白菜（護胃防逆流）、菇類/木耳（多醣體吸油脂降TG）、櫛瓜/瓜果（高鉀排鈉代謝水腫）、海帶/海藻（水溶性纖維阻糖）、青江菜等皆為合格優質纖維，【嚴格禁止】挑刺批評「缺少深綠色葉菜」！
-   - 但【必須客觀檢視蔬菜總份量與多樣性】（絕不可有中 1 個就算沒問題）：
-     * 【外食便當 2 格蔬菜防線】：台灣便當通常有一大盒白飯（精緻高GI碳水），需要足夠體積的膳食纖維網才能攔截葡萄糖與脂肪吸收。
-     * 若為外食便當/正餐結構，3 格配菜中【只有 1 種蔬菜】（其餘是豆干、炒蛋、香腸、麵筋等蛋白質或加工品），單一格蔬菜約僅 50~70g，相較於大盒白飯【份量明顯偏少】！
-     * 此時 ng 欄位【必須客觀指出】：「⚠️ 蔬菜份量偏少：便當 3 格配菜中僅有 1 格青江菜（豆干、吻仔魚炒蛋為蛋白質），相對於一整盒白飯，單一格青菜的纖維量不足以完全平穩餐後血糖衝擊（HbA1c 5.7% 防線）。建議下次便當配菜『至少挑 2 格蔬菜』！」
-     * 只有當餐點中【蔬菜種類 ≥ 2 種】（如便當挑了 2 格蔬菜、或自煮一大盤瓜菇）且份量足夠、無油炸、無含糖飲時，ng 欄位才可給予滿分肯定！
+2. 【評估基準：以通用健康餐盤（飯菜等量、食物六大類分類）為客觀尺規，拒絕自訂死規矩也拒絕盲目稱讚】：
+   - 多元蔬菜皆是寶：高麗菜/白菜（護胃防逆流）、菇類/木耳（多醣體吸油脂降TG）、櫛瓜/瓜果（高鉀代謝排鈉）、海帶、青江菜等皆是合格優質纖維，嚴格禁止挑刺批評「缺少深綠色葉菜」！
+   - 但【必須客觀檢視蔬菜與澱粉的比例】：
+     * 通用健康餐盤核心原則是「蔬菜份量至少要與澱粉相當（飯菜等量）」；在食物分類中，豆干/豆腐與炒蛋屬於「蛋白質類」，不是蔬菜類！
+     * 若為外食便當或正餐，配菜中【只有 1 種蔬菜】（其餘是豆干、炒蛋、肉品）：
+       客觀事實是：相對於便當整盒白飯，蔬菜份量遠小於白飯（僅約 1/3~1/2 飯量），單格青菜的纖維量不足以完全平穩餐後血糖波動（HbA1c 5.7% 防線）。
+       ng 欄位請平實、客觀地指出比例不足，語氣親切自然，不要像自訂死規矩、也無需長篇大論背論文，例如：
+       「⚠️ 蔬菜份量偏少：以餐盤平衡來看，豆干與炒蛋屬於蛋白質，真正的蔬菜只有青江菜，相對於一整盒白飯比例偏低，纖維量較難完全平穩餐後血糖衝擊。建議挑配菜時盡量選 2 種蔬菜，讓蔬菜份量更接近白飯！」
+     * 只有當餐點中【蔬菜份量充足（至少 2 種蔬菜/瓜菇，能平衡澱粉）】且無油炸、無含糖飲時，才給予滿分過關肯定！
 3. 【抓大放小，客觀講真話】：
    - good 欄位：真誠肯定選對的亮點（如吻仔魚炒蛋提供高鈣優質蛋白、豆干大豆異黃酮、無油炸厚粉主菜、無含糖飲品，肝臟免受油炸果糖暴擊）。
    - ng 欄位：若無油炸無糖，但【蔬菜份量偏少/僅 1 格蔬菜】或【精緻澱粉比例高】，務必實話實說點出份量盲點，絕不盲目說「完美無缺」！只有真正菜量充足且無地雷時，才寫「🎉 搭配均衡無地雷，肝臟負擔輕！」。
