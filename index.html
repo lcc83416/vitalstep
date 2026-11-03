@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>微步輕健 VitalStep 5.1 - 專屬健康日誌與智能菜單</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>微步輕健 VitalStep 5.9 - 專屬健康日誌與生活對齊</title>
   <style>
     /* 100% 離線獨立樣式，針對 iPhone 16 Pro Max 尺寸全面優化 */
     :root {
@@ -1194,6 +1197,7 @@
   </nav>
 
   <script>
+    const BUILD_VERSION_TIMESTAMP = 1762157500000; // 2026-11-03 v5.9.1
     const KEY_PREFIX = 'vitalstep_v4_';
     const HISTORY_DB_KEY = 'vitalstep_v5_history_by_date';
     const GLOBAL_CFG_KEY = 'vitalstep_v5_global_cfg';
@@ -1362,6 +1366,7 @@
     }
 
     function init() {
+      autoCheckCloudUpdate();
       const d = new Date();
       document.getElementById('date-display').textContent = d.toLocaleDateString('zh-TW', {
         year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
@@ -3838,6 +3843,29 @@
       }
 
       container.innerHTML = html;
+    }
+
+    // 🛡️ iOS 桌面捷徑專用：自動檢查雲端更新（防止 iPhone 讀取過期的本機快照）
+    async function autoCheckCloudUpdate() {
+      const lastCheck = sessionStorage.getItem('last_auto_version_check');
+      if (lastCheck && Date.now() - Number(lastCheck) < 4000) return;
+      sessionStorage.setItem('last_auto_version_check', Date.now());
+
+      try {
+        const resp = await fetch(window.location.pathname + '?_t=' + Date.now(), { cache: 'no-store' });
+        if (!resp.ok) return;
+        const htmlText = await resp.text();
+        const match = htmlText.match(/BUILD_VERSION_TIMESTAMP\s*=\s*(\d+)/);
+        if (match && match[1]) {
+          const cloudTs = Number(match[1]);
+          if (cloudTs > BUILD_VERSION_TIMESTAMP) {
+            console.log('🔄 偵測到雲端新版本，自動升級中...');
+            const url = new URL(window.location.href);
+            url.searchParams.set('v', cloudTs);
+            window.location.replace(url.toString());
+          }
+        }
+      } catch (e) {}
     }
 
     // 🔄 免刪桌面捷徑：一鍵強制拉取 GitHub 最新版（100% 保留 localStorage 所有歷史打卡與體重資料）
