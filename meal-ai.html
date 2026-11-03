@@ -284,7 +284,6 @@
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <div style="font-size:11px; color:var(--primary); font-weight:700; white-space:nowrap;" id="header-count-badge">今日 0 餐</div>
       <button class="btn" style="padding:4px 8px; font-size:10px; border-color:var(--primary); color:var(--primary);" onclick="forceUpdateMealApp()" title="免刪桌面捷徑，保留資料更新至最新版">🔄 更新</button>
     </div>
   </header>
@@ -329,22 +328,42 @@
       </div>
     </div>
 
-    <!-- 🤖 1. 今日生活與健康防線 AI 智能總結（置頂最上方，一鍵結算與複製最順手！） -->
+    <!-- 🤖 1. 今日與本週 AI 智能總結中心（集中於頂部，一鍵結算與複製最順手！） -->
     <div class="card" style="margin-bottom:12px; background:linear-gradient(135deg, rgba(5,150,105,0.1), rgba(2,132,199,0.1)); border:1.5px solid var(--primary); padding:12px 14px;">
+      <!-- 上半部：今日總結 -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="font-size:13px; font-weight:800; color:var(--primary);">🤖 結算今日生活與健康防線 (AI 智能對齊)</span>
+        <span style="font-size:13px; font-weight:800; color:var(--primary);">🤖 結算今日生活與健康防線 (含餐食同步)</span>
         <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:6px 12px; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(5,150,105,0.25);" onclick="generateDailyAiReview()">
           ✨ 生成今日 AI 總結
         </button>
       </div>
       <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="daily-ai-review-desc">
-        白天可隨時結算！客觀整合已記餐食、行程微活動與飲水，自動對齊 3 大防線，一鍵複製同步回主頁！
+        一天結算一次！客觀整合本日餐食、微活動與飲水，自動對齊 3 大防線並打包全部餐點，一鍵複製回主頁貼上！
       </div>
       <div id="daily-ai-result-box" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
         <div id="daily-ai-result-content" style="font-size:11px; line-height:1.65; color:var(--text-main); margin-bottom:8px; background:var(--card-bg); padding:10px 12px; border-radius:10px; border:1px solid var(--border);"></div>
         <button class="btn btn-primary" id="copy-daily-ai-btn" style="width:100%; padding:10px; font-size:12px; font-weight:800; background:linear-gradient(135deg, #059669, #0284c7);" onclick="copyDailyAiReview()">
           📋 複製今日 AI 總結同步碼（回主頁貼上）
         </button>
+      </div>
+
+      <!-- 下半部：本週飲食 AI 深度總評（直接整合在今日總結下方） -->
+      <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(5,150,105,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+          <span style="font-size:12px; font-weight:800; color:var(--accent);">📊 本週飲食 AI 深度總評（營養盲點檢視）</span>
+          <button class="btn" id="weekly-ai-gen-btn" style="padding:5px 10px; font-size:11px; font-weight:800; background:var(--accent); color:white; border:none;" onclick="generateWeeklyAiReview()">
+            🤖 生成本週 AI 總結
+          </button>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="weekly-ai-review-desc">
+          隨時點選！由 Gemini AI 客觀統整本週所有餐食，找出「飲食結構偏頗與缺乏的營養素」，生成後一鍵同步回「每週統計」！
+        </div>
+        <div id="weekly-ai-result-box" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
+          <div id="weekly-ai-result-text" style="font-size:11px; line-height:1.65; color:var(--text-main); white-space:pre-wrap; margin-bottom:8px; background:var(--card-bg); padding:9px 10px; border-radius:8px; border:1px solid var(--border);"></div>
+          <button class="btn btn-primary" id="copy-weekly-ai-btn" style="width:100%; padding:9px; font-size:11px; background:var(--accent);" onclick="copyWeeklyAiReview()">
+            📋 複製本週總結同步碼（回每週統計貼上）
+          </button>
+        </div>
       </div>
     </div>
 
@@ -439,37 +458,16 @@
       <div id="drink-timeline-list" style="font-size:12px;"></div>
     </div>
 
-    <!-- 4. 📚 本日已記錄餐食相簿 ＆ 本週總評（照片按日保留！） -->
+    <!-- 4. 📚 本日已記錄餐食相簿（照片按日保留，單餐可獨立複製） -->
     <div class="card">
       <div class="card-title">
         <span id="meal-history-card-title">📚 本日餐食紀錄相簿</span>
-        <button class="btn btn-primary" style="padding:5px 10px; font-size:11px;" onclick="copyAllTodayMeals()">
-          📋 複製本日全部餐食
-        </button>
-      </div>
-
-      <!-- 📊 本週飲食 AI 深度總評（隨時點選・不限週日・告別罐頭） -->
-      <div style="margin-bottom:12px; background:linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08)); border:1.5px solid var(--primary); border-radius:10px; padding:10px 12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-          <span style="font-size:12px; font-weight:800; color:var(--primary);">📊 本週飲食 AI 深度總評（外食偏頗診斷）</span>
-          <button class="btn btn-primary" id="weekly-ai-gen-btn" style="padding:4px 9px; font-size:11px;" onclick="generateWeeklyAiReview()">
-            🤖 生成本週 AI 總結
-          </button>
-        </div>
-        <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="weekly-ai-review-desc">
-          隨時點選！由 Gemini AI 統整本週目前所有外食與餐點，客觀診斷「公司週邊外食偏頗與不知不覺漏掉的好營養」，生成後可一鍵同步回「每週統計」！
-        </div>
-        <div id="weekly-ai-result-box" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border);">
-          <div id="weekly-ai-result-text" style="font-size:11px; line-height:1.65; color:var(--text-main); white-space:pre-wrap; margin-bottom:8px; background:var(--card-bg); padding:9px 10px; border-radius:8px; border:1px solid var(--border);"></div>
-          <button class="btn btn-primary" id="copy-weekly-ai-btn" style="width:100%; padding:8px; font-size:11px;" onclick="copyWeeklyAiReview()">
-            📋 複製本週總結同步碼（回每週統計貼上）
-          </button>
-        </div>
+        <span style="font-size:10px; color:var(--text-muted); font-weight:600;">單餐可點右上角複製同步</span>
       </div>
 
       <div id="sync-guide-banner" style="display:none; margin-bottom:10px; background:var(--primary-light); border:1px solid var(--primary); color:var(--text-main); padding:9px 11px; border-radius:10px; font-size:11px; line-height:1.5;">
-        🎉 <strong>已複製成績單同步碼！</strong><br>
-        現在請回手機桌面打開<strong>「每日進度」捷徑</strong>，點一下飲食區上方的<strong>「📋 一鍵貼上匯入 AI 餐食」</strong>就會立刻同步過去！
+        🎉 <strong>已複製同步碼！</strong><br>
+        現在請回手機桌面打開<strong>「每日進度」捷徑</strong>，點一下最上方的<strong>「📋 一鍵貼上匯入」</strong>就會立刻同步過去！
       </div>
 
       <!-- 每日餐食歷史卡片容器（保留所有照片與每餐 4 點分析！） -->
@@ -645,7 +643,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762157500000; // 2026-11-03 v5.9.1
+    const BUILD_VERSION_TIMESTAMP = 1762181000000; // 2026-11-03 v5.9.2
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
     const MEAL_AI_DATE_KEY = 'vitalstep_meal_ai_date';
@@ -1408,41 +1406,30 @@
       const actsDesc = activities.map(a => `• [${a.time}] ${a.text}`).join('\n');
       const drinksDesc = drinks.map(d => `• [${d.time}] ${d.text} (${d.ml}ml)`).join('\n');
 
-      const prompt = `你是一位溫暖、務實且懂人性的臨床減脂與代謝營養教練。
-使用者的健康數據與背景：
-- 三酸甘油酯 (TG) 260（脂肪肝與發炎主因，關鍵是阻斷液態果糖、裹粉壞油、以及餐後及時靠骨骼肌收縮抽血糖）
-- 糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣，需攔截餐後血糖峰值）
-- 護膝鐵則：體重 93.9kg，嚴禁深蹲與跳躍衝擊，通勤下樓搭手扶梯。
-- 今天的生活模式：【${mode}模式】。
+      const prompt = `你是一位專業、客觀且具同理心的臨床代謝與營養師。
+使用者的客觀健檢指標與改善目標：
+- 體重 93.5kg（膝關節需保護，避免深蹲與跑跳等高衝擊動作）
+- 三酸甘油酯 (TG) 260（中度脂肪肝，需控制精緻糖/果糖、過量飽和脂肪、油炸物與精緻碳水，並透過餐後活動促進代謝）
+- 糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣，需平穩餐後血糖波動）
+- 今日生活模式：【${mode}模式】
+（註：紀錄上的時間僅為使用者有空坐下來打字補記的時間，並非實際用餐或飲水時間，請勿針對紀錄時間早晚進行批評。）
 
-以下是使用者【${selectedDate}】的真實餐食記錄：
+以下是使用者【${selectedDate}】的餐食記錄：
 ${mealsDesc || '（今日尚未記錄餐點）'}
 
-以下是使用者【${selectedDate}】的真實行程與微活動隨手記流水帳：
+以下是使用者【${selectedDate}】的行程與微活動記錄：
 ${actsDesc || '（今日尚未記錄行程微活動）'}
 
-以下是使用者【${selectedDate}】的真實飲水與飲品記錄（共約 ${totalWater} ml）：
+以下是使用者【${selectedDate}】的飲水與飲品記錄（共約 ${totalWater} ml）：
 ${drinksDesc || '（今日尚未記錄飲品水份）'}
 
-請你綜合分析今日「生活模式 ＋ 餐食 ＋ 行程活動 ＋ 飲水飲品」，以純 JSON 格式回覆：
-【核心評估規則】：
-1. 【精準區分靜止 vs 有效代謝微活動】：
-   - 自動過濾靜態時間（如：搭車坐著、開會坐著、躺著追劇）。
-   - 提取並加總真實活動（如：站著洗碗收拾10-15分、出門步行、採買提重、做家事整理、穿厚拖鞋踏步）。估算今日「代謝微活動總分鐘數（activeMinutes）」。
-   - 洗碗收拾 10~15 分鐘在醫學上完全合格，能刺激比目魚肌與股四頭肌 GLUT-4 抽血糖，請給予明確肯定！
-2. 【3 大時段健康防線嚴謹判定 (habits)】：
-   - lunch_move_15m (boolean): 午餐後是否有收拾洗碗、散步、厚拖鞋踏步等微活動 ≥ 10~15 分鐘？有則 true。
-   - dinner_step_15m (boolean): 晚餐後是否有收拾洗碗、追劇原地踏步、沙發踢腿或甩腿 ≥ 15~20 分鐘？有則 true。
-   - bedtime_2hr_fast (boolean): 晚餐後是否守住零宵夜、零高糖零食，讓肝臟夜間專心修復？有則 true。
-3. 【餐後血糖與 TG 阻斷判定】：
-   - 檢視午餐/早午餐或晚餐後，是否有走動或站立收拾洗碗？有則判定「⭕ 成功攔截血糖轉化為 TG」！
-4. 【飲水與飲品評定（TG 260 關鍵阻斷）】：
-   - 檢視水分總量（目標 2000~2400ml）。
-   - 檢視飲品類型：若有拿鐵、自調茶飲（如抹茶對半稀釋芭樂原汁消庫存）、無糖茶或純水，給予溫暖且專業的點評。
-5. 【疲勞保護機制（最高優先級）】：
-   - 若使用者下午有外出辦事、採買提重或長時間走動，晚上已很累，請在評語中【強力表揚並指示晚上安心休息放空，絕對免做任何額外運動】！
-6. 【溫暖教練總評】：
-   - 語氣溫暖、懂生活的辛苦，絕不說教、不派補吃補做功課，約 80~130 字。
+請依據標準臨床營養學與代謝醫學，客觀綜合評估今日的飲食營養結構、活動量與水分攝取，並以純 JSON 格式回覆：
+1. 【有效活動量估算 (activeMinutes)】：過濾靜態坐臥時間，加總步行、家事收拾、踏步或運動等實際身體活動分鐘數。
+2. 【3 大時段防線判定 (habits)】：
+   - lunch_move_15m (boolean): 午餐後或白天是否有累積 ≥ 10~15 分鐘的走動、家事或微活動？
+   - dinner_step_15m (boolean): 晚餐後或晚間是否有累積 ≥ 15 分鐘的收拾、踏步或微活動？
+   - bedtime_2hr_fast (boolean): 是否有避免睡前宵夜與高糖點心？
+3. 【客觀真實點評】：做好與均衡的地方給予具體肯定；若有營養不均（如蔬菜纖維不足、蛋白質偏少、精緻澱粉或油脂過高、純水量不足或活動量偏少），請誠實、直白指出並提供具體可行的改善建議，不護短也不強行找碴。
 
 請以純 JSON 格式輸出（字串內部請勿使用雙引號，可用「」代替）：
 {
@@ -1453,12 +1440,12 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
     "bedtime_2hr_fast": true
   },
   "activeMinutes": 30,
-  "activeSummary": "微活動項目加總說明",
-  "glucoseIntercept": "血糖攔截評定",
-  "mealHighlight": "飲食評定",
-  "waterFeedback": "飲水與飲品評定（含消庫存或補水建議）",
-  "coachFeedback": "給 Cherry 的溫暖總評與休息建議（80~130字）",
-  "summaryBadge": "15字以內成果徽章"
+  "activeSummary": "今日實際活動項目與分鐘數加總說明",
+  "glucoseIntercept": "餐後活動與血糖/TG代謝客觀評定",
+  "mealHighlight": "今日三餐營養結構客觀評定（肯定優點並誠實指出不足之處）",
+  "waterFeedback": "飲水總量與飲品結構客觀評定",
+  "coachFeedback": "今日綜合檢討與明日具體微調建議（約 80~130 字）",
+  "summaryBadge": "15字以內今日總結摘要"
 }`;
 
       try {
@@ -2043,23 +2030,22 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       try {
         let resultObj = null;
         if (key) {
-          const promptText = `你是一位精通代謝醫學與實戰營養的專家，正在為一位台灣上班族進行超市食材採買診斷。
-使用者核心健康防線與作息特質：
-1. 健檢指標：三酸甘油酯 (TG) 260（去年 169，中度脂肪肝主因，急需切斷精緻果糖、反式脂肪與過量飽和脂肪）；糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣，需平穩血糖，優先慢速複合碳水）。
-2. 生活型態：每日通勤 3~4 小時，晚歸 20:00~20:30 到家，極度疲勞，烹調追求「零洗切、免開火或微波 ≤ 3 分鐘出餐」；下樓梯膝蓋承重逼近 400kg，運動以穿厚底拖鞋微踏步 15 分鐘為主。
-3. 蔬菜認知原則：高麗菜/白菜（護胃防逆流）、菇類/木耳（多醣體吸油脂降TG）、瓜果（高鉀排鈉代謝），全為合格優質纖維，不強求深綠色葉菜。
+          const promptText = `你是一位精通代謝醫學與臨床營養學的專家，正在為使用者進行食材或食品採買診斷。
+使用者的客觀健檢指標與目標：
+- 體重 93.5kg，三酸甘油酯 (TG) 260（中度脂肪肝，需避免精緻果糖、反式脂肪與過量飽和脂肪）
+- 糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣，需平穩血糖波動）
 
-待診斷食材或問題：
+待診斷食材或食品：
 「${query}」
 ${photo ? '（附帶使用者拍攝之食材或包裝營養成分表圖片）' : ''}
 
-請務必輸出繁體中文 JSON 格式：
+請完全依據客觀營養學與食品成分進行專業評估，輸出繁體中文 JSON 格式：
 {
-  "rating": "🟢 推薦購買" 或 "🟡 可以買，留意細節" 或 "🔴 地雷建議避開",
-  "summary": "一句話總結此食材是否適合買（先肯定優勢或明確指出關鍵風險）",
-  "metabolic_impact": "深入解析對 TG 260、HbA1c 5.7% 與脂肪肝的代謝影響（為什麼適合？或成分中是否含隱形果糖/飽和脂肪/高GI）",
-  "convenience_tip": "針對晚歸上班族的極簡省時烹調技巧（零洗切、微波 ≤ 3 分鐘出餐法）",
-  "swap_alternative": "若含地雷或需注意項，推薦全聯/超市隨手可買的更佳減害替代品；若全數推薦則推薦加分搭檔"
+  "rating": "🟢 推薦購買" 或 "🟡 可以買，留意份量/做法" 或 "🔴 建議避開或少買",
+  "summary": "一句話客觀總結此食材的營養價值或潛在風險",
+  "metabolic_impact": "客觀解析其營養成分（蛋白質、膳食纖維、油脂種類、碳水GI值或隱形糖鈉）對 TG 260、脂肪肝與血糖 (HbA1c 5.7%) 的實際影響",
+  "convenience_tip": "推薦最能保留營養且低油低負擔的烹調或食用方式（如水蒸、川燙、乾煎、去皮或份量控制）",
+  "swap_alternative": "若有營養盲點請推薦更健康的替代品；若為優質食材則推薦能互補營養的搭配食材"
 }`;
 
           const parts = [{ text: promptText }];
@@ -2132,27 +2118,25 @@ ${photo ? '（附帶使用者拍攝之食材或包裝營養成分表圖片）' :
       try {
         let resultObj = null;
         if (key) {
-          const promptText = `你是一位精通代謝醫學與實戰營養的專家，正在為一位台灣上班族體檢簡易食譜或晚餐安排。
-使用者核心健康防線與作息特質：
-1. 健檢指標：三酸甘油酯 (TG) 260（去年 169，中度脂肪肝發炎期，需阻斷果糖、反式脂肪與高飽和脂肪）；糖化血色素 (HbA1c) 5.7%（控糖防線，避免精緻碳水震盪）。
-2. 生活型態：每日通勤長達 3~4 小時，20:00~20:30 到家，極度疲倦，追求睡前 2 小時結束進食、免開火或微波 ≤ 3 分鐘，護膝不彈跳。
-3. 蔬菜多樣性與份量客觀原則：高麗菜、瓜果、菇類、木耳皆為合格優質纖維，不強求深綠色葉菜；但【必須客觀檢視蔬菜總份量】！若全餐只有單一小樣蔬菜（或便當配菜只有1格青菜），相較於澱粉總量明顯偏少（外食便當建議至少挑 2 格蔬菜），必須在盲點中誠實提醒，不可因有一點青菜就盲目認定份量合格。
+          const promptText = `你是一位精通代謝醫學與臨床營養學的專家，正在為使用者評估一餐的食譜或食材搭配。
+使用者的客觀健檢指標與目標：
+- 體重 93.5kg，三酸甘油酯 (TG) 260（中度脂肪肝，需控制精緻糖、過量飽和脂肪與精製碳水）
+- 糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣，需注意膳食纖維、蛋白質與複合碳水的均衡比例）
 
-待體檢食譜文字：
+待評估的食譜或預計烹調食材：
 「${recipeText}」
-${photo ? '（附帶使用者拍攝之食譜書籍或網頁截圖）' : ''}
+${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
 
-體檢重點：
-1. 肯定安排上的優點（好的蛋白質、好油、慢速碳水、抗發炎成分）。
-2. 客觀指出安排上的不足或盲點（是否缺少優質纖維？醬料是否含果糖/蜜汁/照燒/過量鈉？飽和脂肪是否偏厚？晚歸做會不會太繁瑣？）。
-3. 給予 1~2 步最小阻力極簡微調建議（不推翻原本菜單，維持美味但讓肝臟與胰島素零負擔）。
+請完全依據客觀臨床營養學（六大類食物均衡度、膳食纖維量、蛋白質品質、碳水化合物比例、烹調方式如水蒸/水煮/油炸與調味）進行評估：
+- 若食材搭配已經非常均衡健康（例如含有多種蔬菜與菇類、豆腐/去皮雞腿等優質蛋白、適量全穀雜糧如1/3玉米或燕麥，且採用水蒸等無油低脂烹調），請給予明確肯定，並在 blindspots 欄位直接說明「搭配已相當均衡無明顯盲點」，嚴禁為了填滿欄位而無中生有強行挑刺！
+- 若確實存在營養失衡（如蔬菜纖維不足、缺乏蛋白質、精緻澱粉過多、高脂肉類或高糖調味），請誠實、客觀地指出不足之處並給予具體調整建議。
 
-請務必輸出繁體中文 JSON 格式：
+請輸出繁體中文 JSON 格式：
 {
-  "summary": "一句話體檢總結（先肯定優點，客觀定調）",
-  "pros": "安排上的亮點與好處（蛋白質純度、好碳水、抗氧化、護胃等）",
-  "blindspots": "安排上的不足與盲點（缺了什麼？或哪裡隱藏了糖份/油脂/繁瑣步驟）",
-  "quick_tweaks": "1~2 步極簡護肝微調建議（最小動作達到最高護肝減脂效果）"
+  "summary": "一句話客觀總結這份食譜/餐點安排的營養均衡度",
+  "pros": "這份安排在營養學上的優點（如膳食纖維多樣性、優質蛋白質、低脂烹調、慢速碳水等）",
+  "blindspots": "客觀檢視是否有營養不足或需留意處（若已均衡無地雷，請直接寫：🎉 食材與營養比例相當均衡，無明顯盲點！若有不足或調味注意事項再誠實列出）",
+  "quick_tweaks": "具體可行的營養微調或烹調小提醒（如雞腿肉去皮、調味減鈉減糖，或補充特定缺少的營養素）"
 }`;
 
           const parts = [{ text: promptText }];
@@ -2750,35 +2734,28 @@ ${photo ? '（附帶使用者拍攝之食譜書籍或網頁截圖）' : ''}
         }
       });
 
-      const prompt = `你是一位溫暖、務實且懂生活限制的臨床減脂與護肝營養師，同時具備高精準度的繁體中文 OCR 文字辨識能力。
-使用者的健康目標為：「降低高三酸甘油酯(TG 260)、改善中度脂肪肝、避開精緻果糖與厚裹粉壞油、攔截血糖峰值(HbA1c 5.7%糖尿病前期警戒)」。
-重要判讀原則（拒絕強迫找碴，但【嚴格拒絕盲目自我感覺良好】）：
-1. 【保留使用者手打內容＋結合照片/外送截圖 OCR】：使用者手打補充為「${mealToSave}：${note || '（未打字，請從圖片辨識）'}」。若使用者有打字（例如「青江菜、吻仔魚炒蛋、豆干」或「無糖豆漿+茶葉蛋」），請 100% 完整納入判讀，不可漏掉任何一項配菜或食材！
-2. 【評估基準：以通用健康餐盤（飯菜等量、食物六大類分類）為客觀尺規，拒絕自訂死規矩也拒絕盲目稱讚】：
-   - 多元蔬菜皆是寶：高麗菜/白菜（護胃防逆流）、菇類/木耳（多醣體吸油脂降TG）、櫛瓜/瓜果（高鉀代謝排鈉）、海帶、青江菜等皆是合格優質纖維，嚴格禁止挑刺批評「缺少深綠色葉菜」！
-   - 但【必須客觀檢視蔬菜與澱粉的比例】：
-     * 通用健康餐盤核心原則是「蔬菜份量至少要與澱粉相當（飯菜等量）」；在食物分類中，豆干/豆腐與炒蛋屬於「蛋白質類」，不是蔬菜類！
-     * 若為外食便當或正餐，配菜中【只有 1 種蔬菜】（其餘是豆干、炒蛋、肉品）：
-       客觀事實是：相對於便當整盒白飯，蔬菜份量遠小於白飯（僅約 1/3~1/2 飯量），單格青菜的纖維量不足以完全平穩餐後血糖波動（HbA1c 5.7% 防線）。
-       ng 欄位請平實、客觀地指出比例不足，語氣親切自然，不要像自訂死規矩、也無需長篇大論背論文，例如：
-       「⚠️ 蔬菜份量偏少：以餐盤平衡來看，豆干與炒蛋屬於蛋白質，真正的蔬菜只有青江菜，相對於一整盒白飯比例偏低，纖維量較難完全平穩餐後血糖衝擊。建議挑配菜時盡量選 2 種蔬菜，讓蔬菜份量更接近白飯！」
-     * 只有當餐點中【蔬菜份量充足（至少 2 種蔬菜/瓜菇，能平衡澱粉）】且無油炸、無含糖飲時，才給予滿分過關肯定！
-3. 【抓大放小，客觀講真話】：
-   - good 欄位：真誠肯定選對的亮點（如吻仔魚炒蛋提供高鈣優質蛋白、豆干大豆異黃酮、無油炸厚粉主菜、無含糖飲品，肝臟免受油炸果糖暴擊）。
-   - ng 欄位：若無油炸無糖，但【蔬菜份量偏少/僅 1 格蔬菜】或【精緻澱粉比例高】，務必實話實說點出份量盲點，絕不盲目說「完美無缺」！只有真正菜量充足且無地雷時，才寫「🎉 搭配均衡無地雷，肝臟負擔輕！」。
-4. 【接地氣的外食與下一餐建議】：
-   - 若該餐蔬菜份量偏少（如便當只有 1 格青菜），swap 欄位請給出：
-     1. 便當挑菜撇步：「下次便當 3 配菜維持『2 格蔬菜＋1 格蛋白質（蛋豆魚肉）』」。
-     2. 這餐吃完補救：「餐後穿厚底拖鞋微踏步 15 分鐘，利用小腿比目魚肌與腿部大肌肉代償抽走血糖、消解內臟脂肪」！
+      const prompt = `你是一位專業、客觀的臨床減脂與代謝營養師，同時具備精準的繁體中文圖片與文字辨識能力。
+使用者的客觀健檢指標與健康目標：
+- 體重 93.5kg，三酸甘油酯 (TG) 260（中度脂肪肝，需控制精緻果糖、高飽和脂肪、油炸物與過量精緻澱粉）
+- 糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣，需注意每餐的膳食纖維、優質蛋白質與碳水化合物比例以平穩餐後血糖）
+
+使用者提供的餐點資訊為：「${mealToSave}：${note || '（未打字，請從圖片辨識）'}」。
+請完整結合使用者手打文字與照片內容，依據標準臨床營養學（健康餐盤比例、食物六大類分類、烹調方式）進行誠實客觀的評估：
+1. 完整列出這餐包含的所有食材與份量細節，不可遺漏使用者手打的任何品項。
+2. 客觀肯定這餐選對的營養價值（例如：優質蛋白質來源、多元蔬菜菇類海藻的膳食纖維、低脂烹調如水蒸/川燙/去皮、無含糖飲品等）。
+3. 誠實檢視這餐是否有營養不均或潛在盲點（例如：蔬菜總量相對於澱粉是否偏少？是否缺乏深色蔬菜或特定營養素？蛋白質是否不足？或是含有油炸、高脂加工品、過多精緻澱粉、高糖醬料？）：
+   - 若確實有不足或失衡，請在 ng 欄位清楚、客觀地指出，幫助使用者真正看見盲點並改善。
+   - 若這餐的蔬菜、蛋白質與主食比例確實已經非常均衡且無不良烹調地雷，請在 ng 欄位給予肯定：「🎉 營養搭配均衡無地雷，對血脂與血糖非常友善！」，不強行找碴。
+4. 在 swap 欄位針對這餐的結構，提供具體、實用的下一餐營養互補建議或餐後活動建議。
 
 請以純 JSON 格式回覆（字串內部請使用「」代替雙引號）：
 {
   "extractedItems": "餐點完整品項清單（結合使用者手打文字與圖片辨識結果）",
-  "what": "結合使用者手打文字、份量說明與照片/截圖，清楚列出這餐實際吃了什麼",
-  "good": "⭕ 選對亮點 & 這餐補足了什麼營養（具體肯定：如蛋白質質量、無油炸、無糖飲、蔬菜功效等）",
-  "ng": "🧩 這餐注意事項（若蔬菜份量偏少或僅1格菜，請客觀提醒；若真正菜量足且無地雷才寫：🎉 搭配均衡無地雷，肝臟負擔輕！）",
-  "swap": "🔄 下一餐建議 / 餐後活動（給予 1~2 句務實好執行的外食挑選撇步，搭配餐後微踏步 15 分鐘）",
-  "summaryBadge": "15字以內的極簡標籤摘要，如：⭕蛋豆優蛋白⚠️菜量偏少"
+  "what": "清楚列出這餐實際吃了什麼（結合文字說明與照片內容）",
+  "good": "⭕ 選對亮點 & 這餐補足了什麼營養",
+  "ng": "🧩 這餐缺了什麼 / 營養比例與烹調客觀檢視（有不足請誠實指出；若已均衡完美則寫：🎉 搭配均衡無地雷，肝臟負擔輕！）",
+  "swap": "🔄 下一餐怎麼補 / 具體改善建議",
+  "summaryBadge": "15字以內的極簡標籤摘要"
 }`;
 
       parts.push({ text: prompt });
@@ -3423,18 +3400,16 @@ ${photo ? '（附帶使用者拍攝之食譜書籍或網頁截圖）' : ''}
       btn.textContent = '⏳ AI 統整分析中...';
       btn.disabled = true;
 
-      const prompt = `你是一位溫暖、務實的專業減脂與護肝營養教練。
-使用者的健康防線與日常：體重約 93.5kg，三酸甘油酯(TG) 260，HbA1c 5.7%，通勤長達 3~4 小時(20:00~20:30 到家)，午餐多吃公司週邊便當/外食。
+      const prompt = `你是一位專業、客觀的臨床減脂與代謝營養師。
+使用者的客觀健檢指標與目標：體重 93.5kg，三酸甘油酯 (TG) 260（中度脂肪肝），糖化血色素 (HbA1c) 5.7%（糖尿病前期邊緣）。
 以下是使用者本週目前的真實飲食紀錄清單（共 ${weekLogs.length} 天有紀錄）：
 ${weekLogs.join('\n')}
 
-請為使用者撰寫一份「本週飲食偏頗與漏掉的營養深度總評」：
-【核心要求】：
-1. 拒絕罐頭官方空話，拒絕教條式說教。像一位懂他長通勤與公司週邊限制的貼心教練。
-2. 【肯定護肝直覺】：先肯定他本週做對的防線（例如切斷含糖手搖飲、長通勤餓了用堅果/蛋白質墊胃而非亂買宵夜等）。
-3. 【外食結構盲點】：客觀指出這幾天外食不知不覺「漏掉了什麼好營養」或「偏食盲點」（例如：蛋白質是否集中在豬/雞肉而缺魚？公司便當配菜是否缺乏深綠色葉菜？主食麵類比例等）。
-4. 【不派加法功課】：絕不叫他明天或下週狂補吃一堆食物！只給 1~2 個在公司週邊買便當或超商時「順手微調/減害」的挑選撇步即可。
-請使用繁體中文，語氣親切有同理心，段落清晰，字數約 200~280 字。`;
+請依據標準臨床營養學，為使用者撰寫一份客觀、務實的「本週飲食結構與營養盲點總評」：
+1. 【本週做對的亮點】：具體肯定本週已經養成的好習慣與選對的食材結構。
+2. 【客觀營養盲點與不足】：不護短、不套罐頭公式，誠實檢視這幾天的餐點結構「偏向哪一類、缺乏或漏掉了哪些關鍵營養素」（例如：蔬菜總量與種類是否足夠？蛋白質來源是否多樣、有無摄取魚類/豆類？碳水化合物是否偏精緻？是否有隱形油脂或點心頻率問題？）。
+3. 【下週具體調整方向】：提出 2~3 點具體、好執行的飲食改善建議。
+請使用繁體中文，條理清晰，字數約 220~300 字。`;
 
       try {
         const resultText = await callGeminiTextWithFallback(prompt, key);
