@@ -1050,7 +1050,27 @@
           <div class="metric-box">
             <div style="font-size:11px; color:var(--text-muted);">三酸甘油酯 TG</div>
             <div class="metric-val red-flag">260</div>
-            <div style="font-size:10px; color:#ef4444;">去年 169 🚨 脂肪肝根源</div>
+            <div style="font-size:10px; color:#ef4444;">去年 169 🚨 脂肪肝主因</div>
+          </div>
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">總膽固醇 / LDL</div>
+            <div class="metric-val red-flag">236 <span style="font-size:13px;">/ 152</span></div>
+            <div style="font-size:10px; color:#ef4444;">去年 231/152 🚨 限飽和脂肪</div>
+          </div>
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">好膽固醇 HDL / 比值</div>
+            <div class="metric-val red-flag">45 <span style="font-size:12px;">(比5.24)</span></div>
+            <div style="font-size:10px; color:#ef4444;">去年 55 (比4.20) 🚨 需微動拉升</div>
+          </div>
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">尿酸 UA (mg/dL)</div>
+            <div class="metric-val" style="color:#f59e0b;">6.9</div>
+            <div style="font-size:10px; color:#d97706;">去年 6.2 ⚠️ 臨界高值・多喝水</div>
+          </div>
+          <div class="metric-box">
+            <div style="font-size:11px; color:var(--text-muted);">腎絲球過濾率 eGFR</div>
+            <div class="metric-val" style="color:#f59e0b;">84</div>
+            <div style="font-size:10px; color:#d97706;">去年 66(下午缺水) ⚠️ &lt;90稍低</div>
           </div>
           <div class="metric-box">
             <div style="font-size:11px; color:var(--text-muted);">糖化血色素 HbA1c</div>
@@ -1070,8 +1090,9 @@
         </div>
 
         <div style="margin-top:12px; background:var(--bg); padding:10px; border-radius:10px; font-size:11px; line-height:1.6;">
-          🔬 <strong>白血球 WBC 偏高與蟹足腫真相</strong>：<br>
-          93.5kg 的內臟脂肪會持續分泌發炎激素，引發「代謝性白血球增多」；加上蕁麻疹與蟹足腫的過敏體質，身體一直處於備戰狀態。<strong>體重降 4.5 公斤，發炎和白血球就會跟著降下來！</strong>
+          🔬 <strong>血脂、膽固醇、尿酸與腎功能關聯解析</strong>：<br>
+          • <strong>三酸甘油酯 (TG 260) 與膽固醇比值 (5.24)</strong>：過高的三酸甘油酯會消耗好膽固醇 (HDL 從 55 降至 45)；同時總膽固醇 (236) 與壞膽固醇 (LDL 152) 皆為紅字，飲食需同時控制精緻糖/液態高GI碳水（如含糖飲、燕麥奶）與過量飽和脂肪（如肥肉、油炸物）。<br>
+          • <strong>尿酸 (6.9) 與腎絲球過濾率 (eGFR 84，參考值 ≥90)</strong>：果糖代謝會直接生成尿酸；每日維持充足水分（2400ml）搭配餐後微活動，即可同步改善血脂、尿酸與腎絲球過濾率。
         </div>
       </div>
 
@@ -1181,7 +1202,7 @@
   </nav>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762181000000; // 2026-11-03 v5.9.2
+    const BUILD_VERSION_TIMESTAMP = 1762260000000; // 2026-11-04 v5.9.3 完整血脂膽固醇與尿酸腎功能防線升級
     const KEY_PREFIX = 'vitalstep_v4_';
     const HISTORY_DB_KEY = 'vitalstep_v5_history_by_date';
     const GLOBAL_CFG_KEY = 'vitalstep_v5_global_cfg';
@@ -2997,11 +3018,19 @@
       const noteText = rawVal.toLowerCase();
       let tips = [];
 
-      if (noteText.includes('魚') && (noteText.includes('薄粉') || noteText.includes('煎'))) {
-        tips.push('🐟 <strong>薄粉煎魚 ⭕ 算過關！</strong>：選魚肉代替肥肉對降 TG 260 大加分！便當店煎魚表面的一點薄粉只是防沾鍋，完全不算厚裹粉油炸地雷，儲存後上方雷達會自動亮綠燈肯定你！');
+      if (noteText.includes('燕麥奶')) {
+        tips.push('⚠️ <strong>燕麥奶隱形糖與高碳水陷阱</strong>：燕麥奶屬於「液態澱粉」，製程水解會產生高 GI 的<strong>麥芽糖</strong>（就算標示無糖仍有約 10~15g 糖），會直接推升血糖與 TG 260！且因您有<strong>總膽固醇 236 / LDL 152 紅字</strong>，也不宜換成全脂鮮奶；下次沒無糖豆漿時，請改選<strong>「無糖綠茶／紅茶／黑咖啡 ＋ 1顆蛋」</strong>或<strong>「低脂鮮奶」</strong>！');
       }
-      if (noteText.includes('無糖豆漿') || noteText.includes('無糖綠茶') || noteText.includes('無糖')) {
-        tips.push('🥤 <strong>無糖飲品大加分</strong>：選擇無糖豆漿／無糖茶，成功切斷果糖進入肝臟合成三酸甘油酯的源頭！');
+      if (noteText.includes('全脂') || noteText.includes('鮮奶') || noteText.includes('拿鐵')) {
+        if (!noteText.includes('低脂')) {
+          tips.push('🥛 <strong>膽固醇紅字 (TC 236 / LDL 152) 乳品提醒</strong>：全脂鮮奶含較高飽和脂肪，會阻礙肝臟代謝壞膽固醇 (LDL 152)；飲品建議優先選<strong>「無糖豆漿」</strong>（大豆蛋白助降膽固醇），若想喝鮮奶或拿鐵請指定換成<strong>「低脂鮮奶」</strong>！');
+        }
+      }
+      if (noteText.includes('魚') && (noteText.includes('薄粉') || noteText.includes('煎'))) {
+        tips.push('🐟 <strong>薄粉煎魚 ⭕ 算過關！</strong>：選魚肉代替肥肉對降 TG 260 與改善 LDL 152 大加分！便當店煎魚表面的一點薄粉只是防沾鍋，完全不算厚裹粉油炸地雷！');
+      }
+      if ((noteText.includes('無糖豆漿') || noteText.includes('無糖綠茶') || noteText.includes('無糖')) && !noteText.includes('燕麥奶')) {
+        tips.push('🥤 <strong>無糖飲品大加分</strong>：選擇無糖豆漿／無糖茶，成功切斷果糖進入肝臟合成三酸甘油酯與尿酸 (6.9) 的源頭！');
       }
       if (selectedMealType === '點心' || noteText.includes('餅') || noteText.includes('零食')) {
         tips.push('🍪 <strong>餅乾零食「消庫存減害吃法」</strong>：最重要的護肝技巧是<strong>「放在午餐正餐吃飽後立刻吃」</strong>！利用正餐蔬菜與蛋白質延緩糖分吸收，下午空腹與晚上宵夜不碰，TG 才不會飆升！');
@@ -3960,7 +3989,7 @@
 
       const lines = [];
       lines.push(`【微步輕健・近 ${daysCount} 天逐日檢討報表（供結合體重計報告交叉判讀）】`);
-      lines.push(`匯出日期：${TODAY}｜基準健康目標：改善 TG 260 (脂肪肝)、平穩 HbA1c 5.7%、護膝減脂`);
+      lines.push(`匯出日期：${TODAY}｜基準健康目標：體重 93.5kg、TG 260 (去年169)、TC 236 / LDL 152 / HDL 45 (總/高比值 5.24)、HbA1c 5.7%、尿酸 6.9、eGFR 84 (去年66)`);
       lines.push(`（註：餐食與飲水僅看當日內容與結構，不計較打字補記的時間點；睡前禁食以「睡前2小時不宵夜」防線為準）`);
       lines.push(`================================================`);
 
