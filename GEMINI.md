@@ -56,6 +56,18 @@
 
 ## 📓 二、 版本演進與討論歷程紀錄
 
+### 📍 v5.9.4（2026/11/05 修復今日 AI 總結 `models/gemini-2.0-flash is no longer available` 報錯 ＋ 全系統動態尋模與零失敗總結備援）
+
+#### 💡 本次破案與修復細節
+1. **破案「點擊生成今日 AI 總結時跳出 `This model models/gemini-2.0-flash is no longer available`」**：
+   * **根因 1（備援池殘留已退役模型）**：`callGeminiTextWithFallback` 與 `callGeminiConsultApi` 的備援模型池末端仍留有已退役的 `gemini-2.0-flash` 與 `gemini-2.5-flash-lite`。當主力模型進入額度冷卻或暫時受限時，迴圈一路退到最後一棒 `gemini-2.0-flash`，而 Google 已正式下架 `gemini-2.0-flash` 並回傳 `400/404 no longer available`，且舊版邏輯在遇到 `code === 400` 時直接 `throw new Error` 中斷或把最後一棒的錯誤覆蓋為最終錯誤訊息。
+   * **根因 2（文字總結缺少 `ListModels` 動態尋模與冷卻保底重試）**：先前僅單餐視覺分析有 `ListModels` 動態掃描可用模型，文字總結 (`callGeminiTextWithFallback`) 若遇到冷卻中的模型會直接 `continue` 跳過，沒有將其排在隊伍末端保底重試，也未動態查詢帳號下所有可用的最新模型。
+   * **徹底解決**：
+     - 全系統（單餐判讀、採買/食譜顧問、今日總結、本週總評）**徹底移除已退役的 `1.5` / `2.0` / `2.5` 模型**，並在啟動時自動清洗 `localStorage` 中可能殘留的舊模型快取（強制對齊 `gemini-3.8-flash`）。
+     - 修正 `code === 400` 誤判：僅在明確為 `API key not valid` / `403` 時才中斷，若為單一模型不支援則自動換下一棒模型。
+     - 將 `callGeminiTextWithFallback` 與 `callGeminiConsultApi` 同步升級 **`ListModels` 動態尋模機制**，並將冷卻時間縮短為 10 分鐘、排至隊伍末端保底重試（避免短暫 1 分鐘頻率限制誤鎖主力模型）。
+     - **新增「今日 AI 總結」零失敗本機智慧對齊備援**：萬一當天所有雲端模型的免費額度真的全數用盡，系統不再跳出失敗彈窗卡死，而是自動彙整今日已記錄的餐點成績單 (`what`/`good`/`ng`)、行程微活動與飲水量，無縫產出完整今日總結並自動複製 `【VITALSTEP_DAY_AI_SUMMARY】` 同步碼，確保 100% 隨時都能一鍵貼回主頁！
+
 ### 📍 v5.9.3（2026/11/04 補齊完整血脂膽固醇／尿酸／腎功能健檢指標）
 
 #### 💡 本次補齊之 2026 vs 2025 健檢核心數據

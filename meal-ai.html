@@ -279,7 +279,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v5.9 採買食譜雙分頁</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v5.9.4 模型接力防斷升級</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -643,7 +643,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762260000000; // 2026-11-04 v5.9.3 完整血脂膽固醇與尿酸腎功能防線升級
+    const BUILD_VERSION_TIMESTAMP = 1762349400000; // 2026-11-05 v5.9.4 移除已退役 gemini-2.0-flash 並升級全自動尋模與零失敗總結備援
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
     const MEAL_AI_DATE_KEY = 'vitalstep_meal_ai_date';
@@ -685,6 +685,22 @@
       return localStorage.getItem(ISOLATED_KEY_NAME) || '';
     }
 
+    // 🛡️ 確保快取模型名稱絕不殘留已退役的 1.5 / 2.0 / 2.5 舊版模型
+    function isDeprecatedGeminiModel(name) {
+      if (!name) return true;
+      const s = String(name).toLowerCase();
+      return s.includes('1.5') || s.includes('2.0') || s.includes('2.5') || s.includes('pro-vision');
+    }
+
+    function getSanitizedWorkingModel() {
+      const saved = localStorage.getItem('vitalstep_working_gemini_model');
+      if (saved && !isDeprecatedGeminiModel(saved)) {
+        return saved;
+      }
+      localStorage.setItem('vitalstep_working_gemini_model', 'gemini-3.8-flash');
+      return 'gemini-3.8-flash';
+    }
+
     const TODAY = getLocalDateStr();
     let selectedDate = TODAY;
     let mealHistoryByDate = {};
@@ -705,6 +721,8 @@
     let activeConsultMode = 'ingredient'; // 'ingredient' | 'recipe'
 
     function initPage() {
+      getSanitizedWorkingModel();
+      try { localStorage.removeItem('vitalstep_quota_cooldown_map'); } catch (e) {}
       autoCheckCloudUpdate();
       const now = new Date();
       document.getElementById('header-date-str').textContent = now.toLocaleDateString('zh-TW', {
@@ -1455,6 +1473,60 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
   "summaryBadge": "15字以內今日總結摘要"
 }`;
 
+      // 本機智慧總結組裝器（可結合雲端 AI JSON 或於雲端額度滿載時 100% 接手完成總結與同步）
+      function buildSummaryDataObject(parsedAi, isLocalFallback) {
+        const localEval = evaluateDailyHabitsFromData(activities, meals, drinks);
+        const aiHabits = (parsedAi && parsedAi.habits) || {};
+        const finalHabits = {
+          lunch_move_15m: Boolean(aiHabits.lunch_move_15m || localEval.habits.lunch_move_15m),
+          dinner_step_15m: Boolean(aiHabits.dinner_step_15m || localEval.habits.dinner_step_15m),
+          bedtime_2hr_fast: (aiHabits.bedtime_2hr_fast !== undefined) ? Boolean(aiHabits.bedtime_2hr_fast) : localEval.habits.bedtime_2hr_fast
+        };
+        if (localEval.habits.lunch_move_15m) finalHabits.lunch_move_15m = true;
+        if (localEval.habits.dinner_step_15m) finalHabits.dinner_step_15m = true;
+        if (localEval.habits.bedtime_2hr_fast) finalHabits.bedtime_2hr_fast = true;
+
+        const actMins = Math.max(Number(parsedAi?.activeMinutes) || 0, localEval.activeMinutes);
+
+        // 本機餐點與飲水客觀彙整（當雲端額度滿載時提供精準實質檢討）
+        const mealNames = meals.map(m => `${m.mealType}(${m.note || m.report?.what || '已記錄'})`).join('、');
+        const ngNotes = meals
+          .map(m => m.report?.ng || '')
+          .filter(x => x && !x.includes('無地雷') && !x.includes('完美'));
+        const localMealHighlight = meals.length > 0
+          ? (`今日共記錄 ${meals.length} 餐：${mealNames}。` + (ngNotes.length > 0 ? `需留意：${ngNotes[0]}` : '各餐搭配均衡，無明顯高糖高脂地雷！'))
+          : '今日尚未記錄餐點明細';
+
+        const localWaterFeedback = totalWater >= 2400
+          ? `今日累計飲水 ${totalWater}ml（已達標 ≥2400ml 護腎排尿酸防線！）`
+          : `今日累計飲水 ${totalWater}ml（距離 2400ml 目標尚差 ${Math.max(0, 2400 - totalWater)}ml，建議睡前1小時前適量補水）`;
+
+        const localGlucose = (finalHabits.lunch_move_15m && finalHabits.dinner_step_15m)
+          ? '⭕ 午、晚餐後皆完成微活動防線，有效攔截餐後血糖與 TG 峰值！'
+          : ((finalHabits.lunch_move_15m || finalHabits.dinner_step_15m)
+            ? '⭕ 已完成部分餐後微活動防線，協助平緩血糖波動'
+            : '今日餐後活動較少，建議飯後穿厚底拖鞋原地微踏步 15 分鐘');
+
+        const localCoach = `今日完成 ${(finalHabits.lunch_move_15m ? 1 : 0) + (finalHabits.dinner_step_15m ? 1 : 0) + (finalHabits.bedtime_2hr_fast ? 1 : 0)}/3 項健康防線，有效微活動約 ${actMins} 分鐘、飲水 ${totalWater}ml。${ngNotes.length > 0 ? '明日可針對餐點蔬菜纖維與蛋白質比例微調，' : '飲食結構保持穩定，'}持續透過餐後微踏步與充足無糖茶水守護血脂與 eGFR！`;
+
+        return {
+          date: selectedDate,
+          mode: mode,
+          habits: finalHabits,
+          activeMinutes: actMins,
+          activeSummary: parsedAi?.activeSummary || localEval.activeSummary,
+          glucoseIntercept: parsedAi?.glucoseIntercept || localGlucose,
+          mealHighlight: parsedAi?.mealHighlight || localMealHighlight,
+          waterFeedback: parsedAi?.waterFeedback || localWaterFeedback,
+          totalWater: totalWater,
+          drinkLogs: drinks,
+          foodLogs: meals.map(buildSyncPayloadItem), // 今日全部餐食一併打包！
+          coachFeedback: (parsedAi?.coachFeedback || localCoach) + (isLocalFallback ? '（⚡ 雲端免費額度滿載，由本機智慧管家完成對齊結算）' : ''),
+          summaryBadge: parsedAi?.summaryBadge || ((finalHabits.lunch_move_15m && finalHabits.dinner_step_15m) ? '🌟 今日健康防線全數達成' : '🌱 微步輕健穩步前進'),
+          updatedAt: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        };
+      }
+
       try {
         const rawJsonText = await callGeminiTextWithFallback(prompt, key);
         let parsed = robustParseGeminiJson(rawJsonText);
@@ -1465,36 +1537,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           throw new Error('AI 回傳格式解析失敗，請再點一次重試');
         }
 
-        // 結合本機智慧解析作為雙重保險
-        const localEval = evaluateDailyHabitsFromData(activities, meals, drinks);
-        const aiHabits = parsed.habits || {};
-        const finalHabits = {
-          lunch_move_15m: Boolean(aiHabits.lunch_move_15m || localEval.habits.lunch_move_15m),
-          dinner_step_15m: Boolean(aiHabits.dinner_step_15m || localEval.habits.dinner_step_15m),
-          bedtime_2hr_fast: (aiHabits.bedtime_2hr_fast !== undefined) ? Boolean(aiHabits.bedtime_2hr_fast) : localEval.habits.bedtime_2hr_fast
-        };
-        if (localEval.habits.lunch_move_15m) finalHabits.lunch_move_15m = true;
-        if (localEval.habits.dinner_step_15m) finalHabits.dinner_step_15m = true;
-        if (localEval.habits.bedtime_2hr_fast) finalHabits.bedtime_2hr_fast = true;
-
-        const actMins = Math.max(Number(parsed.activeMinutes) || 0, localEval.activeMinutes);
-
-        const summaryData = {
-          date: selectedDate,
-          mode: mode,
-          habits: finalHabits,
-          activeMinutes: actMins,
-          activeSummary: parsed.activeSummary || localEval.activeSummary,
-          glucoseIntercept: parsed.glucoseIntercept || ((finalHabits.lunch_move_15m || finalHabits.dinner_step_15m) ? '⭕ 已完成餐後活動防線' : '日常微活動'),
-          mealHighlight: parsed.mealHighlight || '飲食記錄完成',
-          waterFeedback: parsed.waterFeedback || `今日飲水約 ${totalWater}ml`,
-          totalWater: totalWater,
-          drinkLogs: drinks,
-          foodLogs: meals.map(buildSyncPayloadItem), // 今日全部餐食一併打包！
-          coachFeedback: parsed.coachFeedback || '今天生活節奏調整得很棒，繼續保持！',
-          summaryBadge: parsed.summaryBadge || ((finalHabits.lunch_move_15m && finalHabits.dinner_step_15m) ? '🌟 今日健康防線全數達成' : '🌱 微步輕健穩步前進'),
-          updatedAt: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
-        };
+        const summaryData = buildSummaryDataObject(parsed, false);
 
         dailyAiSummaryByDate[selectedDate] = summaryData;
         try {
@@ -1505,7 +1548,20 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         copyDailyAiReview(true);
         showToast('🎉 今日生活總結已生成！3大防線已智慧對齊，已自動複製同步碼！');
       } catch (err) {
-        alert('生成今日 AI 總結失敗：' + (err.message || err));
+        const errMsg = err.message || String(err);
+        if (errMsg.includes('API Key 無效') || errMsg.includes('API key not valid')) {
+          alert('生成今日 AI 總結失敗：' + errMsg);
+        } else {
+          // 🛡️ 當雲端模型免費額度滿載或暫時超時，自動無縫啟用本機智慧總結對齊，確保 100% 能一鍵同步回主頁！
+          const fallbackSummary = buildSummaryDataObject(null, true);
+          dailyAiSummaryByDate[selectedDate] = fallbackSummary;
+          try {
+            localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
+          } catch (e) {}
+          renderDailyAiSummaryBox();
+          copyDailyAiReview(true);
+          showToast('⚡ 雲端額度暫滿，已由本機智慧對齊生成總結並複製同步碼！');
+        }
       } finally {
         btn.textContent = origText;
         btn.disabled = false;
@@ -1946,7 +2002,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         return until && until > nowTs;
       }
       function markModelQuotaCooldown(mName) {
-        cooldownMap[mName] = Date.now() + 45 * 60 * 1000;
+        cooldownMap[mName] = Date.now() + 10 * 60 * 1000;
         try { localStorage.setItem('vitalstep_quota_cooldown_map', JSON.stringify(cooldownMap)); } catch (e) {}
       }
 
@@ -1975,30 +2031,37 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         }
       }
 
-      const rememberWorkingModel = localStorage.getItem('vitalstep_working_gemini_model') || 'gemini-3.8-flash';
+      const rememberWorkingModel = getSanitizedWorkingModel();
       const modelsToTry = [
         rememberWorkingModel,
         'gemini-3.8-flash',
         'gemini-3.8-flash-lite',
         'gemini-flash-lite-latest',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash'
+        'gemini-flash-latest'
       ];
-      const uniqueModels = [...new Set(modelsToTry)];
+      const uniqueModels = [...new Set(modelsToTry)].filter(m => !isDeprecatedGeminiModel(m));
+      const orderedModels = [
+        ...uniqueModels.filter(m => !isModelInCooldown(m)),
+        ...uniqueModels.filter(m => isModelInCooldown(m))
+      ];
+      const triedModels = new Set();
 
       let lastErrMsg = '';
-      for (const mName of uniqueModels) {
-        if (isModelInCooldown(mName)) continue;
+      for (const mName of orderedModels) {
+        triedModels.add(mName);
         try {
           const data = await tryGenerate(mName);
           if (data && data.error) {
-            lastErrMsg = data.error.message || 'API 錯誤';
-            if ((data.error.message || '').includes('Quota exceeded') || data.error.code === 429) {
+            const msg = data.error.message || 'API 錯誤';
+            if (!msg.includes('no longer available') && !msg.includes('not found')) {
+              lastErrMsg = msg;
+            }
+            if (msg.includes('Quota exceeded') || msg.includes('limit:') || data.error.code === 429) {
               markModelQuotaCooldown(mName);
               continue;
             }
-            if ((data.error.message || '').includes('API key not valid') || data.error.code === 400 || data.error.code === 403) {
-              throw new Error(data.error.message || 'API Key 無效，請檢查下方金鑰！');
+            if (msg.includes('API key not valid') || msg.includes('API_KEY_INVALID') || data.error.code === 403) {
+              throw new Error(msg || 'API Key 無效，請檢查下方金鑰！');
             }
             continue;
           }
@@ -2010,12 +2073,44 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           }
         } catch (err) {
           lastErrMsg = err.message || String(err);
-          if ((lastErrMsg || '').includes('API key not valid')) {
+          if ((lastErrMsg || '').includes('API key not valid') || (lastErrMsg || '').includes('API_KEY_INVALID')) {
             throw err;
           }
           continue;
         }
       }
+
+      // 🔄 動態掃描 ListModels：找出帳號內所有支援 generateContent 的最新模型繼續接力
+      try {
+        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const listData = await listResp.json();
+        if (listData && Array.isArray(listData.models)) {
+          const availableDynamic = listData.models
+            .filter(x => x.name && x.name.includes('gemini') && (x.supportedGenerationMethods || []).includes('generateContent'))
+            .map(x => x.name.replace(/^models\//, ''))
+            .filter(n => !isDeprecatedGeminiModel(n) && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
+            .sort((a, b) => {
+              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3.8') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
+              return score(b) - score(a);
+            });
+
+          for (const dynModel of availableDynamic.slice(0, 5)) {
+            triedModels.add(dynModel);
+            try {
+              const data = await tryGenerate(dynModel);
+              if (data && !data.error) {
+                const cand = data.candidates?.[0];
+                const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
+                if (textPart) {
+                  localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                  return robustParseGeminiJson(textPart);
+                }
+              }
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
       throw new Error(lastErrMsg || '所有 Gemini 備援模型額度均用盡或網路超時！');
     }
 
@@ -2812,7 +2907,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       }
 
       function markModelQuotaCooldown(mName) {
-        cooldownMap[mName] = Date.now() + 45 * 60 * 1000;
+        cooldownMap[mName] = Date.now() + 10 * 60 * 1000;
         try {
           localStorage.setItem('vitalstep_quota_cooldown_map', JSON.stringify(cooldownMap));
         } catch (e) {}
@@ -2846,20 +2941,17 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         }
       }
 
-      // 🛡️ 多模型免費額度自動接力池：
+      // 🛡️ 多模型免費額度自動接力池（徹底移除已退役的 2.0 / 2.5 模型）：
       // 當 gemini-3.8-flash 免費版滿每日 20 次 (Quota exceeded) 時，自動無縫切換至獨立免費額度更高的 flash-lite 與其他可用模型！
       const defaultRelayPool = [
         'gemini-3.8-flash',
         'gemini-3.8-flash-lite',
         'gemini-flash-lite-latest',
-        'gemini-flash-latest',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite'
+        'gemini-flash-latest'
       ];
-      const cachedModel = localStorage.getItem('vitalstep_working_gemini_model');
+      const cachedModel = getSanitizedWorkingModel();
       const rawPool = cachedModel ? [cachedModel, ...defaultRelayPool] : defaultRelayPool;
-      const uniquePool = [...new Set(rawPool)];
+      const uniquePool = [...new Set(rawPool)].filter(m => !isDeprecatedGeminiModel(m));
       // 未進入額度冷卻的模型優先排前面，冷卻中的排最後保底
       const orderedPool = [
         ...uniquePool.filter(m => !isModelInCooldown(m)),
@@ -2883,7 +2975,9 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
             }
           } else if (resData?.error?.message) {
             const msg = resData.error.message;
-            lastErrMsg = msg;
+            if (!msg.includes('no longer available') && !msg.includes('not found')) {
+              lastErrMsg = msg;
+            }
             if (msg.includes('Quota exceeded') || msg.includes('limit:') || resData.error.code === 429) {
               hitQuotaLimit = true;
               markModelQuotaCooldown(m);
@@ -2903,7 +2997,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
           const availableDynamic = listData.models
             .filter(x => x.name && x.name.includes('gemini') && (x.supportedGenerationMethods || []).includes('generateContent'))
             .map(x => x.name.replace(/^models\//, ''))
-            .filter(n => !n.includes('1.5') && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
+            .filter(n => !isDeprecatedGeminiModel(n) && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
             .sort((a, b) => {
               const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3.8') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
               return score(b) - score(a);
@@ -3317,14 +3411,14 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         return until && until > nowTs;
       }
       function markModelQuotaCooldown(mName) {
-        cooldownMap[mName] = Date.now() + 45 * 60 * 1000;
+        cooldownMap[mName] = Date.now() + 10 * 60 * 1000;
         try { localStorage.setItem('vitalstep_quota_cooldown_map', JSON.stringify(cooldownMap)); } catch (e) {}
       }
 
       async function tryTextGen(modelName) {
         const cleanName = modelName.replace(/^models\//, '');
         const controller = new AbortController();
-        const timerId = setTimeout(() => controller.abort(), 20000);
+        const timerId = setTimeout(() => controller.abort(), 30000);
         try {
           const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${key}`, {
             method: 'POST',
@@ -3345,30 +3439,39 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         }
       }
 
-      const rememberWorkingModel = localStorage.getItem('vitalstep_working_gemini_model') || 'gemini-3.8-flash';
+      const rememberWorkingModel = getSanitizedWorkingModel();
+      // 主力 gemini-3.8-flash 若遇瞬間忙碌 (503) 或同分鐘短暫頻率限制，優先重試一次
       const modelsToTry = [
         rememberWorkingModel,
         'gemini-3.8-flash',
         'gemini-3.8-flash-lite',
         'gemini-flash-lite-latest',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash'
+        'gemini-flash-latest'
       ];
-      const uniqueModels = [...new Set(modelsToTry)];
+      const uniqueModels = [...new Set(modelsToTry)].filter(m => !isDeprecatedGeminiModel(m));
+      const orderedModels = [
+        'gemini-3.8-flash',
+        ...uniqueModels.filter(m => m !== 'gemini-3.8-flash' && !isModelInCooldown(m)),
+        'gemini-3.8-flash' // 若第一輪瞬間忙碌，在進入動態尋模前再重試一次主力模型
+      ];
+      const triedModels = new Set();
 
       let lastErrMsg = '';
-      for (const mName of uniqueModels) {
-        if (isModelInCooldown(mName)) continue;
+      for (const mName of orderedModels) {
+        triedModels.add(mName);
         try {
           const data = await tryTextGen(mName);
           if (data && data.error) {
-            lastErrMsg = data.error.message || 'API 錯誤';
-            if ((data.error.message || '').includes('Quota exceeded') || data.error.code === 429) {
+            const msg = data.error.message || 'API 錯誤';
+            if (!msg.includes('no longer available') && !msg.includes('not found')) {
+              lastErrMsg = msg;
+            }
+            if (msg.includes('Quota exceeded') || msg.includes('limit:') || data.error.code === 429) {
               markModelQuotaCooldown(mName);
               continue;
             }
-            if ((data.error.message || '').includes('API key not valid') || data.error.code === 400 || data.error.code === 403) {
-              throw new Error(data.error.message || 'API Key 無效，請檢查下方金鑰！');
+            if (msg.includes('API key not valid') || msg.includes('API_KEY_INVALID') || data.error.code === 403) {
+              throw new Error(msg || 'API Key 無效，請檢查下方金鑰！');
             }
             continue;
           }
@@ -3380,12 +3483,44 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
           }
         } catch (err) {
           lastErrMsg = err.message || String(err);
-          if ((lastErrMsg || '').includes('API key not valid')) {
+          if ((lastErrMsg || '').includes('API key not valid') || (lastErrMsg || '').includes('API_KEY_INVALID')) {
             throw err;
           }
           continue;
         }
       }
+
+      // 🔄 動態掃描 ListModels：找出帳號內所有支援 generateContent 的最新模型繼續接力
+      try {
+        const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const listData = await listResp.json();
+        if (listData && Array.isArray(listData.models)) {
+          const availableDynamic = listData.models
+            .filter(x => x.name && x.name.includes('gemini') && (x.supportedGenerationMethods || []).includes('generateContent'))
+            .map(x => x.name.replace(/^models\//, ''))
+            .filter(n => !isDeprecatedGeminiModel(n) && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
+            .sort((a, b) => {
+              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3.8') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
+              return score(b) - score(a);
+            });
+
+          for (const dynModel of availableDynamic.slice(0, 5)) {
+            triedModels.add(dynModel);
+            try {
+              const data = await tryTextGen(dynModel);
+              if (data && !data.error) {
+                const cand = data.candidates?.[0];
+                const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
+                if (textPart) {
+                  localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                  return textPart.trim();
+                }
+              }
+            } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
       throw new Error(lastErrMsg || '所有 Gemini 備援模型額度均用盡或網路超時，請稍後重試！');
     }
 
