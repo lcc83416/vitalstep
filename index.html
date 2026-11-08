@@ -1202,7 +1202,7 @@
   </nav>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762260000000; // 2026-11-04 v5.9.3 完整血脂膽固醇與尿酸腎功能防線升級
+    const BUILD_VERSION_TIMESTAMP = 1762605000000; // 2026-11-08 v5.9.5 修復跨日回看複製Bug＋清洗11/05與11/06重複餐點＋跨夜自動換日
     const KEY_PREFIX = 'vitalstep_v4_';
     const HISTORY_DB_KEY = 'vitalstep_v5_history_by_date';
     const GLOBAL_CFG_KEY = 'vitalstep_v5_global_cfg';
@@ -1221,7 +1221,7 @@
       return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 
-    const TODAY = getLocalDateStr();
+    let TODAY = getLocalDateStr();
     let selectedDate = TODAY;
     let historyByDate = {};
     let globalCfg = {
@@ -1306,7 +1306,7 @@
         historyByDate[dateStr] = createEmptyDayRecord();
       }
       const dayRec = historyByDate[dateStr];
-      state.habits = dayRec.habits || {};
+      state.habits = { ...(dayRec.habits || {}) };
       state.water = dayRec.water || 0;
       state.thermosCount = dayRec.thermosCount || 0;
       state.steps = dayRec.steps !== undefined ? dayRec.steps : '';
@@ -1316,19 +1316,21 @@
       const mMins = parseInt(state.manualExMins, 10) || 0;
       state.exMins = (wMins + mMins > 0) ? (wMins + mMins) : (dayRec.exMins !== undefined ? dayRec.exMins : '');
       state.weight = dayRec.weight !== undefined ? dayRec.weight : '';
-      // 自動過濾曾因貼上錯誤而誤存為一般餐食的【VITALSTEP_ 同步碼字串
+      // 自動過濾曾因貼上錯誤而誤存為一般餐食的【VITALSTEP_ 同步碼字串，以及跨日誤帶入的非當日餐點
       if (Array.isArray(dayRec.foodLogs)) {
         const cleanedLogs = dayRec.foodLogs.filter(item => {
           const n = String(item?.note || '');
-          return !n.includes('【VITALSTEP_DAY_AI_SUMMARY】') && !n.includes('【VITALSTEP_SYNC】') && !n.includes('【VITALSTEP_WEEKLY_AI_SUMMARY】');
+          if (n.includes('【VITALSTEP_DAY_AI_SUMMARY】') || n.includes('【VITALSTEP_SYNC】') || n.includes('【VITALSTEP_WEEKLY_AI_SUMMARY】')) return false;
+          if (item?.date && item.date !== dateStr) return false;
+          return true;
         });
         if (cleanedLogs.length !== dayRec.foodLogs.length) {
           dayRec.foodLogs = cleanedLogs;
         }
       }
-      state.foodLogs = Array.isArray(dayRec.foodLogs) ? dayRec.foodLogs : [];
+      state.foodLogs = Array.isArray(dayRec.foodLogs) ? [...dayRec.foodLogs] : [];
       state.dayAiSummary = dayRec.dayAiSummary || null;
-      state.drinkLogs = Array.isArray(dayRec.drinkLogs) ? dayRec.drinkLogs : [];
+      state.drinkLogs = Array.isArray(dayRec.drinkLogs) ? [...dayRec.drinkLogs] : [];
       state.locked = !!dayRec.locked;
       state.lockedAt = dayRec.lockedAt || null;
 
@@ -1364,8 +1366,8 @@
         }
 
         if (Array.isArray(sum.foodLogs) && sum.foodLogs.length > 0 && (!state.foodLogs || state.foodLogs.length === 0)) {
-          state.foodLogs = sum.foodLogs;
-          dayRec.foodLogs = sum.foodLogs;
+          state.foodLogs = [...sum.foodLogs];
+          dayRec.foodLogs = [...sum.foodLogs];
           autoUpdated = true;
         }
 
@@ -1378,6 +1380,121 @@
       state.pantryText = globalCfg.pantryText || '';
       state.customMenuPlan = globalCfg.customMenuPlan || null;
       state.streak = calculateStreakCount();
+    }
+
+    // 🧹 自動清洗 11/05 與 11/06 因舊版回看跨日 Bug 被重複複製的前日餐食，並對齊 11/05 體重計實測 92.15kg
+    function cleanupCrossDayDuplicateMealsAndFixWeight() {
+      let modified = false;
+      const nov4Notes = [
+        '茶葉蛋+燕麥飲',
+        '蒸煮便當，配菜：高麗菜、櫛瓜',
+        '水蒸蔬菜包括高麗菜、綠花椰菜'
+      ];
+      const nov5Notes = [
+        '無糖豆漿+茶葉蛋+蔥燒餅1片(之前買的零食早餐消耗)',
+        '黑木耳+蒸蛋+空心菜+豆芽菜+煎鮭魚',
+        '氣炸偽蔬菜pizza失敗'
+      ];
+
+      // 1. 修復 2026-11-05：移除誤帶入的 11/04 三餐，並校正體重為體重計實測 92.15kg
+      const r05 = historyByDate['2026-11-05'];
+      if (r05) {
+        if (String(r05.weight) === '93.15') {
+          r05.weight = 92.15;
+          modified = true;
+        }
+        if (Array.isArray(r05.foodLogs)) {
+          const filtered05 = r05.foodLogs.filter(item => {
+            if (!item) return false;
+            if (item.date && item.date !== '2026-11-05') return false;
+            const txt = String(item.note || item.aiReport?.what || '');
+            return !nov4Notes.some(prefix => txt.includes(prefix));
+          });
+          if (filtered05.length !== r05.foodLogs.length) {
+            r05.foodLogs = filtered05;
+            if (r05.dayAiSummary && Array.isArray(r05.dayAiSummary.foodLogs)) {
+              r05.dayAiSummary.foodLogs = filtered05;
+            }
+            modified = true;
+          }
+        }
+      }
+
+      // 2. 修復 2026-11-06：移除誤帶入的 11/04 與 11/05 六餐，僅保留 11/06 當天三餐
+      const r06 = historyByDate['2026-11-06'];
+      if (r06 && Array.isArray(r06.foodLogs)) {
+        const filtered06 = r06.foodLogs.filter(item => {
+          if (!item) return false;
+          if (item.date && item.date !== '2026-11-06') return false;
+          const txt = String(item.note || item.aiReport?.what || '');
+          const isFromNov4Or5 = nov4Notes.some(p => txt.includes(p)) || nov5Notes.some(p => txt.includes(p));
+          return !isFromNov4Or5;
+        });
+        if (filtered06.length !== r06.foodLogs.length) {
+          r06.foodLogs = filtered06;
+          if (r06.dayAiSummary && Array.isArray(r06.dayAiSummary.foodLogs)) {
+            r06.dayAiSummary.foodLogs = filtered06;
+          }
+          modified = true;
+        }
+      }
+
+      // 3. 通用防呆：確保所有日期不會混入標記為其他 date 的餐點，且同日內相同 id 或相同 (mealType+note) 不重複
+      Object.keys(historyByDate).forEach(dKey => {
+        const rec = historyByDate[dKey];
+        if (!rec || !Array.isArray(rec.foodLogs)) return;
+        const seen = new Set();
+        const deduped = [];
+        rec.foodLogs.forEach(item => {
+          if (!item) return;
+          if (item.date && item.date !== dKey) {
+            modified = true;
+            return;
+          }
+          const sig = `${item.mealType || ''}|${String(item.note || '').trim()}`;
+          const idKey = item.id ? `id:${item.id}` : sig;
+          if (seen.has(idKey) || (item.note && seen.has(sig))) {
+            modified = true;
+            return;
+          }
+          seen.add(idKey);
+          if (item.note) seen.add(sig);
+          deduped.push(item);
+        });
+        if (deduped.length !== rec.foodLogs.length) {
+          rec.foodLogs = deduped;
+          modified = true;
+        }
+      });
+
+      if (modified) {
+        try {
+          localStorage.setItem(HISTORY_DB_KEY, JSON.stringify(historyByDate));
+        } catch (e) {}
+      }
+    }
+
+    // 🌅 跨夜自動換日偵測：當 iPhone 桌面捷徑隔天從背景喚醒時，自動切換至最新今天
+    function checkMidnightDateRollover() {
+      const realToday = getLocalDateStr();
+      if (realToday !== TODAY) {
+        const prevToday = TODAY;
+        TODAY = realToday;
+        const d = new Date();
+        const disp = document.getElementById('date-display');
+        if (disp) {
+          disp.textContent = d.toLocaleDateString('zh-TW', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
+          });
+        }
+        if (selectedDate === prevToday) {
+          loadDayIntoState(TODAY);
+          save();
+          refreshAllDayUI();
+        } else {
+          renderDateSwitcherBar();
+        }
+      }
     }
 
     function init() {
@@ -1400,10 +1517,10 @@
         historyByDate = {};
       }
 
-      // 2. 向下相容遷移舊版單日 state
+      // 2. 向下相容遷移舊版單日 state（僅在歷史庫完全為空時執行一次，防止回看前日紀錄覆寫今日）
       const oldStateRaw = localStorage.getItem(KEY_PREFIX + 'state');
       const oldDateRaw = localStorage.getItem(KEY_PREFIX + 'date') || TODAY;
-      if (oldStateRaw) {
+      if (oldStateRaw && Object.keys(historyByDate).length === 0) {
         try {
           const oldState = JSON.parse(oldStateRaw);
           if (oldState.followup) globalCfg.followup = oldState.followup;
@@ -1481,6 +1598,9 @@
         }
       }
 
+      // 4. 自動清洗 11/05 與 11/06 跨日誤複製之餐點並校正 11/05 體重
+      cleanupCrossDayDuplicateMealsAndFixWeight();
+
       loadDayIntoState(TODAY);
       save();
 
@@ -1490,8 +1610,17 @@
       renderCountdown();
       initPantry();
 
-      // 當從 meal-ai.html 切換回本頁時，即時檢查同步信箱
-      window.addEventListener('focus', checkMealSyncInbox);
+      // 當從 meal-ai.html 切換回本頁或隔天喚醒時，即時檢查跨夜換日與同步信箱
+      window.addEventListener('focus', () => {
+        checkMidnightDateRollover();
+        checkMealSyncInbox();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          checkMidnightDateRollover();
+          checkMealSyncInbox();
+        }
+      });
     }
 
     function refreshAllDayUI() {
@@ -1872,9 +2001,9 @@
     }
 
     function save() {
-      // 同步當前 state 進 historyByDate[selectedDate]
+      // 同步當前 state 進 historyByDate[selectedDate]（建立獨立陣列/物件拷貝，杜絕跨日共用參照汙染）
       historyByDate[selectedDate] = {
-        habits: state.habits || {},
+        habits: { ...(state.habits || {}) },
         water: state.water || 0,
         thermosCount: state.thermosCount || 0,
         steps: state.steps !== undefined ? state.steps : '',
@@ -1882,9 +2011,9 @@
         manualExMins: state.manualExMins !== undefined ? state.manualExMins : '',
         exMins: state.exMins !== undefined ? state.exMins : '',
         weight: state.weight !== undefined ? state.weight : '',
-        foodLogs: Array.isArray(state.foodLogs) ? state.foodLogs : [],
+        foodLogs: Array.isArray(state.foodLogs) ? [...state.foodLogs] : [],
         dayAiSummary: state.dayAiSummary || null,
-        drinkLogs: Array.isArray(state.drinkLogs) ? state.drinkLogs : [],
+        drinkLogs: Array.isArray(state.drinkLogs) ? [...state.drinkLogs] : [],
         locked: !!state.locked,
         lockedAt: state.lockedAt || null
       };
@@ -1897,8 +2026,10 @@
       try {
         localStorage.setItem(GLOBAL_CFG_KEY, JSON.stringify(globalCfg));
         localStorage.setItem(HISTORY_DB_KEY, JSON.stringify(historyByDate));
-        localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
-        localStorage.setItem(KEY_PREFIX + 'date', TODAY);
+        if (selectedDate === TODAY) {
+          localStorage.setItem(KEY_PREFIX + 'state', JSON.stringify(state));
+          localStorage.setItem(KEY_PREFIX + 'date', selectedDate);
+        }
       } catch (err) {
         console.warn('Storage quota issue, cleaning:', err);
         Object.keys(historyByDate).forEach(k => {

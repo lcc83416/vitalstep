@@ -643,7 +643,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762349400000; // 2026-11-05 v5.9.4 移除已退役 gemini-2.0-flash 並升級全自動尋模與零失敗總結備援
+    const BUILD_VERSION_TIMESTAMP = 1762605000000; // 2026-11-08 v5.9.5 跨夜自動換日與跨日重複餐點防呆升級
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
     const MEAL_AI_DATE_KEY = 'vitalstep_meal_ai_date';
@@ -701,7 +701,7 @@
       return 'gemini-3.8-flash';
     }
 
-    const TODAY = getLocalDateStr();
+    let TODAY = getLocalDateStr();
     let selectedDate = TODAY;
     let mealHistoryByDate = {};
     let activityHistoryByDate = {};
@@ -806,10 +806,10 @@
         dailyAiSummaryByDate = {};
       }
 
-      // 2. 向下相容舊版單日紀錄
+      // 2. 向下相容舊版單日紀錄（僅在歷史庫完全為空時執行一次）
       const savedDate = localStorage.getItem(MEAL_AI_DATE_KEY) || TODAY;
       const savedLogs = localStorage.getItem(MEAL_AI_LOGS_KEY);
-      if (savedLogs) {
+      if (savedLogs && Object.keys(mealHistoryByDate).length === 0) {
         try {
           const parsedOld = JSON.parse(savedLogs) || [];
           if (parsedOld.length > 0 && (!mealHistoryByDate[savedDate] || mealHistoryByDate[savedDate].length === 0)) {
@@ -865,6 +865,31 @@
           switchMealAiView('consult');
         }
       } catch (e) {}
+
+      // 🌅 跨夜自動換日偵測：隔天喚醒時自動切換至最新今天
+      const checkMealMidnightRollover = () => {
+        const realToday = getLocalDateStr();
+        if (realToday !== TODAY) {
+          const prevToday = TODAY;
+          TODAY = realToday;
+          const nowD = new Date();
+          const hdr = document.getElementById('header-date-str');
+          if (hdr) {
+            hdr.textContent = nowD.toLocaleDateString('zh-TW', {
+              month: 'long', day: 'numeric', weekday: 'long'
+            }) + '・生活日誌與AI分析';
+          }
+          if (selectedDate === prevToday) {
+            selectMealDate(TODAY);
+          } else {
+            renderMealDateBar();
+          }
+        }
+      };
+      window.addEventListener('focus', checkMealMidnightRollover);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkMealMidnightRollover();
+      });
     }
 
     function selectMealDate(dateStr) {
