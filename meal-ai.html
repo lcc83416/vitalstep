@@ -439,19 +439,26 @@
     <div class="card">
       <div class="card-title">
         <span>🍵 今日飲水與飲品隨手記</span>
-        <span style="font-size:11px; color:var(--accent); font-weight:800;" id="drink-total-badge">💧 累計 0 ml</span>
+        <span style="font-size:11px; color:var(--accent); font-weight:800;" id="drink-total-badge">💧 總計 0 ml</span>
       </div>
       <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
-        拿鐵、自調芭樂綠茶、超商茶或白開水隨手打字（不用拍照、不耗額度），晚上結算一次同步回主頁！
+        照常一筆一筆打字（如：溫開水 500、無糖綠茶 600、拿鐵 250），系統會<strong>自動分開統計「🚰 開水」與「🍵 其他」</strong>！
       </div>
 
       <!-- 輸入列 -->
-      <div style="display:flex; gap:6px; margin-bottom:10px;">
+      <div style="display:flex; gap:6px; margin-bottom:8px;">
         <input type="time" id="drink-time-input" style="padding:6px 8px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
         <input type="text" id="drink-text-input" placeholder="例如：芭樂綠茶 350ml / 溫開水 500ml / 拿鐵 250ml"
           style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main); outline:none;"
           onkeydown="if(event.key==='Enter') addDrinkLog()">
         <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="addDrinkLog()">＋ 記一杯</button>
+      </div>
+
+      <!-- 💧 總計 / 🚰 開水 / 🍵 其他 即時分類統計列 -->
+      <div id="drink-breakdown-bar" style="margin-bottom:8px; padding:7px 10px; background:var(--bg); border:1px dashed var(--border); border-radius:8px; font-size:11px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+        <span>💧 總計：<strong>0</strong> ml</span>
+        <span style="color:#0284c7;">🚰 開水：<strong>0</strong> ml</span>
+        <span style="color:#059669;">🍵 其他：<strong>0</strong> ml</span>
       </div>
 
       <!-- 已記錄飲品清單 -->
@@ -643,7 +650,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762605000000; // 2026-11-08 v5.9.5 跨夜自動換日與跨日重複餐點防呆升級
+    const BUILD_VERSION_TIMESTAMP = 1762680000000; // 2026-11-09 v5.9.6 飲水統計自動區分「總計 / 開水 / 其他」升級
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
     const MEAL_AI_DATE_KEY = 'vitalstep_meal_ai_date';
@@ -1222,7 +1229,39 @@
       `;
     }
 
-    // --- 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・晚上一次結算） ---
+    // --- 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・自動區分「開水」與「其他」） ---
+    function isPlainWaterDrink(itemOrText) {
+      if (itemOrText && typeof itemOrText === 'object') {
+        if (itemOrText.category === 'water') return true;
+        if (itemOrText.category === 'other') return false;
+        itemOrText = itemOrText.text || '';
+      }
+      const raw = String(itemOrText || '').trim().toLowerCase();
+      if (!raw) return false;
+      // 若包含非純水飲品關鍵字（茶、咖啡、拿鐵、豆漿、奶、汁、湯、養生飲等），一律歸類為「其他」
+      const otherKeywords = /茶|咖啡|拿鐵|美式|摩卡|卡布|濃縮|豆漿|黑豆漿|米漿|奶|鮮奶|牛乳|乳|優格|優酪|多多|汁|芭樂|柳橙|蘋果|葡萄|檸檬|百香|金桔|柚|梅|蜂蜜|黑糖|紅糖|糖水|果|醋|酒|啤|可樂|汽水|雪碧|沙士|芬達|運動|舒跑|寶礦力|蠻牛|提神|可可|巧克力|阿華田|美祿|麥片|燕麥|芝麻|杏仁|抹茶|焙茶|烏龍|普洱|鐵觀音|金萱|四季春|冬瓜|仙草|愛玉|綠豆|紅豆|黑豆|薏仁|玉米鬚|牛蒡|薑|桂圓|紅棗|枸杞|菊花|決明子|洛神|玫瑰|洋甘菊|薄荷|椰子|蘆薈|湯|羹|飲|酵素|膠原|發泡錠|維他命/;
+      if (otherKeywords.test(raw)) return false;
+      // 若包含「水 / 開水 / 白開水 / 溫水 / 熱水 / 冰水 / 冷水 / 常溫水 / 純水 / 礦泉水 / 氣泡水 / 保溫杯 / 壺」
+      if (/水|保溫杯|保溫瓶|壺/.test(raw)) return true;
+      return false;
+    }
+
+    function calcDrinkBreakdown(drinks = []) {
+      let totalMl = 0;
+      let plainWaterMl = 0;
+      let otherDrinkMl = 0;
+      (drinks || []).forEach(item => {
+        const ml = Number(item?.ml) || 0;
+        totalMl += ml;
+        if (isPlainWaterDrink(item)) {
+          plainWaterMl += ml;
+        } else {
+          otherDrinkMl += ml;
+        }
+      });
+      return { totalMl, plainWaterMl, otherDrinkMl };
+    }
+
     function extractMlFromText(text) {
       if (!text) return 300;
 
@@ -1275,11 +1314,13 @@
       }
       const time = timeInp?.value || new Date().toTimeString().slice(0, 5);
       const ml = extractMlFromText(text);
+      const category = isPlainWaterDrink(text) ? 'water' : 'other';
       const newEntry = {
         id: Date.now(),
         time: time,
         text: text,
-        ml: ml
+        ml: ml,
+        category: category
       };
       dailyDrinkLogs.push(newEntry);
       drinkHistoryByDate[selectedDate] = dailyDrinkLogs;
@@ -1288,7 +1329,20 @@
       } catch (e) {}
       textInp.value = '';
       renderDrinkTimeline();
-      showToast(`✅ 已記錄一杯（約 ${ml}ml）！`);
+      showToast(`✅ 已記錄（${category === 'water' ? '🚰 開水' : '🍵 其他'} ${ml}ml）！`);
+    }
+
+    function toggleDrinkCategory(id) {
+      const item = dailyDrinkLogs.find(d => d.id === id);
+      if (!item) return;
+      const curIsWater = isPlainWaterDrink(item);
+      item.category = curIsWater ? 'other' : 'water';
+      drinkHistoryByDate[selectedDate] = dailyDrinkLogs;
+      try {
+        localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate));
+      } catch (e) {}
+      renderDrinkTimeline();
+      showToast(`已切換「${item.text}」分類為：${item.category === 'water' ? '🚰 開水' : '🍵 其他'}`);
     }
 
     function editDrinkLogMl(id) {
@@ -1322,20 +1376,36 @@
     function renderDrinkTimeline() {
       const container = document.getElementById('drink-timeline-list');
       const badge = document.getElementById('drink-total-badge');
+      const breakdownBar = document.getElementById('drink-breakdown-bar');
       if (!container) return;
-      const totalMl = dailyDrinkLogs.reduce((sum, item) => sum + (item.ml || 0), 0);
+      const { totalMl, plainWaterMl, otherDrinkMl } = calcDrinkBreakdown(dailyDrinkLogs);
       if (badge) {
-        badge.textContent = `💧 累計 ${totalMl} ml`;
+        badge.textContent = `💧 總計 ${totalMl} ml`;
+      }
+      if (breakdownBar) {
+        const plainPct = totalMl > 0 ? Math.round((plainWaterMl / totalMl) * 100) : 0;
+        const otherPct = totalMl > 0 ? (100 - plainPct) : 0;
+        breakdownBar.innerHTML = `
+          <span>💧 總計：<strong style="color:var(--accent); font-size:12px;">${totalMl}</strong> ml</span>
+          <span style="color:#0284c7;">🚰 開水：<strong>${plainWaterMl}</strong> ml${totalMl > 0 ? ` <span style="font-size:10px; opacity:0.8;">(${plainPct}%)</span>` : ''}</span>
+          <span style="color:#059669;">🍵 其他：<strong>${otherDrinkMl}</strong> ml${totalMl > 0 ? ` <span style="font-size:10px; opacity:0.8;">(${otherPct}%)</span>` : ''}</span>
+        `;
       }
       if (!dailyDrinkLogs.length) {
-        container.innerHTML = '<div style="color:var(--text-muted); font-size:11px; padding:6px 0; text-align:center;">尚無飲水記錄，拿鐵、茶飲、白開水隨手打字，晚上一次對齊！</div>';
+        container.innerHTML = '<div style="color:var(--text-muted); font-size:11px; padding:6px 0; text-align:center;">尚無飲水記錄，拿鐵、茶飲、白開水隨手打字，系統會自動分開算「開水」與「其他」！</div>';
         return;
       }
       const sorted = dailyDrinkLogs.slice().sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-      container.innerHTML = sorted.map(item => `
+      container.innerHTML = sorted.map(item => {
+        const isWater = isPlainWaterDrink(item);
+        const catBg = isWater ? 'rgba(2,132,199,0.12)' : 'rgba(5,150,105,0.12)';
+        const catColor = isWater ? '#0284c7' : '#059669';
+        const catLabel = isWater ? '🚰開水' : '🍵其他';
+        return `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; margin-bottom:6px; background:var(--bg); border:1px solid var(--border); border-radius:8px;">
-          <div style="display:flex; align-items:center; gap:8px;">
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
             <span style="font-size:11px; font-weight:800; color:var(--accent); background:var(--accent-light); padding:2px 6px; border-radius:6px; white-space:nowrap;">${item.time}</span>
+            <button onclick="toggleDrinkCategory(${item.id})" title="點擊可切換【開水 / 其他】分類" style="background:${catBg}; color:${catColor}; border:1px solid rgba(0,0,0,0.06); font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; cursor:pointer; white-space:nowrap;">${catLabel}</button>
             <span style="font-size:12px; color:var(--text-main); font-weight:600;">${escapeHtml(item.text)}</span>
             <button onclick="editDrinkLogMl(${item.id})" title="點擊直接修改容量" style="background:var(--accent-light); border:1px solid rgba(0,0,0,0.08); color:var(--accent); font-size:11px; font-weight:800; padding:2px 7px; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
               ${item.ml}ml <span style="font-size:9px; opacity:0.75;">✏️</span>
@@ -1343,7 +1413,8 @@
           </div>
           <button onclick="deleteDrinkLog(${item.id})" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px; padding:0 4px;" title="刪除此筆">🗑️</button>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     // --- 🤖 今日全日生活與健康防線 AI 智能總結 ---
@@ -1377,6 +1448,11 @@
         const h = data.habits || {};
         const doneCount = (h.lunch_move_15m ? 1 : 0) + (h.dinner_step_15m ? 1 : 0) + (h.bedtime_2hr_fast ? 1 : 0);
         const donePct = Math.round((doneCount / 3) * 100);
+        const drinkSource = Array.isArray(data.drinkLogs) && data.drinkLogs.length > 0 ? data.drinkLogs : dailyDrinkLogs;
+        const wb = calcDrinkBreakdown(drinkSource);
+        const dispTotal = data.totalWater !== undefined ? data.totalWater : wb.totalMl;
+        const dispPlain = data.plainWaterMl !== undefined ? data.plainWaterMl : wb.plainWaterMl;
+        const dispOther = data.otherDrinkMl !== undefined ? data.otherDrinkMl : wb.otherDrinkMl;
 
         contentEl.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border);">
@@ -1400,7 +1476,7 @@
           <div style="margin-bottom:6px;"><strong>⏱️ 有效代謝微活動：</strong> 約 <span style="color:var(--primary); font-weight:800; font-size:13px;">${data.activeMinutes || 0}</span> 分鐘（${escapeHtml(data.activeSummary || '日常走動與家事收拾')}）</div>
           <div style="margin-bottom:6px;"><strong>🛡️ 血糖與 TG 阻斷：</strong> ${escapeHtml(data.glucoseIntercept || '良好')}</div>
           <div style="margin-bottom:6px;"><strong>🍱 飲食營養評定：</strong> ${escapeHtml(data.mealHighlight || '均衡無地雷')}</div>
-          <div style="margin-bottom:6px;"><strong>🍵 水分與飲品評定：</strong> ${escapeHtml(data.waterFeedback || '水分充足')}（今日累計約 <span style="color:var(--accent); font-weight:800;">${data.totalWater || 0}</span> ml）</div>
+          <div style="margin-bottom:6px;"><strong>🍵 水分與飲品評定：</strong> ${escapeHtml(data.waterFeedback || '水分充足')}（總計 <span style="color:var(--accent); font-weight:800;">${dispTotal}</span> ml：🚰 開水 <strong>${dispPlain}</strong> ml ＋ 🍵 其他 <strong>${dispOther}</strong> ml）</div>
           <div style="background:var(--bg); padding:8px 10px; border-radius:8px; border-left:3px solid var(--primary); margin-top:8px; font-size:11.5px; line-height:1.6; color:var(--text-main);">
             💬 <strong>健康教練小結：</strong>${escapeHtml(data.coachFeedback || '')}
           </div>
@@ -1432,7 +1508,7 @@
         return;
       }
 
-      const totalWater = drinks.reduce((sum, item) => sum + (item.ml || 0), 0);
+      const { totalMl: totalWater, plainWaterMl, otherDrinkMl } = calcDrinkBreakdown(drinks);
 
       const btn = document.getElementById('daily-ai-gen-btn');
       const origText = btn.textContent;
@@ -1447,7 +1523,7 @@
       }).join('\n');
 
       const actsDesc = activities.map(a => `• [${a.time}] ${a.text}`).join('\n');
-      const drinksDesc = drinks.map(d => `• [${d.time}] ${d.text} (${d.ml}ml)`).join('\n');
+      const drinksDesc = drinks.map(d => `• [${d.time}] [${isPlainWaterDrink(d) ? '開水' : '其他'}] ${d.text} (${d.ml}ml)`).join('\n');
 
       const prompt = `你是一位專業、客觀且具同理心的臨床代謝與營養師。
 使用者的客觀健檢指標與改善目標（2026 vs 2025）：
@@ -1470,7 +1546,7 @@ ${mealsDesc || '（今日尚未記錄餐點）'}
 以下是使用者【${selectedDate}】的行程與微活動記錄：
 ${actsDesc || '（今日尚未記錄行程微活動）'}
 
-以下是使用者【${selectedDate}】的飲水與飲品記錄（共約 ${totalWater} ml）：
+以下是使用者【${selectedDate}】的飲水與飲品記錄（總計 ${totalWater} ml：其中純開水 ${plainWaterMl} ml、其他飲品 ${otherDrinkMl} ml）：
 ${drinksDesc || '（今日尚未記錄飲品水份）'}
 
 請依據標準臨床營養學與代謝醫學，客觀綜合評估今日的飲食營養結構、活動量與水分攝取，並以純 JSON 格式回覆：
@@ -1493,7 +1569,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
   "activeSummary": "今日實際活動項目與分鐘數加總說明",
   "glucoseIntercept": "餐後活動與血糖/TG代謝客觀評定",
   "mealHighlight": "今日三餐營養結構客觀評定（肯定優點並誠實指出不足之處）",
-  "waterFeedback": "飲水總量與飲品結構客觀評定",
+  "waterFeedback": "飲水總量、純開水與其他飲品結構客觀評定",
   "coachFeedback": "今日綜合檢討與明日具體微調建議（約 80~130 字）",
   "summaryBadge": "15字以內今日總結摘要"
 }`;
@@ -1523,8 +1599,8 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           : '今日尚未記錄餐點明細';
 
         const localWaterFeedback = totalWater >= 2400
-          ? `今日累計飲水 ${totalWater}ml（已達標 ≥2400ml 護腎排尿酸防線！）`
-          : `今日累計飲水 ${totalWater}ml（距離 2400ml 目標尚差 ${Math.max(0, 2400 - totalWater)}ml，建議睡前1小時前適量補水）`;
+          ? `今日飲水總計 ${totalWater}ml（開水 ${plainWaterMl}ml＋其他 ${otherDrinkMl}ml，已達標 ≥2400ml 護腎排尿酸防線！）`
+          : `今日飲水總計 ${totalWater}ml（開水 ${plainWaterMl}ml＋其他 ${otherDrinkMl}ml，距離 2400ml 目標尚差 ${Math.max(0, 2400 - totalWater)}ml）`;
 
         const localGlucose = (finalHabits.lunch_move_15m && finalHabits.dinner_step_15m)
           ? '⭕ 午、晚餐後皆完成微活動防線，有效攔截餐後血糖與 TG 峰值！'
@@ -1532,7 +1608,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
             ? '⭕ 已完成部分餐後微活動防線，協助平緩血糖波動'
             : '今日餐後活動較少，建議飯後穿厚底拖鞋原地微踏步 15 分鐘');
 
-        const localCoach = `今日完成 ${(finalHabits.lunch_move_15m ? 1 : 0) + (finalHabits.dinner_step_15m ? 1 : 0) + (finalHabits.bedtime_2hr_fast ? 1 : 0)}/3 項健康防線，有效微活動約 ${actMins} 分鐘、飲水 ${totalWater}ml。${ngNotes.length > 0 ? '明日可針對餐點蔬菜纖維與蛋白質比例微調，' : '飲食結構保持穩定，'}持續透過餐後微踏步與充足無糖茶水守護血脂與 eGFR！`;
+        const localCoach = `今日完成 ${(finalHabits.lunch_move_15m ? 1 : 0) + (finalHabits.dinner_step_15m ? 1 : 0) + (finalHabits.bedtime_2hr_fast ? 1 : 0)}/3 項健康防線，有效微活動約 ${actMins} 分鐘、飲水總計 ${totalWater}ml（開水 ${plainWaterMl}ml / 其他 ${otherDrinkMl}ml）。${ngNotes.length > 0 ? '明日可針對餐點蔬菜纖維與蛋白質比例微調，' : '飲食結構保持穩定，'}持續透過餐後微踏步與充足無糖茶水守護血脂與 eGFR！`;
 
         return {
           date: selectedDate,
@@ -1544,6 +1620,8 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           mealHighlight: parsedAi?.mealHighlight || localMealHighlight,
           waterFeedback: parsedAi?.waterFeedback || localWaterFeedback,
           totalWater: totalWater,
+          plainWaterMl: plainWaterMl,
+          otherDrinkMl: otherDrinkMl,
           drinkLogs: drinks,
           foodLogs: meals.map(buildSyncPayloadItem), // 今日全部餐食一併打包！
           coachFeedback: (parsedAi?.coachFeedback || localCoach) + (isLocalFallback ? '（⚡ 雲端免費額度滿載，由本機智慧管家完成對齊結算）' : ''),
@@ -3575,14 +3653,17 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         const dObj = new Date(mondayDate.getFullYear(), mondayDate.getMonth(), mondayDate.getDate() + i);
         const dStr = getLocalDateStr(dObj);
         const dayMeals = mealHistoryByDate[dStr] || [];
-        if (dayMeals.length > 0) {
+        const dayDrinks = drinkHistoryByDate[dStr] || [];
+        if (dayMeals.length > 0 || dayDrinks.length > 0) {
           const items = dayMeals.map(m => {
             const what = m.note || m.report?.what || m.mealType;
             const good = m.report?.good ? `[亮點:${m.report.good}]` : '';
             const ng = m.report?.ng ? `[提醒:${m.report.ng}]` : '';
             return `${m.mealType}: ${what} ${good} ${ng}`.trim();
           });
-          weekLogs.push(`${dStr} (${weekDayNames[dObj.getDay()]}): ${items.join(' ｜ ')}`);
+          const wb = calcDrinkBreakdown(dayDrinks);
+          const waterInfo = wb.totalMl > 0 ? ` ｜ 飲水總計:${wb.totalMl}ml(開水${wb.plainWaterMl}ml+其他${wb.otherDrinkMl}ml)` : '';
+          weekLogs.push(`${dStr} (${weekDayNames[dObj.getDay()]}): ${items.join(' ｜ ') || '無餐點紀錄'}${waterInfo}`);
         }
       }
 
