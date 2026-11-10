@@ -337,9 +337,17 @@
           ✨ 生成今日 AI 總結
         </button>
       </div>
-      <div id="top-cloud-quota-bar" style="font-size:10.5px; color:var(--primary); background:rgba(255,255,255,0.75); border:1px solid rgba(5,150,105,0.25); padding:4px 8px; border-radius:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
-        <span>☁️ 今日雲端 AI 呼叫：<strong id="top-quota-count">0</strong> 次（單一模型免費 20 次/日，多模型自動接力）</span>
-        <span style="font-size:10px; color:var(--text-muted); cursor:pointer; text-decoration:underline;" onclick="toggleKeyBox(); document.getElementById('key-box').scrollIntoView({behavior:'smooth'});">查看明細</span>
+      <div id="top-cloud-quota-bar" style="background:var(--card-bg); border:1.5px solid var(--primary); padding:7px 10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11.5px; color:var(--text-main);">
+          <span>☁️ <strong>今日雲端 AI 呼叫：</strong></span>
+          <span style="background:var(--primary); color:#ffffff; padding:2px 8px; border-radius:6px; font-weight:900; font-size:12px; display:inline-block; line-height:1.2;">
+            <span id="top-quota-count">0</span> 次
+          </span>
+          <span style="font-size:10.5px; color:var(--text-muted); font-weight:600;">（單一模型免費 20 次/日・多模型接力）</span>
+        </div>
+        <button onclick="toggleKeyBox(); document.getElementById('key-box').scrollIntoView({behavior:'smooth'});" style="background:var(--accent-light); border:1px solid var(--accent); color:var(--accent); font-weight:800; font-size:10.5px; padding:3px 8px; border-radius:6px; cursor:pointer; white-space:nowrap;">
+          查看明細 ➔
+        </button>
       </div>
       <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="daily-ai-review-desc">
         一天結算一次！客觀整合本日餐食、微活動與飲水，自動對齊 3 大防線並打包全部餐點，一鍵複製回主頁貼上！
@@ -626,7 +634,7 @@
       </div>
 
       <div id="key-box" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
-        <div id="ai-usage-detail-panel" style="background:rgba(5,150,105,0.06); border:1px solid rgba(5,150,105,0.2); border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:11px; line-height:1.55; color:var(--text-main);">
+        <div id="ai-usage-detail-panel" style="background:var(--bg); border:1px solid var(--border); border-left:3px solid var(--primary); border-radius:8px; padding:10px 12px; margin-bottom:8px; font-size:11.5px; line-height:1.6; color:var(--text-main);">
           📊 <strong>今日雲端 AI 額度監控</strong>：載入中...
         </div>
         <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
@@ -658,7 +666,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762782000000; // 2026-11-10 v5.9.8 修復白天微活動提早誤勾睡前防線 Bug ＋ 支援防線標籤隨時手動點擊切換
+    const BUILD_VERSION_TIMESTAMP = 1762784000000; // 2026-11-10 v5.9.9 額度監控深色模式高對比配色升級 ＋ 呼叫次數歷史完整回推與手動校正支援
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -726,10 +734,11 @@
         store = JSON.parse(localStorage.getItem(AI_USAGE_COUNTER_KEY) || '{}') || {};
       } catch (e) { store = {}; }
       if (store.date !== todayKey) {
-        // 若是今天在升級前已經成功跑過雲端 AI 的餐點，自動回推計數
+        // 若是今天在升級前已經成功跑過雲端 AI 的紀錄，自動回推計數
         let inferredCount = 0;
         const byModel = {};
         try {
+          // 1. 餐食拍照/截圖分析
           const hist = JSON.parse(localStorage.getItem(MEAL_AI_HISTORY_BY_DATE_KEY) || '{}') || {};
           const todayMeals = hist[todayKey] || [];
           todayMeals.forEach(m => {
@@ -737,6 +746,20 @@
               inferredCount++;
             }
           });
+          // 2. 今日食材採買與食譜體檢
+          const consults = JSON.parse(localStorage.getItem(CONSULT_HISTORY_KEY) || '[]') || [];
+          const nowD = new Date();
+          const todayPrefix = `${nowD.getMonth() + 1}月${nowD.getDate()}日`;
+          consults.forEach(c => {
+            if (c?.timestamp && c.timestamp.includes(todayPrefix)) {
+              inferredCount++;
+            }
+          });
+          // 3. 今日總結
+          const sumHist = JSON.parse(localStorage.getItem(DAILY_AI_SUMMARY_BY_DATE_KEY) || '{}') || {};
+          if (sumHist[todayKey]) {
+            inferredCount++;
+          }
         } catch (e) {}
         store = {
           date: todayKey,
@@ -763,6 +786,25 @@
         localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(stats));
       } catch (e) {}
       updateKeyStatus();
+    }
+
+    // ✏️ 手動校正今日雲端呼叫次數（方便跨機或升級前用量補正）
+    function adjustCloudAiCalls() {
+      const stats = getCloudAiUsageStats();
+      const cur = Number(stats.totalCalls) || 0;
+      const res = prompt('請輸入今日實際呼叫雲端 AI 的總次數（如今日在計數器上線前已用 6 次）：', cur);
+      if (res === null) return;
+      const num = parseInt(res.trim(), 10);
+      if (isNaN(num) || num < 0 || num > 500) {
+        showToast('請輸入有效的整數喔！');
+        return;
+      }
+      stats.totalCalls = num;
+      try {
+        localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(stats));
+      } catch (e) {}
+      updateKeyStatus();
+      showToast(`✅ 已將今日雲端 AI 呼叫次數校正為 ${num} 次！`);
     }
 
     let TODAY = getLocalDateStr();
@@ -1989,13 +2031,13 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
 
       if (detailPanel) {
         detailPanel.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
-            <span>📊 <strong>今日（${stats.date}）本機統計雲端 AI 呼叫：</strong> <strong style="color:var(--primary); font-size:13px;">${totalCalls}</strong> 次</span>
-            <span style="font-size:10px; color:var(--text-muted);">每日 15:00～16:00 重置雲端配額</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+            <span style="font-size:12px;">📊 <strong>今日（${stats.date}）雲端 AI 呼叫總計：</strong> <span style="background:var(--primary); color:#ffffff; padding:1px 7px; border-radius:6px; font-weight:900; font-size:12px;">${totalCalls} 次</span> <button onclick="adjustCloudAiCalls()" style="background:none; border:none; color:var(--accent); font-size:10.5px; cursor:pointer; text-decoration:underline; font-weight:700; margin-left:4px;">✏️校正次數</button></span>
+            <span style="font-size:10px; color:var(--text-muted); font-weight:600;">每日 15:00～16:00 重置配額</span>
           </div>
-          <div style="font-size:10.5px; color:var(--text-muted); margin-top:3px;">
-            🤖 <strong>各模型分流明細：</strong>${modelBreakdown || '今日尚無新紀錄（多模型池待命中，單一模型免費約 20 次/日）'}
-            ${stats.lastCallTime ? `<br>⏱️ 最近一次呼叫：${stats.lastCallTime}（${stats.lastAction || 'AI 分析'}・使用 <code>${stats.lastModel}</code>）` : ''}
+          <div style="font-size:11px; color:var(--text-main); opacity:0.9;">
+            🤖 <strong>各模型分流明細：</strong>${modelBreakdown || '今日尚無新紀錄（多模型自動接力池待命中，單一模型免費約 20 次/日）'}
+            ${stats.lastCallTime ? `<br>⏱️ 最近呼叫：<strong>${stats.lastCallTime}</strong>（${stats.lastAction || 'AI 分析'}・使用 <code style="background:var(--card-bg); padding:1px 4px; border-radius:4px; border:1px solid var(--border);">${stats.lastModel}</code>）` : ''}
           </div>
         `;
       }
@@ -2005,8 +2047,8 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         st.textContent = `✓ 已設定雲端 Gemini API Key（今日已成功呼叫雲端 AI ${totalCalls} 次）`;
         if (hdrTag) {
           hdrTag.textContent = `🟢 AI 已連線 (今日 ${totalCalls} 次)`;
-          hdrTag.style.background = '#ecfdf5';
-          hdrTag.style.color = '#059669';
+          hdrTag.style.background = 'var(--primary-light)';
+          hdrTag.style.color = 'var(--primary)';
         }
       } else {
         st.textContent = '目前未設定金鑰（將使用 100% 本機營養師規則判讀）';
