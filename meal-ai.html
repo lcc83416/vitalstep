@@ -279,7 +279,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v5.9.4 模型接力防斷升級</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v5.9.7 額度監控＆總結修正</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -331,11 +331,15 @@
     <!-- 🤖 1. 今日與本週 AI 智能總結中心（集中於頂部，一鍵結算與複製最順手！） -->
     <div class="card" style="margin-bottom:12px; background:linear-gradient(135deg, rgba(5,150,105,0.1), rgba(2,132,199,0.1)); border:1.5px solid var(--primary); padding:12px 14px;">
       <!-- 上半部：今日總結 -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:6px; flex-wrap:wrap;">
         <span style="font-size:13px; font-weight:800; color:var(--primary);">🤖 結算今日生活與健康防線 (含餐食同步)</span>
         <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:6px 12px; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(5,150,105,0.25);" onclick="generateDailyAiReview()">
           ✨ 生成今日 AI 總結
         </button>
+      </div>
+      <div id="top-cloud-quota-bar" style="font-size:10.5px; color:var(--primary); background:rgba(255,255,255,0.75); border:1px solid rgba(5,150,105,0.25); padding:4px 8px; border-radius:6px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+        <span>☁️ 今日雲端 AI 呼叫：<strong id="top-quota-count">0</strong> 次（單一模型免費 20 次/日，多模型自動接力）</span>
+        <span style="font-size:10px; color:var(--text-muted); cursor:pointer; text-decoration:underline;" onclick="toggleKeyBox(); document.getElementById('key-box').scrollIntoView({behavior:'smooth'});">查看明細</span>
       </div>
       <div style="font-size:11px; color:var(--text-muted); line-height:1.5;" id="daily-ai-review-desc">
         一天結算一次！客觀整合本日餐食、微活動與飲水，自動對齊 3 大防線並打包全部餐點，一鍵複製回主頁貼上！
@@ -622,8 +626,12 @@
       </div>
 
       <div id="key-box" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
+        <div id="ai-usage-detail-panel" style="background:rgba(5,150,105,0.06); border:1px solid rgba(5,150,105,0.2); border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:11px; line-height:1.55; color:var(--text-main);">
+          📊 <strong>今日雲端 AI 額度監控</strong>：載入中...
+        </div>
         <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
-          💡 <strong>多模型免費額度自動接力保護</strong>：Google 對單一 `gemini-3.8-flash` 免費版設有每日 20 次上限（台灣下午 15:00 重置）。本系統已內建<strong>「多模型自動接力池」</strong>，當主力模型滿 20 次時會<strong>自動無縫切換至獨立額度的 `flash-lite` 等備援模型</strong>，不卡頓、不中斷！
+          💡 <strong>多模型免費額度自動接力保護</strong>：Google 對單一免費模型設有每日上限（台灣下午 15:00～16:00 重置）。本系統已內建<strong>「多模型自動接力池」</strong>（<code>gemini-flash-latest</code> ➔ <code>gemini-flash-lite-latest</code> ➔ <code>gemini-2.5-flash</code> ➔ <code>gemini-2.5-flash-lite</code>），當單一模型滿額時會自動無縫換棒！<br>
+          🌐 <strong>官方雲端後台查詢</strong>：您亦可隨時前往 <a href="https://aistudio.google.com/spend" target="_blank" rel="noopener" style="color:var(--primary); font-weight:700; text-decoration:underline;">Google AI Studio 用量與配額後台</a> 查看 Google 帳號端統計。
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           <input type="password" id="isolated-gemini-key" placeholder="貼上 Gemini API Key"
@@ -650,8 +658,9 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762680000000; // 2026-11-09 v5.9.6 飲水統計自動區分「總計 / 開水 / 其他」升級
+    const BUILD_VERSION_TIMESTAMP = 1762782000000; // 2026-11-10 v5.9.8 修復白天微活動提早誤勾睡前防線 Bug ＋ 支援防線標籤隨時手動點擊切換
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
+    const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
     const MEAL_AI_DATE_KEY = 'vitalstep_meal_ai_date';
     const MEAL_AI_HISTORY_BY_DATE_KEY = 'vitalstep_meal_ai_history_by_date';
@@ -659,6 +668,7 @@
     const DRINK_HISTORY_BY_DATE_KEY = 'vitalstep_drink_history_by_date';
     const DAY_MODE_BY_DATE_KEY = 'vitalstep_day_mode_by_date';
     const DAILY_AI_SUMMARY_BY_DATE_KEY = 'vitalstep_daily_ai_summary_by_date';
+    const MANUAL_HABITS_BY_DATE_KEY = 'vitalstep_manual_habits_by_date';
     const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
     const CONSULT_HISTORY_KEY = 'vitalstep_pantry_consult_history';
 
@@ -692,11 +702,11 @@
       return localStorage.getItem(ISOLATED_KEY_NAME) || '';
     }
 
-    // 🛡️ 確保快取模型名稱絕不殘留已退役的 1.5 / 2.0 / 2.5 舊版模型
+    // 🛡️ 確保快取模型名稱絕不殘留已退役的 1.5 / 2.0 舊版模型或無效別名
     function isDeprecatedGeminiModel(name) {
       if (!name) return true;
       const s = String(name).toLowerCase();
-      return s.includes('1.5') || s.includes('2.0') || s.includes('2.5') || s.includes('pro-vision');
+      return s.includes('1.5') || s.includes('2.0') || s.includes('3.8') || s.includes('pro-vision');
     }
 
     function getSanitizedWorkingModel() {
@@ -704,8 +714,55 @@
       if (saved && !isDeprecatedGeminiModel(saved)) {
         return saved;
       }
-      localStorage.setItem('vitalstep_working_gemini_model', 'gemini-3.8-flash');
-      return 'gemini-3.8-flash';
+      localStorage.setItem('vitalstep_working_gemini_model', 'gemini-flash-latest');
+      return 'gemini-flash-latest';
+    }
+
+    // 📊 雲端免費額度計數器（依台灣每日 + 美西午夜 15:00 重置週期雙軌統計）
+    function getCloudAiUsageStats() {
+      const todayKey = getLocalDateStr();
+      let store = {};
+      try {
+        store = JSON.parse(localStorage.getItem(AI_USAGE_COUNTER_KEY) || '{}') || {};
+      } catch (e) { store = {}; }
+      if (store.date !== todayKey) {
+        // 若是今天在升級前已經成功跑過雲端 AI 的餐點，自動回推計數
+        let inferredCount = 0;
+        const byModel = {};
+        try {
+          const hist = JSON.parse(localStorage.getItem(MEAL_AI_HISTORY_BY_DATE_KEY) || '{}') || {};
+          const todayMeals = hist[todayKey] || [];
+          todayMeals.forEach(m => {
+            if (m?.report?.modeText && m.report.modeText.includes('Gemini')) {
+              inferredCount++;
+            }
+          });
+        } catch (e) {}
+        store = {
+          date: todayKey,
+          totalCalls: inferredCount,
+          byModel: byModel,
+          lastModel: localStorage.getItem('vitalstep_working_gemini_model') || 'gemini-flash-latest',
+          lastCallTime: ''
+        };
+        try { localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(store)); } catch (e) {}
+      }
+      return store;
+    }
+
+    function recordCloudAiCall(modelName, actionLabel) {
+      const stats = getCloudAiUsageStats();
+      const cleanModel = (modelName || 'gemini-flash-latest').replace(/^models\//, '');
+      stats.totalCalls = (Number(stats.totalCalls) || 0) + 1;
+      if (!stats.byModel) stats.byModel = {};
+      stats.byModel[cleanModel] = (Number(stats.byModel[cleanModel]) || 0) + 1;
+      stats.lastModel = cleanModel;
+      stats.lastAction = actionLabel || 'AI 分析';
+      stats.lastCallTime = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+      try {
+        localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(stats));
+      } catch (e) {}
+      updateKeyStatus();
     }
 
     let TODAY = getLocalDateStr();
@@ -715,6 +772,7 @@
     let drinkHistoryByDate = {};
     let dayModeByDate = {};
     let dailyAiSummaryByDate = {};
+    let manualHabitsByDate = {}; // 支援 3 大時段防線手動微調
     let currentDailySummaryData = null;
     let currentMeal = '午餐';
     let photos = [];
@@ -811,6 +869,14 @@
         if (rawSum) dailyAiSummaryByDate = JSON.parse(rawSum) || {};
       } catch (e) {
         dailyAiSummaryByDate = {};
+      }
+
+      // 讀取防線手動自訂覆蓋紀錄
+      try {
+        const rawMan = localStorage.getItem(MANUAL_HABITS_BY_DATE_KEY);
+        if (rawMan) manualHabitsByDate = JSON.parse(rawMan) || {};
+      } catch (e) {
+        manualHabitsByDate = {};
       }
 
       // 2. 向下相容舊版單日紀錄（僅在歷史庫完全為空時執行一次）
@@ -1157,12 +1223,54 @@
         return false;
       });
 
-      if (dinnerMeal && !lateSnack) {
-        bedtimeFast = true;
-        bedtimeReason = `晚餐在 ${dinnerMeal.time || '傍晚'} 結束，零宵夜`;
-      } else if (!lateSnack && (lunchMove || dinnerStep || activities.length > 0)) {
-        bedtimeFast = true;
-        bedtimeReason = '今日未記任何宵夜，守住肝臟夜間燃脂';
+      const isToday = (selectedDate === TODAY);
+      const curTime = new Date().toTimeString().slice(0, 5);
+
+      if (isToday) {
+        // 🛡️ 今日白天時段（20:30 前）：絕不提早自動勾選「睡前零宵夜」！
+        if (curTime < '20:30') {
+          bedtimeFast = false;
+          bedtimeReason = dinnerMeal ? '晚餐已記，待晚間入睡前守住零宵夜' : '白天時段，待晚間結算';
+        } else {
+          // 已進入晚間/睡前時段（20:30 後）
+          if (lateSnack) {
+            bedtimeFast = false;
+            bedtimeReason = '有夜間點心/宵夜紀錄';
+          } else if (dinnerMeal) {
+            bedtimeFast = true;
+            bedtimeReason = `晚餐在 ${dinnerMeal.time || '傍晚'} 結束，夜間零宵夜`;
+          } else {
+            bedtimeFast = false;
+            bedtimeReason = '尚未記錄晚餐，待睡前確認';
+          }
+        }
+      } else {
+        // 過去歷史日期檢驗
+        if (lateSnack) {
+          bedtimeFast = false;
+          bedtimeReason = '有宵夜紀錄';
+        } else if (dinnerMeal) {
+          bedtimeFast = true;
+          bedtimeReason = `晚餐在 ${dinnerMeal.time || '傍晚'} 結束，零宵夜`;
+        } else {
+          bedtimeFast = false;
+          bedtimeReason = '未記錄晚餐結束時間';
+        }
+      }
+
+      // 檢查手動自訂覆蓋 (手動勾選或手動取消優先權最高)
+      const manual = manualHabitsByDate[selectedDate] || {};
+      if (manual.lunch_move_15m !== undefined) {
+        lunchMove = Boolean(manual.lunch_move_15m);
+        lunchReason = manual.lunch_move_15m ? '手動勾選達成' : '手動取消';
+      }
+      if (manual.dinner_step_15m !== undefined) {
+        dinnerStep = Boolean(manual.dinner_step_15m);
+        dinnerReason = manual.dinner_step_15m ? '手動勾選達成' : '手動取消';
+      }
+      if (manual.bedtime_2hr_fast !== undefined) {
+        bedtimeFast = Boolean(manual.bedtime_2hr_fast);
+        bedtimeReason = manual.bedtime_2hr_fast ? '手動勾選守住' : '手動取消';
       }
 
       return {
@@ -1179,6 +1287,41 @@
         activeMinutes: totalActiveMinutes,
         activeSummary: activityItems.length > 0 ? activityItems.join('、') : '日常微活動'
       };
+    }
+
+    // 👆 防線即時預覽標籤點擊手動切換
+    function toggleHabitInPreview(key) {
+      if (!manualHabitsByDate[selectedDate]) {
+        manualHabitsByDate[selectedDate] = {};
+      }
+      const curEval = evaluateDailyHabitsFromData(dailyActivityLogs, dailyMealLogs, dailyDrinkLogs);
+      const curVal = (manualHabitsByDate[selectedDate][key] !== undefined)
+        ? manualHabitsByDate[selectedDate][key]
+        : Boolean(curEval.habits[key]);
+
+      const newVal = !curVal;
+      manualHabitsByDate[selectedDate][key] = newVal;
+      try {
+        localStorage.setItem(MANUAL_HABITS_BY_DATE_KEY, JSON.stringify(manualHabitsByDate));
+      } catch (e) {}
+
+      const nameMap = {
+        lunch_move_15m: '午餐微動',
+        dinner_step_15m: '晚餐微動',
+        bedtime_2hr_fast: '睡前零宵夜'
+      };
+      showToast(`已手動${newVal ? '勾選' : '取消'}【${nameMap[key] || key}】！`);
+      renderActivityHabitsPreview();
+
+      // 若已有今日總結，同步連動總結與複製碼
+      if (dailyAiSummaryByDate[selectedDate]) {
+        if (!dailyAiSummaryByDate[selectedDate].habits) dailyAiSummaryByDate[selectedDate].habits = {};
+        dailyAiSummaryByDate[selectedDate].habits[key] = newVal;
+        try {
+          localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
+        } catch (e) {}
+        renderDailyAiSummaryBox();
+      }
     }
 
     function renderActivityTimeline() {
@@ -1211,20 +1354,20 @@
       const pct = Math.round((doneCount / 3) * 100);
 
       previewEl.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
           <span style="font-size:11px; font-weight:800; color:var(--primary);">🎯 防線即時對齊預覽：完成 ${doneCount} / 3 項 (${pct}%)</span>
-          <span style="font-size:10px; color:var(--text-muted);">微活動約 ${res.activeMinutes} 分</span>
+          <span style="font-size:10px; color:var(--text-muted);">微活動約 ${res.activeMinutes} 分・點標籤可手動微調</span>
         </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:10px;">
-          <span style="padding:2px 7px; border-radius:6px; background:${h.lunch_move_15m ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.lunch_move_15m ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.lunch_move_15m ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; font-weight:700;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:10.5px;">
+          <button onclick="toggleHabitInPreview('lunch_move_15m')" title="點擊手動切換【午餐微動】" style="background:${h.lunch_move_15m ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.lunch_move_15m ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.lunch_move_15m ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; padding:3px 8px; border-radius:6px; font-size:10.5px; font-weight:700; cursor:pointer;">
             ${h.lunch_move_15m ? '✅' : '⚪'} 午餐微動${res.reasons.lunch ? ' (' + res.reasons.lunch.slice(0, 10) + ')' : ''}
-          </span>
-          <span style="padding:2px 7px; border-radius:6px; background:${h.dinner_step_15m ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.dinner_step_15m ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.dinner_step_15m ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; font-weight:700;">
+          </button>
+          <button onclick="toggleHabitInPreview('dinner_step_15m')" title="點擊手動切換【晚餐微動】" style="background:${h.dinner_step_15m ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.dinner_step_15m ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.dinner_step_15m ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; padding:3px 8px; border-radius:6px; font-size:10.5px; font-weight:700; cursor:pointer;">
             ${h.dinner_step_15m ? '✅' : '⚪'} 晚餐微動${res.reasons.dinner ? ' (' + res.reasons.dinner.slice(0, 10) + ')' : ''}
-          </span>
-          <span style="padding:2px 7px; border-radius:6px; background:${h.bedtime_2hr_fast ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.bedtime_2hr_fast ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.bedtime_2hr_fast ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; font-weight:700;">
-            ${h.bedtime_2hr_fast ? '✅' : '⚪'} 睡前零宵夜
-          </span>
+          </button>
+          <button onclick="toggleHabitInPreview('bedtime_2hr_fast')" title="點擊手動切換【睡前零宵夜】" style="background:${h.bedtime_2hr_fast ? 'var(--primary-light)' : 'var(--bg)'}; color:${h.bedtime_2hr_fast ? 'var(--primary)' : 'var(--text-muted)'}; border:1px solid ${h.bedtime_2hr_fast ? 'rgba(5,150,105,0.4)' : 'var(--border)'}; padding:3px 8px; border-radius:6px; font-size:10.5px; font-weight:700; cursor:pointer;">
+            ${h.bedtime_2hr_fast ? '✅' : '⚪'} 睡前零宵夜${res.reasons.bedtime ? ' (' + res.reasons.bedtime.slice(0, 12) + ')' : ''}
+          </button>
         </div>
       `;
     }
@@ -1427,10 +1570,11 @@
         // 若歷史總結中遺漏 habits 或 activeMinutes，以本機智慧解析自動校準補正
         if (!data.habits || Object.keys(data.habits).length === 0 || !data.foodLogs) {
           const autoEval = evaluateDailyHabitsFromData(dailyActivityLogs, dailyMealLogs, dailyDrinkLogs);
+          const manual = manualHabitsByDate[selectedDate] || {};
           data.habits = {
-            lunch_move_15m: Boolean(data.habits?.lunch_move_15m || autoEval.habits.lunch_move_15m),
-            dinner_step_15m: Boolean(data.habits?.dinner_step_15m || autoEval.habits.dinner_step_15m),
-            bedtime_2hr_fast: (data.habits?.bedtime_2hr_fast !== undefined) ? Boolean(data.habits.bedtime_2hr_fast) : autoEval.habits.bedtime_2hr_fast
+            lunch_move_15m: (manual.lunch_move_15m !== undefined) ? Boolean(manual.lunch_move_15m) : Boolean(data.habits?.lunch_move_15m || autoEval.habits.lunch_move_15m),
+            dinner_step_15m: (manual.dinner_step_15m !== undefined) ? Boolean(manual.dinner_step_15m) : Boolean(data.habits?.dinner_step_15m || autoEval.habits.dinner_step_15m),
+            bedtime_2hr_fast: (manual.bedtime_2hr_fast !== undefined) ? Boolean(manual.bedtime_2hr_fast) : ((data.habits?.bedtime_2hr_fast !== undefined) ? Boolean(data.habits.bedtime_2hr_fast) : autoEval.habits.bedtime_2hr_fast)
           };
           if (!data.activeMinutes || data.activeMinutes < autoEval.activeMinutes) {
             data.activeMinutes = autoEval.activeMinutes;
@@ -1575,9 +1719,10 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
 }`;
 
       // 本機智慧總結組裝器（可結合雲端 AI JSON 或於雲端額度滿載時 100% 接手完成總結與同步）
-      function buildSummaryDataObject(parsedAi, isLocalFallback) {
+      function buildSummaryDataObject(parsedAi, isLocalFallback, fallbackReason = '') {
         const localEval = evaluateDailyHabitsFromData(activities, meals, drinks);
         const aiHabits = (parsedAi && parsedAi.habits) || {};
+        const manual = manualHabitsByDate[selectedDate] || {};
         const finalHabits = {
           lunch_move_15m: Boolean(aiHabits.lunch_move_15m || localEval.habits.lunch_move_15m),
           dinner_step_15m: Boolean(aiHabits.dinner_step_15m || localEval.habits.dinner_step_15m),
@@ -1586,6 +1731,11 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         if (localEval.habits.lunch_move_15m) finalHabits.lunch_move_15m = true;
         if (localEval.habits.dinner_step_15m) finalHabits.dinner_step_15m = true;
         if (localEval.habits.bedtime_2hr_fast) finalHabits.bedtime_2hr_fast = true;
+
+        // 🛡️ 使用者手動勾選或取消優先權最高
+        if (manual.lunch_move_15m !== undefined) finalHabits.lunch_move_15m = Boolean(manual.lunch_move_15m);
+        if (manual.dinner_step_15m !== undefined) finalHabits.dinner_step_15m = Boolean(manual.dinner_step_15m);
+        if (manual.bedtime_2hr_fast !== undefined) finalHabits.bedtime_2hr_fast = Boolean(manual.bedtime_2hr_fast);
 
         const actMins = Math.max(Number(parsedAi?.activeMinutes) || 0, localEval.activeMinutes);
 
@@ -1624,20 +1774,20 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           otherDrinkMl: otherDrinkMl,
           drinkLogs: drinks,
           foodLogs: meals.map(buildSyncPayloadItem), // 今日全部餐食一併打包！
-          coachFeedback: (parsedAi?.coachFeedback || localCoach) + (isLocalFallback ? '（⚡ 雲端免費額度滿載，由本機智慧管家完成對齊結算）' : ''),
+          coachFeedback: (parsedAi?.coachFeedback || localCoach) + (isLocalFallback ? `（⚡ ${fallbackReason || '本機智慧管家完成對齊結算'}）` : ''),
           summaryBadge: parsedAi?.summaryBadge || ((finalHabits.lunch_move_15m && finalHabits.dinner_step_15m) ? '🌟 今日健康防線全數達成' : '🌱 微步輕健穩步前進'),
           updatedAt: new Date().toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
         };
       }
 
       try {
-        const rawJsonText = await callGeminiTextWithFallback(prompt, key);
+        const rawJsonText = await callGeminiTextWithFallback(prompt, key, true, '今日AI總結');
         let parsed = robustParseGeminiJson(rawJsonText);
-        if (!parsed || !parsed.coachFeedback) {
+        if (!parsed || (!parsed.coachFeedback && !parsed.mealHighlight)) {
           try { parsed = JSON.parse(rawJsonText); } catch(e){}
         }
         if (!parsed) {
-          throw new Error('AI 回傳格式解析失敗，請再點一次重試');
+          throw new Error('AI 回傳格式解析異常');
         }
 
         const summaryData = buildSummaryDataObject(parsed, false);
@@ -1649,21 +1799,24 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
 
         renderDailyAiSummaryBox();
         copyDailyAiReview(true);
-        showToast('🎉 今日生活總結已生成！3大防線已智慧對齊，已自動複製同步碼！');
+        showToast('🎉 今日雲端 AI 生活總結已生成！3大防線已智慧對齊，已自動複製同步碼！');
       } catch (err) {
         const errMsg = err.message || String(err);
         if (errMsg.includes('API Key 無效') || errMsg.includes('API key not valid')) {
           alert('生成今日 AI 總結失敗：' + errMsg);
         } else {
-          // 🛡️ 當雲端模型免費額度滿載或暫時超時，自動無縫啟用本機智慧總結對齊，確保 100% 能一鍵同步回主頁！
-          const fallbackSummary = buildSummaryDataObject(null, true);
+          const isRealQuota = errMsg.includes('Quota') || errMsg.includes('429') || errMsg.includes('額度');
+          const reasonTag = isRealQuota
+            ? '雲端免費額度滿載，由本機智慧管家完成對齊結算'
+            : `雲端連線瞬斷(${errMsg.slice(0, 24)})，由本機智慧管家備援結算`;
+          const fallbackSummary = buildSummaryDataObject(null, true, reasonTag);
           dailyAiSummaryByDate[selectedDate] = fallbackSummary;
           try {
             localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
           } catch (e) {}
           renderDailyAiSummaryBox();
           copyDailyAiReview(true);
-          showToast('⚡ 雲端額度暫滿，已由本機智慧對齊生成總結並複製同步碼！');
+          showToast('⚡ 已由本機智慧備援生成總結並複製同步碼！可再點一次重試雲端 AI');
         }
       } finally {
         btn.textContent = origText;
@@ -1680,10 +1833,11 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       // 確保 habits, activeMinutes 與 foodLogs 完整打包
       if (!data.habits || Object.keys(data.habits).length === 0 || !data.foodLogs) {
         const autoEval = evaluateDailyHabitsFromData(dailyActivityLogs, dailyMealLogs, dailyDrinkLogs);
+        const manual = manualHabitsByDate[selectedDate] || {};
         data.habits = {
-          lunch_move_15m: Boolean(data.habits?.lunch_move_15m || autoEval.habits.lunch_move_15m),
-          dinner_step_15m: Boolean(data.habits?.dinner_step_15m || autoEval.habits.dinner_step_15m),
-          bedtime_2hr_fast: (data.habits?.bedtime_2hr_fast !== undefined) ? Boolean(data.habits.bedtime_2hr_fast) : autoEval.habits.bedtime_2hr_fast
+          lunch_move_15m: (manual.lunch_move_15m !== undefined) ? Boolean(manual.lunch_move_15m) : Boolean(data.habits?.lunch_move_15m || autoEval.habits.lunch_move_15m),
+          dinner_step_15m: (manual.dinner_step_15m !== undefined) ? Boolean(manual.dinner_step_15m) : Boolean(data.habits?.dinner_step_15m || autoEval.habits.dinner_step_15m),
+          bedtime_2hr_fast: (manual.bedtime_2hr_fast !== undefined) ? Boolean(manual.bedtime_2hr_fast) : ((data.habits?.bedtime_2hr_fast !== undefined) ? Boolean(data.habits.bedtime_2hr_fast) : autoEval.habits.bedtime_2hr_fast)
         };
         if (!data.activeMinutes || data.activeMinutes < autoEval.activeMinutes) {
           data.activeMinutes = autoEval.activeMinutes;
@@ -1822,11 +1976,35 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       const st = document.getElementById('key-status');
       const inp = document.getElementById('isolated-gemini-key');
       const hdrTag = document.getElementById('key-header-tag');
+      const topCountEl = document.getElementById('top-quota-count');
+      const detailPanel = document.getElementById('ai-usage-detail-panel');
+      const stats = getCloudAiUsageStats();
+      const totalCalls = Number(stats.totalCalls) || 0;
+
+      if (topCountEl) topCountEl.textContent = String(totalCalls);
+
+      const modelBreakdown = Object.entries(stats.byModel || {})
+        .map(([m, c]) => `${m}: ${c}次`)
+        .join(' ｜ ');
+
+      if (detailPanel) {
+        detailPanel.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+            <span>📊 <strong>今日（${stats.date}）本機統計雲端 AI 呼叫：</strong> <strong style="color:var(--primary); font-size:13px;">${totalCalls}</strong> 次</span>
+            <span style="font-size:10px; color:var(--text-muted);">每日 15:00～16:00 重置雲端配額</span>
+          </div>
+          <div style="font-size:10.5px; color:var(--text-muted); margin-top:3px;">
+            🤖 <strong>各模型分流明細：</strong>${modelBreakdown || '今日尚無新紀錄（多模型池待命中，單一模型免費約 20 次/日）'}
+            ${stats.lastCallTime ? `<br>⏱️ 最近一次呼叫：${stats.lastCallTime}（${stats.lastAction || 'AI 分析'}・使用 <code>${stats.lastModel}</code>）` : ''}
+          </div>
+        `;
+      }
+
       if (k) {
         if (inp) inp.value = k;
-        st.textContent = '✓ 已設定雲端 Gemini API Key（將使用 AI 視覺＋文字綜合判讀）';
+        st.textContent = `✓ 已設定雲端 Gemini API Key（今日已成功呼叫雲端 AI ${totalCalls} 次）`;
         if (hdrTag) {
-          hdrTag.textContent = '🟢 AI 金鑰已設定';
+          hdrTag.textContent = `🟢 AI 已連線 (今日 ${totalCalls} 次)`;
           hdrTag.style.background = '#ecfdf5';
           hdrTag.style.color = '#059669';
         }
@@ -1894,6 +2072,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         modes: dayModeByDate || {},
         summaries: dailyAiSummaryByDate || {},
         consults: consultHistory || [],
+        manualHabits: manualHabitsByDate || {},
         exportedAt: new Date().toISOString()
       });
       copyTextToClipboard(payload);
@@ -1937,6 +2116,10 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           if (parsed.summaries && typeof parsed.summaries === 'object') {
             dailyAiSummaryByDate = { ...dailyAiSummaryByDate, ...parsed.summaries };
             localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
+          }
+          if (parsed.manualHabits && typeof parsed.manualHabits === 'object') {
+            manualHabitsByDate = { ...manualHabitsByDate, ...parsed.manualHabits };
+            localStorage.setItem(MANUAL_HABITS_BY_DATE_KEY, JSON.stringify(manualHabitsByDate));
           }
           if (parsed.consults && Array.isArray(parsed.consults)) {
             consultHistory = parsed.consults;
@@ -2137,10 +2320,10 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       const rememberWorkingModel = getSanitizedWorkingModel();
       const modelsToTry = [
         rememberWorkingModel,
-        'gemini-3.8-flash',
-        'gemini-3.8-flash-lite',
+        'gemini-flash-latest',
         'gemini-flash-lite-latest',
-        'gemini-flash-latest'
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
       ];
       const uniqueModels = [...new Set(modelsToTry)].filter(m => !isDeprecatedGeminiModel(m));
       const orderedModels = [
@@ -2171,8 +2354,12 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           const cand = data.candidates?.[0];
           const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
           if (textPart) {
-            localStorage.setItem('vitalstep_working_gemini_model', mName);
-            return robustParseGeminiJson(textPart);
+            const parsed = robustParseGeminiJson(textPart);
+            if (parsed) {
+              localStorage.setItem('vitalstep_working_gemini_model', mName);
+              recordCloudAiCall(mName, '採買/食譜診斷');
+              return parsed;
+            }
           }
         } catch (err) {
           lastErrMsg = err.message || String(err);
@@ -2193,7 +2380,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
             .map(x => x.name.replace(/^models\//, ''))
             .filter(n => !isDeprecatedGeminiModel(n) && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
             .sort((a, b) => {
-              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3.8') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
+              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
               return score(b) - score(a);
             });
 
@@ -2205,8 +2392,12 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
                 const cand = data.candidates?.[0];
                 const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
                 if (textPart) {
-                  localStorage.setItem('vitalstep_working_gemini_model', dynModel);
-                  return robustParseGeminiJson(textPart);
+                  const parsed = robustParseGeminiJson(textPart);
+                  if (parsed) {
+                    localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                    recordCloudAiCall(dynModel, '採買/食譜診斷');
+                    return parsed;
+                  }
                 }
               }
             } catch (e) {}
@@ -2908,7 +3099,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       };
     }
 
-    // 🛡️ 防爆 JSON 解析器：就算 AI 回傳含有未跳脫雙引號、換行或格式微瑕，也能用正則精準抽出 4 點成績單！
+    // 🛡️ 防爆 JSON 解析器：就算 AI 回傳含有未跳脫雙引號、換行或格式微瑕，也能精準抽出單餐、今日總結、採買食譜等全部 JSON 欄位！
     function robustParseGeminiJson(rawText) {
       if (!rawText) return null;
       let raw = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
@@ -2926,21 +3117,35 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         return JSON.parse(cleaned);
       } catch (e2) {}
 
-      // 3. 正則欄位保底抽取（防止 AI 在中文內容裡夾帶未跳脫雙引號導致 JSON.parse 崩潰）
-      const keys = ['extractedItems', 'what', 'good', 'ng', 'swap', 'summaryBadge'];
+      // 3. 正則欄位保底抽取（支援單餐 4 點成績單 + 今日總結 + 食材食譜體檢，不限欄位順序）
+      const allKnownStringKeys = [
+        'extractedItems', 'what', 'good', 'ng', 'swap', 'summaryBadge',
+        'mode', 'activeSummary', 'glucoseIntercept', 'mealHighlight', 'waterFeedback', 'coachFeedback',
+        'rating', 'summary', 'metabolic_impact', 'convenience_tip', 'swap_alternative', 'pros', 'blindspots', 'quick_tweaks'
+      ];
       const extracted = {};
       let foundCount = 0;
-      for (let i = 0; i < keys.length; i++) {
-        const k = keys[i];
-        const nextKeysPattern = keys.slice(i + 1).map(nk => `"${nk}"\\s*:`).join('|');
-        const regex = nextKeysPattern
-          ? new RegExp(`"${k}"\\s*:\\s*"([\\s\\S]*?)"\\s*,?\\s*(?=${nextKeysPattern}|\\}\\s*$)`, 'i')
-          : new RegExp(`"${k}"\\s*:\\s*"([\\s\\S]*?)"\\s*\\}?\\s*$`, 'i');
+      for (const k of allKnownStringKeys) {
+        const regex = new RegExp(`"${k}"\\s*:\\s*"([\\s\\S]*?)"(?=\\s*,\\s*"[a-zA-Z_]+"\\s*:|\\s*\\})`, 'i');
         const m = raw.match(regex);
-        if (m && m[1]) {
+        if (m && m[1] !== undefined) {
           extracted[k] = m[1].replace(/\\"/g, '"').replace(/\\n/g, '<br>').trim();
           foundCount++;
         }
+      }
+      const actMinMatch = raw.match(/"activeMinutes"\s*:\s*(\d+)/i);
+      if (actMinMatch) {
+        extracted.activeMinutes = parseInt(actMinMatch[1], 10);
+      }
+      const lunchMatch = raw.match(/"lunch_move_15m"\s*:\s*(true|false)/i);
+      const dinnerMatch = raw.match(/"dinner_step_15m"\s*:\s*(true|false)/i);
+      const bedMatch = raw.match(/"bedtime_2hr_fast"\s*:\s*(true|false)/i);
+      if (lunchMatch || dinnerMatch || bedMatch) {
+        extracted.habits = {
+          lunch_move_15m: lunchMatch ? lunchMatch[1].toLowerCase() === 'true' : false,
+          dinner_step_15m: dinnerMatch ? dinnerMatch[1].toLowerCase() === 'true' : false,
+          bedtime_2hr_fast: bedMatch ? bedMatch[1].toLowerCase() === 'true' : true
+        };
       }
       if (foundCount >= 2) return extracted;
       return null;
@@ -3044,13 +3249,13 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         }
       }
 
-      // 🛡️ 多模型免費額度自動接力池（徹底移除已退役的 2.0 / 2.5 模型）：
-      // 當 gemini-3.8-flash 免費版滿每日 20 次 (Quota exceeded) 時，自動無縫切換至獨立免費額度更高的 flash-lite 與其他可用模型！
+      // 🛡️ 多模型免費額度自動接力池（徹底移除已退役的 1.5 / 2.0 模型）：
+      // 當單一模型滿每日 20 次 (Quota exceeded) 時，自動無縫切換至獨立免費額度更高的 flash-lite 與其他可用模型！
       const defaultRelayPool = [
-        'gemini-3.8-flash',
-        'gemini-3.8-flash-lite',
+        'gemini-flash-latest',
         'gemini-flash-lite-latest',
-        'gemini-flash-latest'
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
       ];
       const cachedModel = getSanitizedWorkingModel();
       const rawPool = cachedModel ? [cachedModel, ...defaultRelayPool] : defaultRelayPool;
@@ -3074,6 +3279,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
             const parsed = robustParseGeminiJson(raw);
             if (parsed && (parsed.what || parsed.good)) {
               localStorage.setItem('vitalstep_working_gemini_model', m);
+              recordCloudAiCall(m, `${mealToSave}分析`);
               return { ok: true, parsed, usedModel: m };
             }
           } else if (resData?.error?.message) {
@@ -3102,7 +3308,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
             .map(x => x.name.replace(/^models\//, ''))
             .filter(n => !isDeprecatedGeminiModel(n) && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
             .sort((a, b) => {
-              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3.8') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
+              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
               return score(b) - score(a);
             });
 
@@ -3116,6 +3322,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
               const parsed = robustParseGeminiJson(raw);
               if (parsed && (parsed.what || parsed.good)) {
                 localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                recordCloudAiCall(dynModel, `${mealToSave}分析`);
                 return { ok: true, parsed, usedModel: dynModel };
               }
             } else if (resData?.error?.message) {
@@ -3501,8 +3708,8 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       showToast(`📋 已複製今日全部 ${allSyncItems.length} 餐成績單！請回「每日進度」貼上！`);
     }
 
-    // 🤖 本週飲食 AI 深度總評：文字推理模型自動備援接力
-    async function callGeminiTextWithFallback(promptText, key) {
+    // 🤖 今日總結 & 本週飲食 AI 深度總評：文字推理模型自動備援接力
+    async function callGeminiTextWithFallback(promptText, key, expectJson = false, actionLabel = 'AI 總結') {
       let cooldownMap = {};
       try {
         cooldownMap = JSON.parse(localStorage.getItem('vitalstep_quota_cooldown_map') || '{}') || {};
@@ -3522,6 +3729,9 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         const cleanName = modelName.replace(/^models\//, '');
         const controller = new AbortController();
         const timerId = setTimeout(() => controller.abort(), 30000);
+        const genConfig = expectJson
+          ? { responseMimeType: 'application/json', temperature: 0.2 }
+          : { temperature: 0.3 };
         try {
           const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${key}`, {
             method: 'POST',
@@ -3529,9 +3739,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
             signal: controller.signal,
             body: JSON.stringify({
               contents: [{ parts: [{ text: promptText }] }],
-              generationConfig: {
-                temperature: 0.3
-              }
+              generationConfig: genConfig
             })
           });
           clearTimeout(timerId);
@@ -3543,19 +3751,17 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       }
 
       const rememberWorkingModel = getSanitizedWorkingModel();
-      // 主力 gemini-3.8-flash 若遇瞬間忙碌 (503) 或同分鐘短暫頻率限制，優先重試一次
       const modelsToTry = [
         rememberWorkingModel,
-        'gemini-3.8-flash',
-        'gemini-3.8-flash-lite',
+        'gemini-flash-latest',
         'gemini-flash-lite-latest',
-        'gemini-flash-latest'
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
       ];
       const uniqueModels = [...new Set(modelsToTry)].filter(m => !isDeprecatedGeminiModel(m));
       const orderedModels = [
-        'gemini-3.8-flash',
-        ...uniqueModels.filter(m => m !== 'gemini-3.8-flash' && !isModelInCooldown(m)),
-        'gemini-3.8-flash' // 若第一輪瞬間忙碌，在進入動態尋模前再重試一次主力模型
+        ...uniqueModels.filter(m => !isModelInCooldown(m)),
+        ...uniqueModels.filter(m => isModelInCooldown(m))
       ];
       const triedModels = new Set();
 
@@ -3581,7 +3787,15 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
           const cand = data.candidates?.[0];
           const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
           if (textPart) {
+            if (expectJson) {
+              const testParsed = robustParseGeminiJson(textPart);
+              if (!testParsed) {
+                lastErrMsg = 'JSON 格式解析微瑕';
+                continue;
+              }
+            }
             localStorage.setItem('vitalstep_working_gemini_model', mName);
+            recordCloudAiCall(mName, actionLabel);
             return textPart.trim();
           }
         } catch (err) {
@@ -3603,7 +3817,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
             .map(x => x.name.replace(/^models\//, ''))
             .filter(n => !isDeprecatedGeminiModel(n) && !n.includes('tts') && !n.includes('image') && !n.includes('embedding') && !triedModels.has(n))
             .sort((a, b) => {
-              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3.8') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
+              const score = (s) => (s.includes('lite') ? 4 : 0) + (s.includes('3') ? 3 : 0) + (s.includes('flash') ? 2 : 0);
               return score(b) - score(a);
             });
 
@@ -3615,7 +3829,11 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
                 const cand = data.candidates?.[0];
                 const textPart = cand?.content?.parts?.find(p => !p.thought && p.text)?.text || cand?.content?.parts?.[0]?.text;
                 if (textPart) {
+                  if (expectJson && !robustParseGeminiJson(textPart)) {
+                    continue;
+                  }
                   localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                  recordCloudAiCall(dynModel, actionLabel);
                   return textPart.trim();
                 }
               }
@@ -3694,7 +3912,7 @@ ${weekLogs.join('\n')}
 請使用繁體中文，條理清晰，字數約 220~300 字。`;
 
       try {
-        const resultText = await callGeminiTextWithFallback(prompt, key);
+        const resultText = await callGeminiTextWithFallback(prompt, key, false, '本週AI總評');
         currentWeeklyReviewData = {
           monday: mondayStr,
           text: resultText,
