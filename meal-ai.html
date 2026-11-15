@@ -279,7 +279,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.0</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.1</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -1127,6 +1127,11 @@
 
       selectMealDate(TODAY);
 
+      // 🛡️ 雙向自動深度自癒：若今日 AI 總結、飲水或次數不完整，立即自動完全復原！
+      if (!dailyAiSummaryByDate['2026-11-15'] || !drinkHistoryByDate['2026-11-15'] || drinkHistoryByDate['2026-11-15'].length < 5) {
+        restoreTodayDataFull();
+      }
+
       // 若舊版曾存過 vitalstep_gemini_key，單向遷移至獨立 key
       const existing = localStorage.getItem(ISOLATED_KEY_NAME) || localStorage.getItem('vitalstep_gemini_key');
       if (existing) {
@@ -1166,6 +1171,11 @@
           }
           if (selectedDate === prevToday) {
             selectMealDate(TODAY);
+
+      // 🛡️ 雙向自動深度自癒：若今日 AI 總結、飲水或次數不完整，立即自動完全復原！
+      if (!dailyAiSummaryByDate['2026-11-15'] || !drinkHistoryByDate['2026-11-15'] || drinkHistoryByDate['2026-11-15'].length < 5) {
+        restoreTodayDataFull();
+      }
           } else {
             renderMealDateBar();
           }
@@ -2293,9 +2303,8 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         }
         await fetch(window.location.pathname + '?_t=' + Date.now(), { cache: 'no-store' });
       } catch (e) {}
-      const url = new URL(window.location.href);
-      url.searchParams.set('v', Date.now());
-      window.location.replace(url.toString());
+      const ts = Date.now();
+      window.location.href = window.location.pathname + '?v=' + ts;
     }
 
     // 💾 一鍵備份餐食紀錄（不含巨量原圖以確保剪貼簿秒複製，完整保留所有日期文字與 4 點成績單）
