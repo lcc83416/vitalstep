@@ -279,7 +279,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v5.9.7 額度監控＆總結修正</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.0</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -666,7 +666,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762784000000; // 2026-11-10 v5.9.9 額度監控深色模式高對比配色升級 ＋ 呼叫次數歷史完整回推與手動校正支援
+    const BUILD_VERSION_TIMESTAMP = 1763244000000; // 2026-11-15 v6.0.0 微活動時段互斥防呆 ＋ 移除存檔搶占剪貼簿 ＋ 版本標籤精簡一致化
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -1233,20 +1233,40 @@
           activityItems.push(`${item.text} (${mins}分)`);
         }
 
+        const isBreakfastKeyword = /早餐|早起|晨間/.test(text);
         const isLunchKeyword = /午餐|中午|午休/.test(text);
-        const isLunchTime = (time >= '11:00' && time <= '15:00');
+        const isDinnerKeyword = /晚餐|晚上|追劇|沙發|看劇/.test(text);
+
+        const isMorningTime = (time >= '05:00' && time < '11:00');
+        const isLunchTime = (time >= '11:00' && time < '16:30');
+        const isDinnerTime = (time >= '16:30' && time <= '23:30');
+
         const hasMoveAction = /收拾|踏步|散步|走|洗碗|動|操|踢腿|甩腿|墊腳|提踵|整理|家事/.test(text);
-        if ((isLunchKeyword && hasMoveAction) || (isLunchTime && hasMoveAction)) {
-          if (mins >= 10 || text.includes('踏步') || text.includes('散步') || text.includes('收拾') || text.includes('洗碗')) {
+        const isValidDuration = (mins >= 10 || /踏步|散步|走|收拾|洗碗|動|家事/.test(text));
+
+        if (hasMoveAction && isValidDuration) {
+          // 🍱 午餐微動判定：
+          // 1. 若文字明確寫「晚餐/晚上」且未提「午餐」，絕對不誤勾午餐！
+          // 2. 條件：有午餐關鍵字，或在午餐時段 (11:00~16:30) 且未標記為晚餐或早餐
+          const matchLunch = (isLunchKeyword && !isDinnerKeyword) || 
+                             (isLunchTime && !isDinnerKeyword && !isBreakfastKeyword) ||
+                             (isLunchKeyword && isDinnerKeyword);
+          if (matchLunch) {
             lunchMove = true;
             lunchReason = `${time} ${item.text}`;
           }
-        }
 
-        const isDinnerKeyword = /晚餐|晚上|追劇|沙發|看劇/.test(text);
-        const isDinnerTime = (time >= '17:00' && time <= '22:30');
-        if ((isDinnerKeyword && hasMoveAction) || (isDinnerTime && hasMoveAction)) {
-          if (mins >= 10 || text.includes('踏步') || text.includes('甩腿') || text.includes('踢腿') || text.includes('收拾') || text.includes('洗碗')) {
+          // 🏠 晚餐微動判定：
+          // 1. 若文字明確寫「午餐/中午/早餐」且未提「晚餐」，絕對不誤勾晚餐！
+          // 2. 🛡️ 白天時段保護：時間在 16:30 前（大白天晚餐根本尚未進食），絕不提前自動勾選「晚餐微動」！
+          // 3. 條件：晚間時段 (>=16:30 或非當天回看) 且（有晚餐關鍵字或在晚間時段），且未標記為午餐或早餐
+          const isEveningAllowed = (time >= '16:30' || !isToday);
+          const matchDinner = isEveningAllowed && (
+            (isDinnerKeyword && !isLunchKeyword) ||
+            (isDinnerTime && !isLunchKeyword && !isBreakfastKeyword) ||
+            (isLunchKeyword && isDinnerKeyword)
+          );
+          if (matchDinner) {
             dinnerStep = true;
             dinnerReason = `${time} ${item.text}`;
           }
@@ -3719,19 +3739,21 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       if (!entry) return;
       const syncItem = buildSyncPayloadItem(entry);
       const token = '【VITALSTEP_SYNC】' + JSON.stringify(syncItem);
-      copyTextToClipboard(token);
 
-      // 同時寫入同源信箱
+      // 同時寫入同源信箱（同網域主頁 index.html 開啟時自動秒讀取，無須手動貼上）
       localStorage.setItem(SYNC_INBOX_KEY, JSON.stringify([syncItem]));
+
+      if (!isAutoAfterSave) {
+        // 僅在使用者明確點擊「📋 複製同步」按鈕時才寫入系統剪貼簿！
+        // 避免存檔時搶占剪貼簿，導致 iPhone 鍵盤在打字時彈出「從 Safari 貼上」程式碼氣泡
+        copyTextToClipboard(token);
+        showToast(`📋 已複製【${entry.mealType}】同步碼！請回「每日進度」貼上！`);
+      } else {
+        showToast(`✅ 已存入【${entry.mealType}】照片與成績單！（同源信箱已自動就緒）`);
+      }
 
       const banner = document.getElementById('sync-guide-banner');
       if (banner) banner.style.display = 'block';
-
-      if (isAutoAfterSave) {
-        showToast(`✅ 已存入【${entry.mealType}】照片與成績單，並自動複製同步碼！`);
-      } else {
-        showToast(`📋 已複製【${entry.mealType}】同步碼！請回「每日進度」貼上！`);
-      }
     }
 
     // 一鍵複製今日全部餐食同步碼（一次同步早、午、晚全部！）

@@ -85,14 +85,13 @@
       width: 36px;
       height: 36px;
       flex-shrink: 0;
-      background: var(--primary);
+      background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
     }
     .logo-title {
       font-size: 15px;
@@ -621,9 +620,16 @@
   <!-- 頂部標題列（含免刪桌面捷徑一鍵更新按鈕） -->
   <header>
     <div class="logo-badge">
-      <div class="logo-icon">🌱</div>
+      <div class="logo-icon" title="微步輕健">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 20h10" />
+          <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+          <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
+          <path d="M14.1 6a7 7 0 0 1 1.1 4c-1.2 0-2.6-.4-3.9-1.3-.9-.6-1.7-1.5-2.4-2.6 1.7-.8 3.5-1 5.2-.1z" />
+        </svg>
+      </div>
       <div>
-        <div class="logo-title">微步輕健 5.9 <span class="tag">三頁極簡專注</span></div>
+        <div class="logo-title">微步輕健 <span class="tag">v6.0.0</span></div>
         <div class="date-str" id="date-display">載入中...</div>
       </div>
     </div>
@@ -808,20 +814,20 @@
         <!-- 4 壺保溫杯卡片 -->
         <div class="thermos-grid" id="thermos-container">
           <div class="thermos-card" onclick="toggleThermos(0)">
-            <div class="thermos-icon">☕</div>
-            <div class="thermos-label">第 1 壺 600ml<br><span style="font-size:9px; font-weight:normal;">晨間拿鐵/豆漿</span></div>
+            <div class="thermos-icon">💧</div>
+            <div class="thermos-label">第 1 壺 600ml</div>
           </div>
           <div class="thermos-card" onclick="toggleThermos(1)">
-            <div class="thermos-icon">🍵</div>
-            <div class="thermos-label">第 2 壺 600ml<br><span style="font-size:9px; font-weight:normal;">上午公司回沖</span></div>
+            <div class="thermos-icon">💧</div>
+            <div class="thermos-label">第 2 壺 600ml</div>
           </div>
           <div class="thermos-card" onclick="toggleThermos(2)">
-            <div class="thermos-icon">🍵</div>
-            <div class="thermos-label">第 3 壺 600ml<br><span style="font-size:9px; font-weight:normal;">下午 17:00前</span></div>
+            <div class="thermos-icon">💧</div>
+            <div class="thermos-label">第 3 壺 600ml</div>
           </div>
           <div class="thermos-card" onclick="toggleThermos(3)">
             <div class="thermos-icon">💧</div>
-            <div class="thermos-label">第 4 壺 600ml<br><span style="font-size:9px; font-weight:normal;">傍晚/視情況</span></div>
+            <div class="thermos-label">第 4 壺 600ml</div>
           </div>
         </div>
 
@@ -1209,7 +1215,7 @@
   </nav>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1762680000000; // 2026-11-09 v5.9.6 飲水統計自動區分「總計 / 開水 / 其他」升級
+    const BUILD_VERSION_TIMESTAMP = 1763244000000; // 2026-11-15 v6.0.0 視覺與一致性全面升級：微步SVG高對比圖示 ＋ 版本號一致化 ＋ 保溫杯多餘小字精簡
     const KEY_PREFIX = 'vitalstep_v4_';
     const HISTORY_DB_KEY = 'vitalstep_v5_history_by_date';
     const GLOBAL_CFG_KEY = 'vitalstep_v5_global_cfg';
