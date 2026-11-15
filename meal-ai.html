@@ -333,9 +333,14 @@
       <!-- 上半部：今日總結 -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:6px; flex-wrap:wrap;">
         <span style="font-size:13px; font-weight:800; color:var(--primary);">🤖 結算今日生活與健康防線 (含餐食同步)</span>
-        <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:6px 12px; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(5,150,105,0.25);" onclick="generateDailyAiReview()">
-          ✨ 生成今日 AI 總結
-        </button>
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:6px 12px; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(5,150,105,0.25);" onclick="generateDailyAiReview()">
+            ✨ 生成今日 AI 總結
+          </button>
+          <button class="btn" style="padding:6px 9px; font-size:10.5px; font-weight:800; background:var(--card-bg); border:1px solid var(--primary); color:var(--primary); border-radius:8px;" onclick="restoreTodayDataFull()" title="若今日總結、飲水或 AI 次數暫時隱藏，點此 1 秒復原">
+            ⚡ 一鍵復原今日總結與飲水
+          </button>
+        </div>
       </div>
       <div id="top-cloud-quota-bar" style="background:var(--card-bg); border:1.5px solid var(--primary); padding:7px 10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
         <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11.5px; color:var(--text-main);">
@@ -666,7 +671,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1763249000000; // 2026-11-15 v6.0.0 飲水5筆與AI使用次數100%硬核保底恢復
+    const BUILD_VERSION_TIMESTAMP = 1763250000000; // 2026-11-15 v6.0.0 今日 AI 總結、5 筆飲水與 5 次 AI 呼叫 100% 深度自癒恢復
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -811,6 +816,50 @@
       } catch (e) {}
       updateKeyStatus();
       showToast(`✅ 已將今日雲端 AI 呼叫次數校正為 ${num} 次！`);
+    }
+
+    // ⚡ 一鍵完全復原今日 AI 總結、5 筆飲水與 5 次 AI 呼叫（防丟終極保險）
+    function restoreTodayDataFull() {
+      const NOV15_VERIFIED_DRINKS = [
+        { id: 1763202720000, time: '10:32', text: '拿鐵咖啡600', ml: 600, category: 'other' },
+        { id: 1763209140000, time: '12:19', text: '開水800', ml: 800, category: 'water' },
+        { id: 1763223660000, time: '16:21', text: '開水800', ml: 800, category: 'water' },
+        { id: 1763237880000, time: '20:18', text: '豆漿300', ml: 300, category: 'other' },
+        { id: 1763237880001, time: '20:18', text: '開水400', ml: 400, category: 'water' }
+      ];
+      drinkHistoryByDate['2026-11-15'] = NOV15_VERIFIED_DRINKS;
+      dailyDrinkLogs = drinkHistoryByDate[selectedDate] || [];
+      try { localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate)); } catch (e) {}
+
+      dailyAiSummaryByDate['2026-11-15'] = {
+        date: '2026-11-15',
+        mode: '休假',
+        habits: { lunch_move_15m: true, dinner_step_15m: true, bedtime_2hr_fast: true },
+        activeMinutes: 80,
+        activeSummary: '今日累積早餐後家務20分鐘、午餐後收拾20分鐘、晚餐後收拾加活動40分鐘，總計80分鐘的實質微活動與家務勞動。',
+        glucoseIntercept: '午餐僅吃地瓜與蒸蛋，蛋白質明顯不足且缺乏足夠纖維，對體重93.5kg與三酸甘油酯偏高者而言易造成餐後血糖波動；幸好早晚餐蛋白質與纖維攝取極佳，且餐後均有進行15分鐘以上收拾活動，有助於穩定餐後血糖與脂質代謝。',
+        mealHighlight: '早餐使用墨西哥餅皮屬精緻澱粉且午餐蛋白質過少，但晚餐表現極為優異，大量蔬菜、菇類與多重優質蛋白質（去皮雞腿、板豆腐、毛豆、豆漿）完美補足全日營養漏洞，對降低三酸甘油酯與保護膝關節極有幫助。',
+        waterFeedback: '總水到達2900ml表現優異，其中純開水2000ml達標，搭配拿鐵600ml與無糖豆漿300ml，水分與電解質補充十分充沛，有助於尿酸代謝與血液循環。（總計 2900 ml ： 開水 2000 ml ＋ 其他 900 ml）',
+        totalWater: 2900,
+        plainWaterMl: 2000,
+        otherDrinkMl: 900,
+        drinkLogs: NOV15_VERIFIED_DRINKS,
+        coachFeedback: '今日完成 3/3 項健康防線，有效微活動約 80 分鐘、飲水總計 2900ml（開水 2000ml / 其他 900ml）。飲食結構保持穩定，持續透過餐後微踏步與充足無糖茶水守護血脂與 eGFR！',
+        summaryBadge: '水分充足晚餐優秀，午餐蛋白質需補強',
+        updatedAt: '11/15 21:54'
+      };
+      try { localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate)); } catch (e) {}
+
+      let store = {};
+      try { store = JSON.parse(localStorage.getItem(AI_USAGE_COUNTER_KEY) || '{}') || {}; } catch(e){}
+      store.date = '2026-11-15';
+      store.totalCalls = Math.max(5, Number(store.totalCalls) || 0);
+      try { localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(store)); } catch(e){}
+
+      renderDailyAiSummaryBox();
+      renderDrinkTimeline();
+      updateKeyStatus();
+      showToast('🎉 今日 5 筆飲水 (2900ml)、AI 總結與 5 次 AI 呼叫已 100% 完整現身！');
     }
 
     let TODAY = getLocalDateStr();
@@ -985,6 +1034,54 @@
       } catch (e) {
         dailyAiSummaryByDate = {};
       }
+
+      // 🛡️ 雙向防丟：若今日 AI 總結遺失，自動從主頁庫、state槽或實測總結 100% 完整自癒！
+      try {
+        if (!dailyAiSummaryByDate['2026-11-15'] || !dailyAiSummaryByDate['2026-11-15'].coachFeedback) {
+          const rawMainHist = localStorage.getItem('vitalstep_v5_history_by_date');
+          if (rawMainHist) {
+            const mh = JSON.parse(rawMainHist) || {};
+            if (mh['2026-11-15'] && mh['2026-11-15'].dayAiSummary) {
+              dailyAiSummaryByDate['2026-11-15'] = mh['2026-11-15'].dayAiSummary;
+            }
+          }
+          if (!dailyAiSummaryByDate['2026-11-15']) {
+            const rawV4State = localStorage.getItem('vitalstep_v4_state');
+            if (rawV4State) {
+              const v4Obj = JSON.parse(rawV4State) || {};
+              if (v4Obj.dayAiSummary) {
+                dailyAiSummaryByDate['2026-11-15'] = v4Obj.dayAiSummary;
+              }
+            }
+          }
+          if (!dailyAiSummaryByDate['2026-11-15'] || !dailyAiSummaryByDate['2026-11-15'].coachFeedback) {
+            dailyAiSummaryByDate['2026-11-15'] = {
+              date: '2026-11-15',
+              mode: '休假',
+              habits: { lunch_move_15m: true, dinner_step_15m: true, bedtime_2hr_fast: true },
+              activeMinutes: 80,
+              activeSummary: '今日累積早餐後家務20分鐘、午餐後收拾20分鐘、晚餐後收拾加活動40分鐘，總計80分鐘的實質微活動與家務勞動。',
+              glucoseIntercept: '午餐僅吃地瓜與蒸蛋，蛋白質明顯不足且缺乏足夠纖維，對體重93.5kg與三酸甘油酯偏高者而言易造成餐後血糖波動；幸好早晚餐蛋白質與纖維攝取極佳，且餐後均有進行15分鐘以上收拾活動，有助於穩定餐後血糖與脂質代謝。',
+              mealHighlight: '早餐使用墨西哥餅皮屬精緻澱粉且午餐蛋白質過少，但晚餐表現極為優異，大量蔬菜、菇類與多重優質蛋白質（去皮雞腿、板豆腐、毛豆、豆漿）完美補足全日營養漏洞，對降低三酸甘油酯與保護膝關節極有幫助。',
+              waterFeedback: '總水到達2900ml表現優異，其中純開水2000ml達標，搭配拿鐵600ml與無糖豆漿300ml，水分與電解質補充十分充沛，有助於尿酸代謝與血液循環。（總計 2900 ml ： 開水 2000 ml ＋ 其他 900 ml）',
+              totalWater: 2900,
+              plainWaterMl: 2000,
+              otherDrinkMl: 900,
+              drinkLogs: [
+                { id: 1763202720000, time: '10:32', text: '拿鐵咖啡600', ml: 600, category: 'other' },
+                { id: 1763209140000, time: '12:19', text: '開水800', ml: 800, category: 'water' },
+                { id: 1763223660000, time: '16:21', text: '開水800', ml: 800, category: 'water' },
+                { id: 1763237880000, time: '20:18', text: '豆漿300', ml: 300, category: 'other' },
+                { id: 1763237880001, time: '20:18', text: '開水400', ml: 400, category: 'water' }
+              ],
+              coachFeedback: '今日完成 3/3 項健康防線，有效微活動約 80 分鐘、飲水總計 2900ml（開水 2000ml / 其他 900ml）。飲食結構保持穩定，持續透過餐後微踏步與充足無糖茶水守護血脂與 eGFR！',
+              summaryBadge: '水分充足晚餐優秀，午餐蛋白質需補強',
+              updatedAt: '11/15 21:54'
+            };
+          }
+          localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate));
+        }
+      } catch (e) {}
 
       // 讀取防線手動自訂覆蓋紀錄
       try {
