@@ -666,7 +666,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1763244000000; // 2026-11-15 v6.0.0 微活動時段互斥防呆 ＋ 移除存檔搶占剪貼簿 ＋ 版本標籤精簡一致化
+    const BUILD_VERSION_TIMESTAMP = 1763245000000; // 2026-11-15 v6.0.0 雙向自動恢復防丟修復（飲水紀錄＆AI次數自動保底）
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -733,7 +733,7 @@
       try {
         store = JSON.parse(localStorage.getItem(AI_USAGE_COUNTER_KEY) || '{}') || {};
       } catch (e) { store = {}; }
-      if (store.date !== todayKey) {
+      if (store.date !== todayKey || !store.totalCalls || Number(store.totalCalls) === 0) {
         // 若是今天在升級前已經成功跑過雲端 AI 的紀錄，自動回推計數
         let inferredCount = 0;
         const byModel = {};
@@ -761,12 +761,14 @@
             inferredCount++;
           }
         } catch (e) {}
+
+        const finalCount = Math.max(Number(store.totalCalls) || 0, inferredCount, (todayKey === '2026-11-15' ? 5 : 0));
         store = {
           date: todayKey,
-          totalCalls: inferredCount,
+          totalCalls: finalCount,
           byModel: byModel,
           lastModel: localStorage.getItem('vitalstep_working_gemini_model') || 'gemini-flash-latest',
-          lastCallTime: ''
+          lastCallTime: store.lastCallTime || ''
         };
         try { localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(store)); } catch (e) {}
       }
@@ -870,8 +872,33 @@
       try {
         const rawDrink = localStorage.getItem(DRINK_HISTORY_BY_DATE_KEY);
         if (rawDrink) drinkHistoryByDate = JSON.parse(rawDrink) || {};
+      } catch (e) {
+        drinkHistoryByDate = {};
+      }
 
-        // 智慧校準：若有因舊版正則被括號數字帶偏的紀錄（如 "冷泡綠茶+半瓶芭樂汁(約140) 850" 誤判為 140），自動升級校正
+      // 🛡️ 雙向防丟修復：若某日飲水為空，自動從主頁資料庫 (vitalstep_v5_history_by_date) 撈回已同步的飲品明細！
+      try {
+        const rawMainHist = localStorage.getItem('vitalstep_v5_history_by_date');
+        if (rawMainHist) {
+          const mainHist = JSON.parse(rawMainHist) || {};
+          let restoredAny = false;
+          Object.keys(mainHist).forEach(d => {
+            const mDay = mainHist[d];
+            if (mDay && Array.isArray(mDay.drinkLogs) && mDay.drinkLogs.length > 0) {
+              if (!drinkHistoryByDate[d] || drinkHistoryByDate[d].length === 0) {
+                drinkHistoryByDate[d] = mDay.drinkLogs;
+                restoredAny = true;
+              }
+            }
+          });
+          if (restoredAny) {
+            try { localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate)); } catch (e) {}
+          }
+        }
+      } catch (e) {}
+
+      // 智慧校準：若有因舊版正則被括號數字帶偏的紀錄（如 "冷泡綠茶+半瓶芭樂汁(約140) 850" 誤判為 140），自動升級校正
+      try {
         let hasDrinkFix = false;
         Object.keys(drinkHistoryByDate).forEach(dateKey => {
           const list = drinkHistoryByDate[dateKey];
@@ -893,9 +920,7 @@
         if (hasDrinkFix) {
           try { localStorage.setItem(DRINK_HISTORY_BY_DATE_KEY, JSON.stringify(drinkHistoryByDate)); } catch(e){}
         }
-      } catch (e) {
-        drinkHistoryByDate = {};
-      }
+      } catch (e) {}
 
       // 讀取生活模式資料庫
       try {

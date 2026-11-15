@@ -693,7 +693,16 @@
 
       <!-- 【區塊 2：三合一整併卡片（今日防線達成率 ＋ 3大時段行動打卡 ＋ 專屬健康管家 & AI總結）】 -->
       <div class="card" style="border:1.5px solid var(--primary);">
-        <!-- 上層：防線達成率進度條 -->
+        <!-- 上層：🤖 今日全日 AI 生活與健康防線總結（若有匯入則優先在頂部展開） -->
+        <div id="day-ai-summary-card" style="display:none; background:linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08)); border:1px solid var(--primary); border-radius:12px; padding:11px 12px; margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:12px; font-weight:800; color:var(--primary);">🤖 今日生活與健康防線 AI 總結</span>
+            <span class="tag" id="day-ai-mode-tag">上班模式</span>
+          </div>
+          <div id="day-ai-summary-content" style="font-size:12px; line-height:1.6; color:var(--text-main);"></div>
+        </div>
+
+        <!-- 中層：防線達成率進度條 -->
         <div class="card-title" style="margin-bottom:6px;">
           <span style="color:var(--primary); font-size:13px; font-weight:800;">🎯 今日 3 大黃金防線 & 專屬健康管家</span>
           <span id="progress-pct" style="color:var(--primary); font-weight:900; font-size:14px;">0%</span>
@@ -706,19 +715,10 @@
           <span id="encouragement">順應作息：午餐動、晚餐動、睡前不宵夜！</span>
         </div>
 
-        <!-- 中層：3 大黃金防線打卡清單 -->
+        <!-- 3 大黃金防線打卡清單 -->
         <div id="exercise-list" style="margin-bottom:12px;"></div>
 
-        <!-- 下層 A：🤖 今日全日 AI 生活與健康防線總結（若有匯入則直接在此展開） -->
-        <div id="day-ai-summary-card" style="display:none; background:linear-gradient(135deg, rgba(5,150,105,0.08), rgba(2,132,199,0.08)); border:1px solid var(--primary); border-radius:12px; padding:11px 12px; margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span style="font-size:12px; font-weight:800; color:var(--primary);">🤖 今日生活與健康防線 AI 總結</span>
-            <span class="tag" id="day-ai-mode-tag">上班模式</span>
-          </div>
-          <div id="day-ai-summary-content" style="font-size:12px; line-height:1.6; color:var(--text-main);"></div>
-        </div>
-
-        <!-- 下層 B：🩺 專屬健康管家・即時建議（內嵌於同區塊底部，不跨卡交錯） -->
+        <!-- 下層：🩺 專屬健康管家・即時建議（內嵌於同區塊底部，不跨卡交錯） -->
         <div style="background:linear-gradient(135deg, rgba(5,150,105,0.05), rgba(2,132,199,0.05)); border:1px dashed rgba(5,150,105,0.35); border-radius:12px; padding:10px 12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
             <span style="font-size:11px; font-weight:800; color:var(--primary);">🩺 專屬健康管家・即時動態回饋</span>
@@ -1215,7 +1215,7 @@
   </nav>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1763244000000; // 2026-11-15 v6.0.0 視覺與一致性全面升級：微步SVG高對比圖示 ＋ 版本號一致化 ＋ 保溫杯多餘小字精簡
+    const BUILD_VERSION_TIMESTAMP = 1763246000000; // 2026-11-15 v6.0.0 今日 AI 總結優先置頂 ＋ 3大防線打卡卡片順序調換
     const KEY_PREFIX = 'vitalstep_v4_';
     const HISTORY_DB_KEY = 'vitalstep_v5_history_by_date';
     const GLOBAL_CFG_KEY = 'vitalstep_v5_global_cfg';
