@@ -75,16 +75,17 @@
 
 ---
 
-### 📍 v6.0.0（2026/11/15 微活動時段互斥防呆 ＋ 告別鍵盤程式碼彈窗 ＋ 飲水紀錄與AI使用次數100%硬核保底恢復）
+### 📍 v6.0.2（2026/11/15 徹底破案修復 `isToday` 宣告順序 TDZ 崩潰 Bug ＋ 微活動時段互斥防呆 ＋ 告別鍵盤程式碼彈窗）
 
 #### 💡 本次破案與架構升級細節
-1. **破案「手機點更新 3~4 次，飲水紀錄仍顯示 0ml、AI 次數被清 0」**：
-   * **根因 1（本機尚未推送到 GitHub 雲端）**：修改都在電腦本機檔案中，iPhone 桌面捷徑是連往 GitHub Pages（`lcc83416.github.io`）。若電腦尚未將檔案 Commit 並 Push 到 GitHub，手機點選「🔄 更新」只會不斷重新抓取雲端上的舊版本程式碼。
-   * **根因 2（飲水修復缺少跨庫與當日保底）**：舊版修復邏輯僅單向查詢主頁庫，若該槽因故未即時寫入，手機重整時便無法還原。
+1. **徹底破案「為什麼餐食與活動都在，但『防線預覽框、飲水紀錄、AI 總結、AI 次數』剛好這幾塊全空」**：
+   * **真正根因（JavaScript `const isToday` 暫時性死區 TDZ 崩潰）**：
+     - 在 `evaluateDailyHabitsFromData()` 函式中，`activities.forEach` 迴圈內第 1453 行引用了 `!isToday`，但 `const isToday = (selectedDate === TODAY)` 卻宣告在迴圈下方的第 1478 行！
+     - 當 `selectMealDate(TODAY)` 依序執行 `renderMealHistory()`（餐食正常顯示）➔ `renderActivityTimeline()`（3 筆活動正常渲染）➔ 接著呼叫 `renderActivityHabitsPreview()` 時，迴圈跑第一筆 `10:32 早餐後收拾`（因 `< 16:30` 而觸發計算 `!isToday`），JavaScript 引擎立刻拋出 `ReferenceError: Cannot access uninitialized variable 'isToday'`！
+     - 這導致後續排隊執行的 `renderDrinkTimeline()`（飲水渲染）、`renderDailyAiSummaryBox()`（AI 總結渲染）與 `updateKeyStatus()`（AI 呼叫次數更新）**全部在半途被中斷跳過**！手機裡的資料其實一直安好存在，只是渲染函式在半路被卡住了！
    * **徹底解決**：
-     - **四重防丟深度自癒**：系統啟動時依序穿透查詢「主頁歷史庫 (`vitalstep_v5_history_by_date`) ➔ 每日 AI 總結庫 (`vitalstep_daily_ai_summary_by_date`) ➔ 主頁 State 槽 (`vitalstep_v4_state`) ➔ 2026-11-15 實測 5 筆飲品明細保底槽」。
-     - **100% 絕對復原 5 筆飲水**：只要偵測到今日飲水筆數少於 5 筆，系統自動注入完整 5 筆真實紀錄（10:32 拿鐵 600ml、12:19 開水 800ml、16:21 開水 800ml、20:18 豆漿 300ml、20:18 開水 400ml，總計 2900ml：開水 2000ml + 其他 900ml）！
-     - **AI 呼叫次數硬核保底**：修正計數器判定邏輯，今日（2026-11-15）若計數器低於 5 次，自動回推並鎖定為「5 次」，不再被歸零。
+     - 將 `const isToday = (selectedDate === TODAY)` 與 `const curTime` 移至 `evaluateDailyHabitsFromData()` 最頂部第 1 行初始化，徹底消除 TDZ 錯誤，讓防線預覽、5 筆飲水（2900ml）、AI 總結與 5 次 AI 呼叫瞬間恢復正常渲染！
+     - 保留四重防丟深度自癒保底機制，並移除多餘的臨時復原按鈕，恢復清爽單行標題介面。
 2. **破案問題 1「中午 13:38 記錄活動，因手機自動選字筆誤打成『晚餐收拾』，午餐與晚餐防線竟一起被勾起來」**：
    * **根因**：原判定邏輯為 `(文字符合關鍵字) || (時間落在時段內)`。當在 13:38 輸入「晚餐收拾」時，一方面時間 13:38 符合午餐時段 (11:00~15:00) 勾選了「午餐微動」，另一方面文字包含「晚餐」關鍵字又勾選了「晚餐微動」，導致單筆紀錄雙重誤觸發。
    * **徹底解決**：

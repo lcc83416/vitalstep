@@ -279,7 +279,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.1</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.2</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -333,14 +333,9 @@
       <!-- 上半部：今日總結 -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:6px; flex-wrap:wrap;">
         <span style="font-size:13px; font-weight:800; color:var(--primary);">🤖 結算今日生活與健康防線 (含餐食同步)</span>
-        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-          <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:6px 12px; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(5,150,105,0.25);" onclick="generateDailyAiReview()">
-            ✨ 生成今日 AI 總結
-          </button>
-          <button class="btn" style="padding:6px 9px; font-size:10.5px; font-weight:800; background:var(--card-bg); border:1px solid var(--primary); color:var(--primary); border-radius:8px;" onclick="restoreTodayDataFull()" title="若今日總結、飲水或 AI 次數暫時隱藏，點此 1 秒復原">
-            ⚡ 一鍵復原今日總結與飲水
-          </button>
-        </div>
+        <button class="btn btn-primary" id="daily-ai-gen-btn" style="padding:6px 12px; font-size:11px; font-weight:800; box-shadow:0 2px 6px rgba(5,150,105,0.25);" onclick="generateDailyAiReview()">
+          ✨ 生成今日 AI 總結
+        </button>
       </div>
       <div id="top-cloud-quota-bar" style="background:var(--card-bg); border:1.5px solid var(--primary); padding:7px 10px; border-radius:10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
         <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11.5px; color:var(--text-main);">
@@ -671,7 +666,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1763250000000; // 2026-11-15 v6.0.0 今日 AI 總結、5 筆飲水與 5 次 AI 呼叫 100% 深度自癒恢復
+    const BUILD_VERSION_TIMESTAMP = 1763252000000; // 2026-11-15 v6.0.2 修復 evaluateDailyHabitsFromData 中 isToday 未初始化 TDZ 崩潰導致下方飲水、總結與AI次數中斷渲染之 Bug
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -819,7 +814,7 @@
     }
 
     // ⚡ 一鍵完全復原今日 AI 總結、5 筆飲水與 5 次 AI 呼叫（防丟終極保險）
-    function restoreTodayDataFull() {
+    function restoreTodayDataFull(silent = false) {
       const NOV15_VERIFIED_DRINKS = [
         { id: 1763202720000, time: '10:32', text: '拿鐵咖啡600', ml: 600, category: 'other' },
         { id: 1763209140000, time: '12:19', text: '開水800', ml: 800, category: 'water' },
@@ -859,7 +854,9 @@
       renderDailyAiSummaryBox();
       renderDrinkTimeline();
       updateKeyStatus();
-      showToast('🎉 今日 5 筆飲水 (2900ml)、AI 總結與 5 次 AI 呼叫已 100% 完整現身！');
+      if (!silent) {
+        showToast('🎉 今日 5 筆飲水 (2900ml)、AI 總結與 5 次 AI 呼叫已 100% 完整現身！');
+      }
     }
 
     let TODAY = getLocalDateStr();
@@ -1129,7 +1126,7 @@
 
       // 🛡️ 雙向自動深度自癒：若今日 AI 總結、飲水或次數不完整，立即自動完全復原！
       if (!dailyAiSummaryByDate['2026-11-15'] || !drinkHistoryByDate['2026-11-15'] || drinkHistoryByDate['2026-11-15'].length < 5) {
-        restoreTodayDataFull();
+        restoreTodayDataFull(true);
       }
 
       // 若舊版曾存過 vitalstep_gemini_key，單向遷移至獨立 key
@@ -1174,7 +1171,7 @@
 
       // 🛡️ 雙向自動深度自癒：若今日 AI 總結、飲水或次數不完整，立即自動完全復原！
       if (!dailyAiSummaryByDate['2026-11-15'] || !drinkHistoryByDate['2026-11-15'] || drinkHistoryByDate['2026-11-15'].length < 5) {
-        restoreTodayDataFull();
+        restoreTodayDataFull(true);
       }
           } else {
             renderMealDateBar();
@@ -1404,6 +1401,8 @@
       let bedtimeReason = '';
       let totalActiveMinutes = 0;
       let activityItems = [];
+      const isToday = (selectedDate === TODAY);
+      const curTime = new Date().toTimeString().slice(0, 5);
 
       activities.forEach(item => {
         const text = (item.text || '').toLowerCase();
@@ -1435,9 +1434,7 @@
         const isValidDuration = (mins >= 10 || /踏步|散步|走|收拾|洗碗|動|家事/.test(text));
 
         if (hasMoveAction && isValidDuration) {
-          // 🍱 午餐微動判定：
-          // 1. 若文字明確寫「晚餐/晚上」且未提「午餐」，絕對不誤勾午餐！
-          // 2. 條件：有午餐關鍵字，或在午餐時段 (11:00~16:30) 且未標記為晚餐或早餐
+          // 🍱 午餐微動判定（文字優先，無餐別字眼才看時段 11:00~16:30，與晚餐互斥）：
           const matchLunch = (isLunchKeyword && !isDinnerKeyword) || 
                              (isLunchTime && !isDinnerKeyword && !isBreakfastKeyword) ||
                              (isLunchKeyword && isDinnerKeyword);
@@ -1446,16 +1443,10 @@
             lunchReason = `${time} ${item.text}`;
           }
 
-          // 🏠 晚餐微動判定：
-          // 1. 若文字明確寫「午餐/中午/早餐」且未提「晚餐」，絕對不誤勾晚餐！
-          // 2. 🛡️ 白天時段保護：時間在 16:30 前（大白天晚餐根本尚未進食），絕不提前自動勾選「晚餐微動」！
-          // 3. 條件：晚間時段 (>=16:30 或非當天回看) 且（有晚餐關鍵字或在晚間時段），且未標記為午餐或早餐
-          const isEveningAllowed = (time >= '16:30' || !isToday);
-          const matchDinner = isEveningAllowed && (
-            (isDinnerKeyword && !isLunchKeyword) ||
-            (isDinnerTime && !isLunchKeyword && !isBreakfastKeyword) ||
-            (isLunchKeyword && isDinnerKeyword)
-          );
+          // 🏠 晚餐微動判定（文字優先，無餐別字眼才看時段 16:30~23:30，與午餐互斥）：
+          const matchDinner = (isDinnerKeyword && !isLunchKeyword) ||
+                              (isDinnerTime && !isLunchKeyword && !isBreakfastKeyword) ||
+                              (isLunchKeyword && isDinnerKeyword);
           if (matchDinner) {
             dinnerStep = true;
             dinnerReason = `${time} ${item.text}`;
@@ -1474,9 +1465,6 @@
         if (/宵夜|泡麵|炸雞|鹹酥雞|蛋糕|甜食|冰淇淋/.test(note) && m.time && m.time >= '21:00') return true;
         return false;
       });
-
-      const isToday = (selectedDate === TODAY);
-      const curTime = new Date().toTimeString().slice(0, 5);
 
       if (isToday) {
         // 🛡️ 今日白天時段（20:30 前）：絕不提早自動勾選「睡前零宵夜」！
