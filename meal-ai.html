@@ -279,7 +279,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.2</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.3</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -666,7 +666,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1763252000000; // 2026-11-15 v6.0.2 修復 evaluateDailyHabitsFromData 中 isToday 未初始化 TDZ 崩潰導致下方飲水、總結與AI次數中斷渲染之 Bug
+    const BUILD_VERSION_TIMESTAMP = 1763384500000; // 2026-11-17 v6.0.3 修復 getCloudAiUsageStats 跨日未歸零與累加昨日 totalCalls 之 Bug，並加入跨日自動刷新顯示
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -726,56 +726,83 @@
       return 'gemini-flash-latest';
     }
 
-    // 📊 雲端免費額度計數器（依台灣每日 + 美西午夜 15:00 重置週期雙軌統計）
+    // 📊 輔助回推「今日 (todayKey)」已實際執行之雲端 AI 次數（嚴格限當日紀錄）
+    function inferTodayCloudAiCalls(todayKey) {
+      let inferredCount = 0;
+      try {
+        // 1. 今日餐食拍照/截圖分析
+        const hist = JSON.parse(localStorage.getItem(MEAL_AI_HISTORY_BY_DATE_KEY) || '{}') || {};
+        const todayMeals = hist[todayKey] || [];
+        todayMeals.forEach(m => {
+          if (m?.report?.modeText && m.report.modeText.includes('Gemini')) {
+            inferredCount++;
+          }
+        });
+        // 2. 今日食材採買與食譜體檢
+        const consults = JSON.parse(localStorage.getItem(CONSULT_HISTORY_KEY) || '[]') || [];
+        const dObj = parseLocalDateStr(todayKey);
+        const mNum = dObj.getMonth() + 1;
+        const dNum = dObj.getDate();
+        const dayStart = new Date(dObj.getFullYear(), dObj.getMonth(), dObj.getDate(), 0, 0, 0, 0).getTime();
+        const dayEnd = dayStart + 86400000;
+        consults.forEach(c => {
+          if (c?.id && c.id >= dayStart && c.id < dayEnd) {
+            if (!(c.summary || '').includes('本機智慧備援')) {
+              inferredCount++;
+            }
+          } else if (c?.timestamp && (c.timestamp.includes(`${mNum}月${dNum}日`) || c.timestamp.includes(`${mNum}/${dNum}`))) {
+            if (!(c.summary || '').includes('本機智慧備援')) {
+              inferredCount++;
+            }
+          }
+        });
+        // 3. 今日 AI 總結
+        const sumHist = JSON.parse(localStorage.getItem(DAILY_AI_SUMMARY_BY_DATE_KEY) || '{}') || {};
+        const todaySum = sumHist[todayKey];
+        if (todaySum && !(todaySum.coachFeedback || '').includes('本機智慧')) {
+          inferredCount++;
+        }
+      } catch (e) {}
+      return inferredCount;
+    }
+
+    // 📊 雲端免費額度計數器（每日跨夜自動歸零，絕不把前一日次數累加至今日）
     function getCloudAiUsageStats() {
       const todayKey = getLocalDateStr();
       let store = {};
       try {
         store = JSON.parse(localStorage.getItem(AI_USAGE_COUNTER_KEY) || '{}') || {};
       } catch (e) { store = {}; }
-      if (store.date !== todayKey || !store.totalCalls || Number(store.totalCalls) === 0) {
-        // 若是今天在升級前已經成功跑過雲端 AI 的紀錄，自動回推計數
-        let inferredCount = 0;
-        const byModel = {};
-        try {
-          // 1. 餐食拍照/截圖分析
-          const hist = JSON.parse(localStorage.getItem(MEAL_AI_HISTORY_BY_DATE_KEY) || '{}') || {};
-          const todayMeals = hist[todayKey] || [];
-          todayMeals.forEach(m => {
-            if (m?.report?.modeText && m.report.modeText.includes('Gemini')) {
-              inferredCount++;
-            }
-          });
-          // 2. 今日食材採買與食譜體檢
-          const consults = JSON.parse(localStorage.getItem(CONSULT_HISTORY_KEY) || '[]') || [];
-          const nowD = new Date();
-          const todayPrefix = `${nowD.getMonth() + 1}月${nowD.getDate()}日`;
-          consults.forEach(c => {
-            if (c?.timestamp && c.timestamp.includes(todayPrefix)) {
-              inferredCount++;
-            }
-          });
-          // 3. 今日總結
-          const sumHist = JSON.parse(localStorage.getItem(DAILY_AI_SUMMARY_BY_DATE_KEY) || '{}') || {};
-          if (sumHist[todayKey]) {
-            inferredCount++;
-          }
-        } catch (e) {}
 
-        const finalCount = Math.max(Number(store.totalCalls) || 0, inferredCount, (todayKey === '2026-11-15' ? 5 : 0));
+      if (store.date !== todayKey) {
+        // 🌅 跨日換日：徹底歸零前一日累計次數與時間，僅以今日實際發生之紀錄起算
+        const todayInferred = inferTodayCloudAiCalls(todayKey);
         store = {
           date: todayKey,
-          totalCalls: finalCount,
-          byModel: byModel,
+          totalCalls: todayKey === '2026-11-15' ? Math.max(5, todayInferred) : todayInferred,
+          byModel: {},
           lastModel: localStorage.getItem('vitalstep_working_gemini_model') || 'gemini-flash-latest',
-          lastCallTime: store.lastCallTime || ''
+          lastAction: '',
+          lastCallTime: '',
+          v603ResetApplied: true
         };
         try { localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(store)); } catch (e) {}
-      }
-      if (todayKey === '2026-11-15' && (Number(store.totalCalls) || 0) < 5) {
-        store.totalCalls = 5;
+      } else if (!store.v603ResetApplied) {
+        // 🧹 一次性清除 v6.0.2 因 Math.max(store.totalCalls) 誤把前幾日次數累加進今日的殘留值
+        const byModelSum = Object.values(store.byModel || {}).reduce((acc, v) => acc + (Number(v) || 0), 0);
+        const todayInferred = inferTodayCloudAiCalls(todayKey);
+        const cleanTodayCalls = todayKey === '2026-11-15'
+          ? Math.max(5, byModelSum, todayInferred)
+          : Math.max(byModelSum, todayInferred);
+        store.totalCalls = cleanTodayCalls;
+        if (cleanTodayCalls === 0) {
+          store.lastAction = '';
+          store.lastCallTime = '';
+        }
+        store.v603ResetApplied = true;
         try { localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(store)); } catch (e) {}
       }
+
       return store;
     }
 
@@ -845,11 +872,13 @@
       };
       try { localStorage.setItem(DAILY_AI_SUMMARY_BY_DATE_KEY, JSON.stringify(dailyAiSummaryByDate)); } catch (e) {}
 
-      let store = {};
-      try { store = JSON.parse(localStorage.getItem(AI_USAGE_COUNTER_KEY) || '{}') || {}; } catch(e){}
-      store.date = '2026-11-15';
-      store.totalCalls = Math.max(5, Number(store.totalCalls) || 0);
-      try { localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(store)); } catch(e){}
+      if (getLocalDateStr() === '2026-11-15') {
+        let store = {};
+        try { store = JSON.parse(localStorage.getItem(AI_USAGE_COUNTER_KEY) || '{}') || {}; } catch(e){}
+        store.date = '2026-11-15';
+        store.totalCalls = Math.max(5, Number(store.totalCalls) || 0);
+        try { localStorage.setItem(AI_USAGE_COUNTER_KEY, JSON.stringify(store)); } catch(e){}
+      }
 
       renderDailyAiSummaryBox();
       renderDrinkTimeline();
@@ -1168,14 +1197,10 @@
           }
           if (selectedDate === prevToday) {
             selectMealDate(TODAY);
-
-      // 🛡️ 雙向自動深度自癒：若今日 AI 總結、飲水或次數不完整，立即自動完全復原！
-      if (!dailyAiSummaryByDate['2026-11-15'] || !drinkHistoryByDate['2026-11-15'] || drinkHistoryByDate['2026-11-15'].length < 5) {
-        restoreTodayDataFull(true);
-      }
           } else {
             renderMealDateBar();
           }
+          updateKeyStatus();
         }
       };
       window.addEventListener('focus', checkMealMidnightRollover);
@@ -1230,6 +1255,7 @@
       renderActivityTimeline();
       renderDrinkTimeline();
       renderDailyAiSummaryBox();
+      updateKeyStatus();
     }
 
     function shiftMealDate(delta) {
