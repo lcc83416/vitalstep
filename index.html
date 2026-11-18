@@ -924,27 +924,6 @@
         <!-- 由 renderDayLockBanner() 同步渲染 -->
       </div>
 
-      <!-- 🔐 私密健康防線 & 每週體重計 (Fitdays) 保險箱（預設上鎖隱藏，輸入 PIN 碼才展開） -->
-      <div id="main-privacy-vault-card" class="card" style="padding:10px 12px;">
-        <div id="main-vault-locked-row" style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
-          <span style="font-size:11.5px; font-weight:800; color:var(--text-main);">🔒 私密健檢 & 每週體重計保險箱（已隱藏）</span>
-          <div style="display:flex; align-items:center; gap:5px;">
-            <input type="password" id="main-vault-pin-input" inputmode="numeric" maxlength="6" placeholder="PIN碼(預設0000)"
-              style="width:105px; padding:4px 8px; font-size:11px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text-main); text-align:center;"
-              onkeydown="if(event.key==='Enter') unlockMainPrivacyVault()">
-            <button class="btn btn-primary" style="padding:4px 10px; font-size:11px; font-weight:800;" onclick="unlockMainPrivacyVault()">🔓 解鎖查看</button>
-          </div>
-        </div>
-        <div id="main-vault-unlocked-panel" style="display:none;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:6px; border-bottom:1px dashed var(--border);">
-            <span style="font-size:12px; font-weight:800; color:var(--primary);">🛡️ 本機健檢基準 & 每週體重計 (Fitdays) 紀錄</span>
-            <button class="btn" style="padding:3px 9px; font-size:10.5px;" onclick="lockMainPrivacyVault()">🔒 上鎖隱藏</button>
-          </div>
-          <div id="main-vault-scale-summary" style="font-size:11px; margin-bottom:8px; overflow-x:auto;"></div>
-          <div id="main-vault-lab-summary" style="font-size:11px; color:var(--text-muted); line-height:1.5;"></div>
-        </div>
-      </div>
-
       <!-- 🗂️ 底部收納：週末檢討匯出 & 歷史備份還原 -->
       <div class="card" style="padding:10px 12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1205,67 +1184,6 @@
     const HISTORY_DB_KEY = 'vitalstep_v5_history_by_date';
     const GLOBAL_CFG_KEY = 'vitalstep_v5_global_cfg';
     const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
-    const PRIVATE_VAULT_KEY = 'vitalstep_private_health_vault_v1';
-    const ENCODED_VAULT_SEED = 'eyJwaW4iOiIwMDAwIiwibGFiIjp7InllYXJDdXIiOiIyMDI2IiwieWVhclByZXYiOiIyMDI1IiwidGciOjI2MCwidGdQcmV2IjoxNjksInRjIjoyMzYsInRjUHJldiI6MjMxLCJsZGwiOjE1MiwibGRsUHJldiI6MTUyLCJoZGwiOjQ1LCJoZGxQcmV2Ijo1NSwiaGJhMWMiOjUuNywidWEiOjYuOSwidWFQcmV2Ijo2LjIsImVnZnIiOjg0LCJlZ2ZyUHJldiI6NjYsImFsdCI6MTd9LCJzY2FsZUxvZ3MiOlt7ImxhYmVsIjoi56ysMemAseWfuua6liAoMTAvMzApIiwiZGF0ZSI6IjIwMjYtMTAtMzAiLCJ3ZWlnaHQiOjkzLjg1LCJibWkiOjM1LjgsImZhdEtnIjo0MS42LCJmYXRQY3QiOjQ0LjMsIm11c2NsZUtnIjoyOS4zLCJ2aXNjZXJhbCI6MTgsIndhaXN0IjoxMDYuMCwic2NvcmUiOjYyfSx7ImxhYmVsIjoi56ysMumAsee1kOeulyAoMTEvMDYpIiwiZGF0ZSI6IjIwMjYtMTEtMDYiLCJ3ZWlnaHQiOjkyLjA1LCJibWkiOjM1LjEsImZhdEtnIjo0MS4xLCJmYXRQY3QiOjQ0LjYsIm11c2NsZUtnIjoyOC41LCJ2aXNjZXJhbCI6MTgsIndhaXN0IjoxMDMuNSwic2NvcmUiOjYxfSx7ImxhYmVsIjoi56ysM+mAseacgOS9juiEgiAoMTEvMTMpIiwiZGF0ZSI6IjIwMjYtMTEtMTMiLCJ3ZWlnaHQiOjkxLjcwLCJibWkiOjM0LjksImZhdEtnIjozOS40LCJmYXRQY3QiOjQzLjAsIm11c2NsZUtnIjoyOS4zLCJ2aXNjZXJhbCI6MTcsIndhaXN0IjoxMDIuNCwic2NvcmUiOjY0fSx7ImxhYmVsIjoi56ysM+mAseaUtuWumCAoMTEvMTUpIiwiZGF0ZSI6IjIwMjYtMTEtMTUiLCJ3ZWlnaHQiOjkwLjc1LCJibWkiOjM0LjYsImZhdEtnIjo0MS42LCJmYXRQY3QiOjQ1LjgsIm11c2NsZUtnIjoyNy40LCJ2aXNjZXJhbCI6MTgsIndhaXN0IjoxMDIuNCwic2NvcmUiOjU5fV19';
-
-    function decodeMainVaultSeed(b64) {
-      try {
-        const binStr = atob(b64);
-        const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
-        return new TextDecoder('utf-8').decode(bytes);
-      } catch (e) { return '{}'; }
-    }
-
-    function getMainLocalHealthVault() {
-      try {
-        const raw = localStorage.getItem(PRIVATE_VAULT_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === 'object') return parsed;
-        }
-      } catch (e) {}
-      try {
-        const seeded = JSON.parse(decodeMainVaultSeed(ENCODED_VAULT_SEED));
-        localStorage.setItem(PRIVATE_VAULT_KEY, JSON.stringify(seeded));
-        return seeded;
-      } catch (e) { return { pin: '0000', lab: {}, scaleLogs: [] }; }
-    }
-
-    function unlockMainPrivacyVault() {
-      const inp = document.getElementById('main-vault-pin-input');
-      const pinVal = (inp?.value || '').trim();
-      const vault = getMainLocalHealthVault();
-      if (pinVal !== String(vault.pin || '0000')) {
-        alert('PIN 碼不正確（預設為 0000）');
-        return;
-      }
-      if (inp) inp.value = '';
-      document.getElementById('main-vault-locked-row').style.display = 'none';
-      document.getElementById('main-vault-unlocked-panel').style.display = 'block';
-      const logs = Array.isArray(vault.scaleLogs) ? vault.scaleLogs : [];
-      const scaleEl = document.getElementById('main-vault-scale-summary');
-      if (scaleEl && logs.length > 0) {
-        const base = logs[0];
-        const rows = logs.map((r, i) => {
-          const wd = (r.weight - base.weight).toFixed(2);
-          const fd = (r.fatKg - base.fatKg).toFixed(1);
-          return `<tr style="border-bottom:1px solid var(--border);"><td style="padding:3px;">${r.label}</td><td style="padding:3px;"><strong>${r.weight}kg</strong> (${i===0?'基準':(wd>0?'+'+wd:wd)})</td><td style="padding:3px;">${r.fatKg}kg / ${r.fatPct}% (${i===0?'-':(fd>0?'+'+fd:fd)+'kg'})</td><td style="padding:3px;">內臟脂 ${r.visceral}</td><td style="padding:3px;">腰圍 ${r.waist}cm</td></tr>`;
-        }).join('');
-        scaleEl.innerHTML = `<table style="width:100%; border-collapse:collapse; font-size:10.5px; text-align:center;"><thead><tr style="color:var(--text-muted); border-bottom:1px solid var(--border);"><th>週次</th><th>體重</th><th>脂肪量/體脂率</th><th>內臟脂</th><th>腰圍</th></tr></thead><tbody>${rows}</tbody></table>`;
-      }
-      const lab = vault.lab || {};
-      const labEl = document.getElementById('main-vault-lab-summary');
-      if (labEl) {
-        labEl.innerHTML = `🩺 <strong>本機健檢基準</strong>：TG <code>${lab.tgPrev||'-'}➔${lab.tg||'-'}</code>｜TC <code>${lab.tcPrev||'-'}➔${lab.tc||'-'}</code>｜LDL <code>${lab.ldl||'-'}</code>｜HDL <code>${lab.hdlPrev||'-'}➔${lab.hdl||'-'}</code>｜HbA1c <code>${lab.hba1c||'-'}%</code>｜UA <code>${lab.uaPrev||'-'}➔${lab.ua||'-'}</code>｜eGFR <code>${lab.egfrPrev||'-'}➔${lab.egfr||'-'}</code>`;
-      }
-    }
-
-    function lockMainPrivacyVault() {
-      document.getElementById('main-vault-locked-row').style.display = 'flex';
-      document.getElementById('main-vault-unlocked-panel').style.display = 'none';
-      document.getElementById('main-vault-scale-summary').innerHTML = '';
-      document.getElementById('main-vault-lab-summary').innerHTML = '';
-    }
 
     function isPlainWaterDrink(itemOrText) {
       if (itemOrText && typeof itemOrText === 'object') {
