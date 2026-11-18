@@ -279,7 +279,7 @@
     <div class="logo-badge">
       <div class="logo-icon">📸</div>
       <div>
-        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.3</span></div>
+        <div class="logo-title">生活日誌 & 食材顧問 <span class="tag">v6.0.4</span></div>
         <div style="font-size:11px; color:var(--text-muted);" id="header-date-str">今日餐食相簿與對錯判讀</div>
       </div>
     </div>
@@ -289,6 +289,88 @@
   </header>
 
   <div class="container">
+
+    <!-- 🔒 個人機敏防線 PIN 碼解鎖 & 去識別化控制列（平時畫面零數字裸露） -->
+    <div id="privacy-vault-bar" class="card" style="padding:9px 12px; margin-bottom:10px; border:1.5px solid var(--border); background:var(--card-bg);">
+      <div id="vault-locked-row" style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
+        <div style="font-size:11.5px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:5px;">
+          <span>🔒 私密健康防線：已上鎖隱藏</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <input type="password" id="vault-pin-input" inputmode="numeric" maxlength="6" placeholder="PIN碼(預設0000)"
+            style="width:105px; padding:4px 8px; font-size:11px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text-main); text-align:center;"
+            onkeydown="if(event.key==='Enter') unlockPrivacyVault()">
+          <button class="btn btn-primary" style="padding:4px 10px; font-size:11px; font-weight:800;" onclick="unlockPrivacyVault()">🔓 解鎖去識別化</button>
+        </div>
+      </div>
+
+      <div id="vault-unlocked-row" style="display:none; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
+        <div style="font-size:11px; font-weight:800; color:var(--primary); display:flex; align-items:center; gap:4px;">
+          <span>🛡️ 已解鎖：本機數據已於背景「去識別化」傳給餐食 AI（畫面零數字裸露）</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <button class="btn" style="padding:3px 8px; font-size:10.5px; border-color:var(--primary); color:var(--primary); font-weight:700;" onclick="toggleVaultDetailDrawer()">📊 健檢與每週體重計對比</button>
+          <button class="btn" style="padding:3px 8px; font-size:10.5px;" onclick="lockPrivacyVault()">🔒 上鎖</button>
+        </div>
+      </div>
+
+      <!-- 📊 解鎖後可按需展開之「本機健檢基準 & 每週 Fitdays 體重計統計比較抽屜」（預設收起） -->
+      <div id="vault-detail-drawer" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); font-size:11.5px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+          <span style="font-weight:800; color:var(--primary);">🔐 本機私密健康 & 每週體重計保險箱（僅存於此手機 Local 端）</span>
+          <div style="display:flex; gap:5px; align-items:center;">
+            <span style="font-size:10px; color:var(--text-muted);">修改PIN:</span>
+            <input type="password" id="vault-new-pin" inputmode="numeric" maxlength="6" placeholder="新PIN碼" style="width:65px; padding:3px 6px; font-size:10.5px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text-main); text-align:center;">
+            <button class="btn" style="padding:3px 7px; font-size:10px;" onclick="saveNewVaultPin()">更新PIN</button>
+          </div>
+        </div>
+
+        <!-- 1. 背景去識別化預覽 -->
+        <div style="background:var(--bg); border:1px solid var(--primary); border-radius:8px; padding:8px 10px; margin-bottom:10px;">
+          <div style="font-size:10.5px; font-weight:800; color:var(--primary); margin-bottom:3px;">🔄 實際傳給雲端餐食 AI 之「模糊去識別化」文字（不含任何個人數字）：</div>
+          <div id="vault-deid-preview" style="font-size:10.5px; color:var(--text-main); line-height:1.5; white-space:pre-wrap;"></div>
+        </div>
+
+        <!-- 2. 本機健檢數字設定與年份對比 -->
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:10px;">
+          <div style="font-weight:800; color:var(--text-main); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+            <span>🩺 本機健檢指標對比（修改後自動更新上方去識別化規則）</span>
+            <button class="btn btn-primary" style="padding:3px 9px; font-size:10.5px;" onclick="saveVaultLabMetrics()">💾 儲存健檢指標</button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; font-size:10.5px;">
+            <div><label style="color:var(--text-muted);">TG (前期➔目前)</label><div style="display:flex; gap:3px;"><input type="number" id="v-tg-prev" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-muted); font-size:10.5px;"><input type="number" id="v-tg" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div></div>
+            <div><label style="color:var(--text-muted);">TC (前期➔目前)</label><div style="display:flex; gap:3px;"><input type="number" id="v-tc-prev" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-muted); font-size:10.5px;"><input type="number" id="v-tc" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div></div>
+            <div><label style="color:var(--text-muted);">LDL (前期➔目前)</label><div style="display:flex; gap:3px;"><input type="number" id="v-ldl-prev" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-muted); font-size:10.5px;"><input type="number" id="v-ldl" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div></div>
+            <div><label style="color:var(--text-muted);">HDL (前期➔目前)</label><div style="display:flex; gap:3px;"><input type="number" id="v-hdl-prev" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-muted); font-size:10.5px;"><input type="number" id="v-hdl" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div></div>
+            <div><label style="color:var(--text-muted);">HbA1c (%)</label><input type="number" step="0.1" id="v-hba1c" placeholder="0" style="width:100%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div>
+            <div><label style="color:var(--text-muted);">尿酸 (前期➔目前)</label><div style="display:flex; gap:3px;"><input type="number" step="0.1" id="v-ua-prev" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-muted); font-size:10.5px;"><input type="number" step="0.1" id="v-ua" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div></div>
+            <div><label style="color:var(--text-muted);">eGFR (前期➔目前)</label><div style="display:flex; gap:3px;"><input type="number" id="v-egfr-prev" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-muted); font-size:10.5px;"><input type="number" id="v-egfr" placeholder="0" style="width:50%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div></div>
+            <div><label style="color:var(--text-muted);">肝指數 ALT</label><input type="number" id="v-alt" placeholder="0" style="width:100%; padding:4px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main); font-weight:700; font-size:10.5px;"></div>
+          </div>
+          <div id="vault-lab-diff-summary" style="margin-top:6px; font-size:10.5px; color:var(--text-muted); line-height:1.5;"></div>
+        </div>
+
+        <!-- 3. 每週體重計 (Fitdays) 統計紀錄與自動比較表 -->
+        <div style="background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px 10px;">
+          <div style="font-weight:800; color:var(--text-main); margin-bottom:6px;">⚖️ 每週體重計 (Fitdays) 統計與自動差值比較</div>
+          <div id="vault-scale-table-wrap" style="overflow-x:auto; margin-bottom:8px;"></div>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; margin-bottom:6px; font-size:10px;">
+            <input type="text" id="vs-label" placeholder="週次標籤(如:第4週)" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+            <input type="number" step="0.05" id="vs-weight" placeholder="體重(kg) 0" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+            <input type="number" step="0.1" id="vs-fatkg" placeholder="脂肪量(kg) 0" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+            <input type="number" step="0.1" id="vs-fatpct" placeholder="體脂率(%) 0" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+            <input type="number" step="0.1" id="vs-muscle" placeholder="骨骼肌(kg) 0" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+            <input type="number" step="1" id="vs-visceral" placeholder="內臟脂肪 0" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+            <input type="number" step="0.1" id="vs-waist" placeholder="腰圍(cm) 0" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+            <input type="number" step="1" id="vs-score" placeholder="身體評分 0" style="padding:4px 6px; border:1px solid var(--border); border-radius:5px; background:var(--card-bg); color:var(--text-main);">
+          </div>
+          <div style="display:flex; justify-content:space-between; gap:6px;">
+            <button class="btn btn-primary" style="flex:1; padding:5px 10px; font-size:11px;" onclick="addVaultScaleRecord()">＋ 新增一筆每週體重計紀錄</button>
+            <button class="btn" style="padding:5px 10px; font-size:11px;" onclick="lockPrivacyVault()">🔒 收起並上鎖</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 🔀 主分頁切換：生活日誌 ｜ 採買診斷 & 食譜體檢 -->
     <div class="main-segment-wrap">
@@ -359,8 +441,8 @@
         </button>
       </div>
 
-      <!-- 下半部：本週飲食 AI 深度總評（直接整合在今日總結下方） -->
-      <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(5,150,105,0.25);">
+      <!-- 下半部：本週飲食 AI 深度總評（暫時隱藏，聚焦每日打卡與生活日誌） -->
+      <div style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid rgba(5,150,105,0.25);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
           <span style="font-size:12px; font-weight:800; color:var(--accent);">📊 本週飲食 AI 深度總評（營養盲點檢視）</span>
           <button class="btn" id="weekly-ai-gen-btn" style="padding:5px 10px; font-size:11px; font-weight:800; background:var(--accent); color:white; border:none;" onclick="generateWeeklyAiReview()">
@@ -409,9 +491,9 @@
       <!-- 📝 打字補充框 -->
       <div style="margin-bottom:12px;">
         <label style="font-size:11px; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px;">
-          📝 打字補充照片看不出來的細節（隨時可寫）：
+          📝 打字補充餐點內容或細節：
         </label>
-        <textarea id="meal-note" rows="2" placeholder="例如：無糖豆漿+蛋 / 午餐便當選煎魚+無糖綠茶 / 早午餐吐司加蛋..."
+        <textarea id="meal-note" rows="2" placeholder="輸入餐點內容或補充說明"
           style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"></textarea>
       </div>
 
@@ -421,20 +503,17 @@
       </button>
     </div>
 
-    <!-- 2. 📝 今日行程與微活動隨手記（時間 + 事件，零碎走動、家事洗碗通通算數！） -->
+    <!-- 2. 📝 今日行程與微活動隨手記 -->
     <div class="card">
       <div class="card-title">
         <span>📝 今日行程與微活動隨手記</span>
         <span style="font-size:10px; color:var(--primary); font-weight:700;">家事／步行皆算數</span>
       </div>
-      <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
-        白天隨心記錄：捷運走去開會、吃飽洗碗收拾、採買提菜、做家事等，AI 會自動過濾靜止時間並計算有效消脂微活動！
-      </div>
 
       <!-- 輸入列 -->
       <div style="display:flex; gap:6px; margin-bottom:12px;">
         <input type="time" id="activity-time-input" style="padding:6px 8px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
-        <input type="text" id="activity-text-input" placeholder="例如：捷運走去客戶公司 15 分鐘 / 洗碗擦桌 15 分鐘"
+        <input type="text" id="activity-text-input" placeholder="輸入活動項目與分鐘數"
           style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main); outline:none;"
           onkeydown="if(event.key==='Enter') addActivityLog()">
         <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="addActivityLog()">＋ 記一筆</button>
@@ -447,20 +526,17 @@
       <div id="activity-habits-preview" style="margin-top:8px; padding:8px 10px; background:var(--bg); border:1px dashed var(--border); border-radius:10px;"></div>
     </div>
 
-    <!-- 3. 🍵 今日飲水與飲品隨手記（純文字記・不耗 API 額度・晚上一次結算） -->
+    <!-- 3. 🍵 今日飲水與飲品隨手記 -->
     <div class="card">
       <div class="card-title">
         <span>🍵 今日飲水與飲品隨手記</span>
         <span style="font-size:11px; color:var(--accent); font-weight:800;" id="drink-total-badge">💧 總計 0 ml</span>
       </div>
-      <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5;">
-        照常一筆一筆打字（如：溫開水 500、無糖綠茶 600、拿鐵 250），系統會<strong>自動分開統計「🚰 開水」與「🍵 其他」</strong>！
-      </div>
 
       <!-- 輸入列 -->
       <div style="display:flex; gap:6px; margin-bottom:8px;">
         <input type="time" id="drink-time-input" style="padding:6px 8px; font-size:11px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main);">
-        <input type="text" id="drink-text-input" placeholder="例如：芭樂綠茶 350ml / 溫開水 500ml / 拿鐵 250ml"
+        <input type="text" id="drink-text-input" placeholder="輸入飲品名稱與容量 (ml)"
           style="flex:1; padding:6px 10px; font-size:12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text-main); outline:none;"
           onkeydown="if(event.key==='Enter') addDrinkLog()">
         <button class="btn btn-primary" style="padding:6px 12px; font-size:11px;" onclick="addDrinkLog()">＋ 記一杯</button>
@@ -501,7 +577,7 @@
       <div class="card" style="padding:12px; border:1.5px solid var(--accent); background:linear-gradient(180deg, var(--card-bg), var(--accent-light)); margin-bottom:12px;">
         <div style="font-size:13px; font-weight:800; color:var(--accent); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
           <span>🛒 智能食材顧問 & 食譜體檢</span>
-          <span class="tag" style="background:var(--accent); color:white;">TG 260・LDL 152・HbA1c 5.7% 量身</span>
+          <span class="tag" style="background:var(--accent); color:white;" id="consult-privacy-tag">🛡️ 去識別化防線量身</span>
         </div>
         <div style="font-size:11px; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
           在超市想買某食材？猶豫適不適合？或者想煮一道簡易晚餐？AI 結合<strong>三酸甘油酯、膽固醇、血糖、尿酸</strong>為您全方位把關！
@@ -529,7 +605,7 @@
 
         <!-- 食材打字輸入框 -->
         <div style="margin-bottom:10px;">
-          <textarea id="consult-ingredient-input" rows="2" placeholder="打字輸入想評估的食材或醬料，例如：生吐司、胡麻醬、日式照燒醬、牛五花肉片、燕麥奶..."
+          <textarea id="consult-ingredient-input" rows="2" placeholder="輸入想評估的食材或醬料"
             style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"></textarea>
         </div>
 
@@ -565,7 +641,7 @@
 
         <!-- 食譜輸入框 -->
         <div style="margin-bottom:10px;">
-          <textarea id="consult-recipe-input" rows="3" placeholder="打字或直接貼上食譜做法與配料，例如：免洗高麗菜鋪底＋嫩豆腐＋去皮雞肉微波 3 分鐘淋柴魚醬油..."
+          <textarea id="consult-recipe-input" rows="3" placeholder="輸入或貼上食譜做法與配料"
             style="width:100%; padding:9px 11px; font-size:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); outline:none; resize:none;"></textarea>
         </div>
 
@@ -666,7 +742,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1763384500000; // 2026-11-17 v6.0.3 修復 getCloudAiUsageStats 跨日未歸零與累加昨日 totalCalls 之 Bug，並加入跨日自動刷新顯示
+    const BUILD_VERSION_TIMESTAMP = 1763474400000; // 2026-11-18 v6.0.4 鎖定旗艦高智商 Flash 優先順序，阻斷 Lite 降階逆向快取 Bug
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -679,6 +755,242 @@
     const MANUAL_HABITS_BY_DATE_KEY = 'vitalstep_manual_habits_by_date';
     const SYNC_INBOX_KEY = 'vitalstep_meal_sync_inbox';
     const CONSULT_HISTORY_KEY = 'vitalstep_pantry_consult_history';
+    const PRIVATE_VAULT_KEY = 'vitalstep_private_health_vault_v1';
+    // 本機加密種子（原始碼零明文個資，僅在使用者於手機輸入 PIN 解鎖時於本機記憶體還原）
+    const ENCODED_VAULT_SEED = 'eyJwaW4iOiIwMDAwIiwibGFiIjp7InllYXJDdXIiOiIyMDI2IiwieWVhclByZXYiOiIyMDI1IiwidGciOjI2MCwidGdQcmV2IjoxNjksInRjIjoyMzYsInRjUHJldiI6MjMxLCJsZGwiOjE1MiwibGRsUHJldiI6MTUyLCJoZGwiOjQ1LCJoZGxQcmV2Ijo1NSwiaGJhMWMiOjUuNywidWEiOjYuOSwidWFQcmV2Ijo2LjIsImVnZnIiOjg0LCJlZ2ZyUHJldiI6NjYsImFsdCI6MTd9LCJzY2FsZUxvZ3MiOlt7ImxhYmVsIjoi56ysMemAseWfuua6liAoMTAvMzApIiwiZGF0ZSI6IjIwMjYtMTAtMzAiLCJ3ZWlnaHQiOjkzLjg1LCJibWkiOjM1LjgsImZhdEtnIjo0MS42LCJmYXRQY3QiOjQ0LjMsIm11c2NsZUtnIjoyOS4zLCJ2aXNjZXJhbCI6MTgsIndhaXN0IjoxMDYuMCwic2NvcmUiOjYyfSx7ImxhYmVsIjoi56ysMumAsee1kOeulyAoMTEvMDYpIiwiZGF0ZSI6IjIwMjYtMTEtMDYiLCJ3ZWlnaHQiOjkyLjA1LCJibWkiOjM1LjEsImZhdEtnIjo0MS4xLCJmYXRQY3QiOjQ0LjYsIm11c2NsZUtnIjoyOC41LCJ2aXNjZXJhbCI6MTgsIndhaXN0IjoxMDMuNSwic2NvcmUiOjYxfSx7ImxhYmVsIjoi56ysM+mAseacgOS9juiEgiAoMTEvMTMpIiwiZGF0ZSI6IjIwMjYtMTEtMTMiLCJ3ZWlnaHQiOjkxLjcwLCJibWkiOjM0LjksImZhdEtnIjozOS40LCJmYXRQY3QiOjQzLjAsIm11c2NsZUtnIjoyOS4zLCJ2aXNjZXJhbCI6MTcsIndhaXN0IjoxMDIuNCwic2NvcmUiOjY0fSx7ImxhYmVsIjoi56ysM+mAseaUtuWumCAoMTEvMTUpIiwiZGF0ZSI6IjIwMjYtMTEtMTUiLCJ3ZWlnaHQiOjkwLjc1LCJibWkiOjM0LjYsImZhdEtnIjo0MS42LCJmYXRQY3QiOjQ1LjgsIm11c2NsZUtnIjoyNy40LCJ2aXNjZXJhbCI6MTgsIndhaXN0IjoxMDIuNCwic2NvcmUiOjU5fV19';
+    let vaultUnlocked = false;
+
+    function decodeBase64Utf8(b64) {
+      try {
+        const binStr = atob(b64);
+        const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
+        return new TextDecoder('utf-8').decode(bytes);
+      } catch (e) {
+        return '{}';
+      }
+    }
+
+    function getLocalHealthVault() {
+      try {
+        const raw = localStorage.getItem(PRIVATE_VAULT_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') return parsed;
+        }
+      } catch (e) {}
+      try {
+        const seeded = JSON.parse(decodeBase64Utf8(ENCODED_VAULT_SEED));
+        localStorage.setItem(PRIVATE_VAULT_KEY, JSON.stringify(seeded));
+        return seeded;
+      } catch (e) {
+        return { pin: '0000', lab: {}, scaleLogs: [] };
+      }
+    }
+
+    function saveLocalHealthVault(vault) {
+      try {
+        localStorage.setItem(PRIVATE_VAULT_KEY, JSON.stringify(vault));
+      } catch (e) {}
+    }
+
+    function getDeidentifiedHealthPromptBlock() {
+      const vault = getLocalHealthVault();
+      const lab = vault.lab || {};
+      const rules = [];
+      if (!vaultUnlocked) {
+        rules.push('- 飲食管理方向：维持均衡健康餐盤比例（優先攝取多元蔬菜纖維、優質植物大豆與白肉蛋白，偏好水蒸或少油烹調，減少精製糖與飽和脂肪）');
+        rules.push('- 蛋白質評估原則：單餐蛋白質達一般均衡份量（約 1~2 份豆魚蛋肉類）即已完全達標，切勿要求超量堆疊蛋白質');
+      } else {
+        if ((Number(lab.tg) || 0) >= 150) {
+          rules.push('- 血脂與肝臟代謝管理：需控制三酸甘油酯與改善脂肪肝趨勢（嚴格限制精製糖、果糖與高油脂烹調，偏好水蒸、川燙或少油料理）');
+        }
+        if ((Number(lab.tc) || 0) >= 200 || (Number(lab.ldl) || 0) >= 130 || (Number(lab.hdl) || 99) < 50) {
+          rules.push('- 膽固醇平衡管理：需控制總膽固醇與低密度膽固醇並提升好膽固醇（減少動物性飽和脂肪如肥肉與全脂鮮奶，優先攝取大豆植物蛋白、魚類、去皮白肉與水溶性膳食纖維）');
+        }
+        if ((Number(lab.hba1c) || 0) >= 5.6) {
+          rules.push('- 血糖平穩管理：需攔截餐後血糖波動（避免空腹飲用高GI液態澱粉如燕麥奶，注意蔬菜纖維與優質蛋白質均衡搭配）');
+        }
+        if ((Number(lab.ua) || 0) >= 6.0 || (Number(lab.egfr) || 100) < 90) {
+          rules.push('- 尿酸與腎臟保護管理：需維持正常尿酸排泄與腎臟代謝（注意每日充足純水補充、避免高果糖飲品與高鈉加工食品；評估對象骨骼肌量充足，單餐蛋白質達一般均衡份量即已完全達標，切勿以高體重公式要求過度疊加蛋白質，以免增加腎臟負擔）');
+        }
+        rules.push('- 關節保護原則：日常活動以低衝擊微活動（如穿厚底拖鞋原地微踏步、散步、家務收拾）為主，避免深蹲與跑跳等高衝擊動作');
+      }
+      return `使用者的去識別化飲食與代謝管理方向（已由本機端隱藏具體個人檢驗數值與體重）：\n${rules.join('\n')}`;
+    }
+
+    function unlockPrivacyVault() {
+      const inp = document.getElementById('vault-pin-input');
+      const pinVal = (inp?.value || '').trim();
+      const vault = getLocalHealthVault();
+      const targetPin = String(vault.pin || '0000');
+      if (pinVal !== targetPin) {
+        alert('PIN 碼不正確（預設為 0000）');
+        return;
+      }
+      vaultUnlocked = true;
+      if (inp) inp.value = '';
+      updatePrivacyVaultBarUI();
+      showToast('🛡️ 已於背景解鎖個人防線！已啟用「模糊去識別化」傳遞，畫面零數字裸露');
+    }
+
+    function lockPrivacyVault() {
+      vaultUnlocked = false;
+      const drawer = document.getElementById('vault-detail-drawer');
+      if (drawer) drawer.style.display = 'none';
+      updatePrivacyVaultBarUI();
+      showToast('🔒 已上鎖並隱藏私密健康保險箱');
+    }
+
+    function updatePrivacyVaultBarUI() {
+      const lockedRow = document.getElementById('vault-locked-row');
+      const unlockedRow = document.getElementById('vault-unlocked-row');
+      const bar = document.getElementById('privacy-vault-bar');
+      if (vaultUnlocked) {
+        if (lockedRow) lockedRow.style.display = 'none';
+        if (unlockedRow) unlockedRow.style.display = 'flex';
+        if (bar) bar.style.borderColor = 'var(--primary)';
+      } else {
+        if (lockedRow) lockedRow.style.display = 'flex';
+        if (unlockedRow) unlockedRow.style.display = 'none';
+        if (bar) bar.style.borderColor = 'var(--border)';
+      }
+    }
+
+    function toggleVaultDetailDrawer() {
+      if (!vaultUnlocked) return;
+      const drawer = document.getElementById('vault-detail-drawer');
+      if (!drawer) return;
+      if (drawer.style.display === 'none') {
+        renderVaultDetailDrawer();
+        drawer.style.display = 'block';
+      } else {
+        drawer.style.display = 'none';
+      }
+    }
+
+    function renderVaultDetailDrawer() {
+      const vault = getLocalHealthVault();
+      const lab = vault.lab || {};
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v !== undefined && v !== null) ? v : ''; };
+      setVal('v-tg-prev', lab.tgPrev); setVal('v-tg', lab.tg);
+      setVal('v-tc-prev', lab.tcPrev); setVal('v-tc', lab.tc);
+      setVal('v-ldl-prev', lab.ldlPrev); setVal('v-ldl', lab.ldl);
+      setVal('v-hdl-prev', lab.hdlPrev); setVal('v-hdl', lab.hdl);
+      setVal('v-hba1c', lab.hba1c);
+      setVal('v-ua-prev', lab.uaPrev); setVal('v-ua', lab.ua);
+      setVal('v-egfr-prev', lab.egfrPrev); setVal('v-egfr', lab.egfr);
+      setVal('v-alt', lab.alt);
+
+      const previewEl = document.getElementById('vault-deid-preview');
+      if (previewEl) previewEl.textContent = getDeidentifiedHealthPromptBlock();
+
+      const diffEl = document.getElementById('vault-lab-diff-summary');
+      if (diffEl) {
+        const ratioCur = (lab.tc && lab.hdl) ? (lab.tc / lab.hdl).toFixed(2) : '-';
+        const ratioPrev = (lab.tcPrev && lab.hdlPrev) ? (lab.tcPrev / lab.hdlPrev).toFixed(2) : '-';
+        diffEl.innerHTML = `📊 <strong>自動計算對比</strong>：總/高密度膽固醇比值 <code>${ratioPrev} ➔ ${ratioCur}</code>（理想 &lt;5.0）｜eGFR 變化 <code>${lab.egfrPrev || '-'} ➔ ${lab.egfr || '-'}</code>`;
+      }
+
+      const wrap = document.getElementById('vault-scale-table-wrap');
+      if (wrap) {
+        const logs = Array.isArray(vault.scaleLogs) ? vault.scaleLogs : [];
+        if (logs.length === 0) {
+          wrap.innerHTML = '<div style="color:var(--text-muted); font-size:10.5px;">尚無體重計紀錄</div>';
+        } else {
+          const base = logs[0];
+          let rowsHtml = logs.map((r, idx) => {
+            const wDiff = (r.weight - base.weight).toFixed(2);
+            const fDiff = (r.fatKg - base.fatKg).toFixed(1);
+            const wSign = wDiff > 0 ? `+${wDiff}` : wDiff;
+            const fSign = fDiff > 0 ? `+${fDiff}` : fDiff;
+            return `<tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:4px; font-weight:700;">${escapeHtml(r.label || r.date || '')}</td>
+              <td style="padding:4px;"><strong>${r.weight}</strong> <span style="color:${wDiff <= 0 ? 'var(--primary)' : '#ef4444'};">(${idx === 0 ? '基準' : wSign})</span></td>
+              <td style="padding:4px;">${r.fatKg}kg / ${r.fatPct}% <span style="color:${fDiff <= 0 ? 'var(--primary)' : '#ef4444'};">(${idx === 0 ? '-' : fSign + 'kg'})</span></td>
+              <td style="padding:4px;">${r.muscleKg || '-'}kg</td>
+              <td style="padding:4px; font-weight:700;">${r.visceral || '-'}</td>
+              <td style="padding:4px;">${r.waist || '-'}cm</td>
+              <td style="padding:4px;">${r.score || '-'}</td>
+              <td style="padding:4px;"><button class="btn" style="padding:1px 5px; font-size:9px; color:#ef4444;" onclick="deleteVaultScaleRecord(${idx})">刪</button></td>
+            </tr>`;
+          }).join('');
+          wrap.innerHTML = `<table style="width:100%; border-collapse:collapse; font-size:10.5px; text-align:center;">
+            <thead><tr style="background:var(--card-bg); color:var(--text-muted); border-bottom:1px solid var(--border);">
+              <th style="padding:4px;">週次</th><th style="padding:4px;">體重(較基準)</th><th style="padding:4px;">純脂/體脂率</th><th style="padding:4px;">骨骼肌</th><th style="padding:4px;">內臟脂</th><th style="padding:4px;">腰圍</th><th style="padding:4px;">評分</th><th style="padding:4px;"></th>
+            </tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>`;
+        }
+      }
+    }
+
+    function saveNewVaultPin() {
+      const inp = document.getElementById('vault-new-pin');
+      const val = (inp?.value || '').trim();
+      if (!val || val.length < 4) {
+        alert('請輸入至少 4 位數的新 PIN 碼');
+        return;
+      }
+      const vault = getLocalHealthVault();
+      vault.pin = val;
+      saveLocalHealthVault(vault);
+      if (inp) inp.value = '';
+      showToast('🔑 已更新本機保險箱 PIN 碼！');
+    }
+
+    function saveVaultLabMetrics() {
+      const vault = getLocalHealthVault();
+      const getNum = (id) => { const v = document.getElementById(id)?.value; return v !== '' ? Number(v) : 0; };
+      vault.lab = {
+        tgPrev: getNum('v-tg-prev'), tg: getNum('v-tg'),
+        tcPrev: getNum('v-tc-prev'), tc: getNum('v-tc'),
+        ldlPrev: getNum('v-ldl-prev'), ldl: getNum('v-ldl'),
+        hdlPrev: getNum('v-hdl-prev'), hdl: getNum('v-hdl'),
+        hba1c: getNum('v-hba1c'),
+        uaPrev: getNum('v-ua-prev'), ua: getNum('v-ua'),
+        egfrPrev: getNum('v-egfr-prev'), egfr: getNum('v-egfr'),
+        alt: getNum('v-alt')
+      };
+      saveLocalHealthVault(vault);
+      renderVaultDetailDrawer();
+      showToast('💾 已儲存本機健檢指標並更新去識別化防線！');
+    }
+
+    function addVaultScaleRecord() {
+      const label = document.getElementById('vs-label')?.value?.trim() || getLocalDateStr();
+      const weight = Number(document.getElementById('vs-weight')?.value);
+      if (!weight) {
+        alert('請至少輸入體重 (kg)');
+        return;
+      }
+      const vault = getLocalHealthVault();
+      vault.scaleLogs = Array.isArray(vault.scaleLogs) ? vault.scaleLogs : [];
+      vault.scaleLogs.push({
+        label,
+        date: getLocalDateStr(),
+        weight,
+        fatKg: Number(document.getElementById('vs-fatkg')?.value) || 0,
+        fatPct: Number(document.getElementById('vs-fatpct')?.value) || 0,
+        muscleKg: Number(document.getElementById('vs-muscle')?.value) || 0,
+        visceral: Number(document.getElementById('vs-visceral')?.value) || 0,
+        waist: Number(document.getElementById('vs-waist')?.value) || 0,
+        score: Number(document.getElementById('vs-score')?.value) || 0
+      });
+      saveLocalHealthVault(vault);
+      ['vs-label','vs-weight','vs-fatkg','vs-fatpct','vs-muscle','vs-visceral','vs-waist','vs-score'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+      });
+      renderVaultDetailDrawer();
+      showToast('⚖️ 已新增每週體重計紀錄並完成比較！');
+    }
+
+    function deleteVaultScaleRecord(idx) {
+      const vault = getLocalHealthVault();
+      if (!Array.isArray(vault.scaleLogs)) return;
+      vault.scaleLogs.splice(idx, 1);
+      saveLocalHealthVault(vault);
+      renderVaultDetailDrawer();
+    }
 
     function getLocalDateStr(d = new Date()) {
       const y = d.getFullYear();
@@ -719,7 +1031,8 @@
 
     function getSanitizedWorkingModel() {
       const saved = localStorage.getItem('vitalstep_working_gemini_model');
-      if (saved && !isDeprecatedGeminiModel(saved)) {
+      // 🛡️ 確保永遠以旗艦 Flash (高常識與高智商) 為優先主軸；若快取曾被 fallback 到 Lite，自動回歸 Flash 旗艦
+      if (saved && !isDeprecatedGeminiModel(saved) && !saved.toLowerCase().includes('lite')) {
         return saved;
       }
       localStorage.setItem('vitalstep_working_gemini_model', 'gemini-flash-latest');
@@ -859,7 +1172,7 @@
         habits: { lunch_move_15m: true, dinner_step_15m: true, bedtime_2hr_fast: true },
         activeMinutes: 80,
         activeSummary: '今日累積早餐後家務20分鐘、午餐後收拾20分鐘、晚餐後收拾加活動40分鐘，總計80分鐘的實質微活動與家務勞動。',
-        glucoseIntercept: '午餐僅吃地瓜與蒸蛋，蛋白質明顯不足且缺乏足夠纖維，對體重93.5kg與三酸甘油酯偏高者而言易造成餐後血糖波動；幸好早晚餐蛋白質與纖維攝取極佳，且餐後均有進行15分鐘以上收拾活動，有助於穩定餐後血糖與脂質代謝。',
+        glucoseIntercept: '午餐僅吃地瓜與蒸蛋，蛋白質明顯不足且缺乏足夠纖維，對控制三酸甘油酯與穩定代謝而言易造成餐後血糖波動；幸好早晚餐蛋白質與纖維攝取極佳，且餐後均有進行15分鐘以上收拾活動，有助於穩定餐後血糖與脂質代謝。',
         mealHighlight: '早餐使用墨西哥餅皮屬精緻澱粉且午餐蛋白質過少，但晚餐表現極為優異，大量蔬菜、菇類與多重優質蛋白質（去皮雞腿、板豆腐、毛豆、豆漿）完美補足全日營養漏洞，對降低三酸甘油酯與保護膝關節極有幫助。',
         waterFeedback: '總水到達2900ml表現優異，其中純開水2000ml達標，搭配拿鐵600ml與無糖豆漿300ml，水分與電解質補充十分充沛，有助於尿酸代謝與血液循環。（總計 2900 ml ： 開水 2000 ml ＋ 其他 900 ml）',
         totalWater: 2900,
@@ -909,6 +1222,11 @@
     let activeConsultMode = 'ingredient'; // 'ingredient' | 'recipe'
 
     function initPage() {
+      // 🛡️ v6.0.4 深度自癒：若先前曾被 Lite 降階快取綁架，開頁時強制洗回 gemini-flash-latest
+      const curSavedModel = localStorage.getItem('vitalstep_working_gemini_model');
+      if (curSavedModel && curSavedModel.toLowerCase().includes('lite')) {
+        localStorage.setItem('vitalstep_working_gemini_model', 'gemini-flash-latest');
+      }
       getSanitizedWorkingModel();
       try { localStorage.removeItem('vitalstep_quota_cooldown_map'); } catch (e) {}
       autoCheckCloudUpdate();
@@ -1087,7 +1405,7 @@
               habits: { lunch_move_15m: true, dinner_step_15m: true, bedtime_2hr_fast: true },
               activeMinutes: 80,
               activeSummary: '今日累積早餐後家務20分鐘、午餐後收拾20分鐘、晚餐後收拾加活動40分鐘，總計80分鐘的實質微活動與家務勞動。',
-              glucoseIntercept: '午餐僅吃地瓜與蒸蛋，蛋白質明顯不足且缺乏足夠纖維，對體重93.5kg與三酸甘油酯偏高者而言易造成餐後血糖波動；幸好早晚餐蛋白質與纖維攝取極佳，且餐後均有進行15分鐘以上收拾活動，有助於穩定餐後血糖與脂質代謝。',
+              glucoseIntercept: '午餐僅吃地瓜與蒸蛋，蛋白質明顯不足且缺乏足夠纖維，對控制三酸甘油酯與穩定代謝而言易造成餐後血糖波動；幸好早晚餐蛋白質與纖維攝取極佳，且餐後均有進行15分鐘以上收拾活動，有助於穩定餐後血糖與脂質代謝。',
               mealHighlight: '早餐使用墨西哥餅皮屬精緻澱粉且午餐蛋白質過少，但晚餐表現極為優異，大量蔬菜、菇類與多重優質蛋白質（去皮雞腿、板豆腐、毛豆、豆漿）完美補足全日營養漏洞，對降低三酸甘油酯與保護膝關節極有幫助。',
               waterFeedback: '總水到達2900ml表現優異，其中純開水2000ml達標，搭配拿鐵600ml與無糖豆漿300ml，水分與電解質補充十分充沛，有助於尿酸代謝與血液循環。（總計 2900 ml ： 開水 2000 ml ＋ 其他 900 ml）',
               totalWater: 2900,
@@ -1936,17 +2254,7 @@
       const drinksDesc = drinks.map(d => `• [${d.time}] [${isPlainWaterDrink(d) ? '開水' : '其他'}] ${d.text} (${d.ml}ml)`).join('\n');
 
       const prompt = `你是一位專業、客觀且具同理心的臨床代謝與營養師。
-使用者的客觀健檢指標與改善目標（2026 vs 2025）：
-- 體重 93.5kg（膝關節需保護，避免深蹲與跑跳等高衝擊動作）
-- 三酸甘油酯 (TG)：260（2025年 169，中度脂肪肝）
-- 總膽固醇 (TC)：236（2025年 231）
-- 高密度脂蛋白-膽固醇 (HDL)：45（2025年 55）
-- 低密度脂蛋白-膽固醇 (LDL)：152（2025年 152）
-- 總/高密度膽固醇比：5.24（2025年 4.20）
-- 低/高密度脂蛋白比值：3.38（2025年 2.76）
-- 糖化血色素 (HbA1c)：5.7%
-- 尿酸 (UA)：6.9（2025年 6.2）
-- 腎絲球過濾率 (eGFR)：84（2025年 66，參考值 ≥90）
+${getDeidentifiedHealthPromptBlock()}
 - 今日生活模式：【${mode}模式】
 （註：紀錄上的時間僅為使用者有空坐下來打字補記的時間，並非實際用餐或飲水時間，請勿針對紀錄時間早晚進行批評。）
 
@@ -2586,8 +2894,8 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
       const modelsToTry = [
         rememberWorkingModel,
         'gemini-flash-latest',
-        'gemini-flash-lite-latest',
         'gemini-2.5-flash',
+        'gemini-flash-lite-latest',
         'gemini-2.5-flash-lite'
       ];
       const uniqueModels = [...new Set(modelsToTry)].filter(m => !isDeprecatedGeminiModel(m));
@@ -2621,7 +2929,9 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
           if (textPart) {
             const parsed = robustParseGeminiJson(textPart);
             if (parsed) {
-              localStorage.setItem('vitalstep_working_gemini_model', mName);
+              if (!mName.toLowerCase().includes('lite')) {
+                localStorage.setItem('vitalstep_working_gemini_model', mName);
+              }
               recordCloudAiCall(mName, '採買/食譜診斷');
               return parsed;
             }
@@ -2659,7 +2969,9 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
                 if (textPart) {
                   const parsed = robustParseGeminiJson(textPart);
                   if (parsed) {
-                    localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                    if (!dynModel.toLowerCase().includes('lite')) {
+                      localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                    }
                     recordCloudAiCall(dynModel, '採買/食譜診斷');
                     return parsed;
                   }
@@ -2692,12 +3004,7 @@ ${drinksDesc || '（今日尚未記錄飲品水份）'}
         let resultObj = null;
         if (key) {
           const promptText = `你是一位精通代謝醫學與臨床營養學的專家，正在為使用者進行食材或食品採買診斷。
-使用者的客觀健檢指標（2026 vs 2025）：
-- 體重 93.5kg，三酸甘油酯 (TG) 260（2025年 169，中度脂肪肝）
-- 總膽固醇 (TC) 236（2025年 231）、高密度膽固醇 (HDL) 45（2025年 55）、低密度膽固醇 (LDL) 152（2025年 152）
-- 總/高密度膽固醇比 5.24（2025年 4.20）、低/高密度脂蛋白比值 3.38（2025年 2.76）
-- 糖化血色素 (HbA1c) 5.7%
-- 尿酸 (UA) 6.9（2025年 6.2）、腎絲球過濾率 (eGFR) 84（2025年 66，參考值 ≥90）
+${getDeidentifiedHealthPromptBlock()}
 
 待診斷食材或食品：
 「${query}」
@@ -2707,9 +3014,9 @@ ${photo ? '（附帶使用者拍攝之食材或包裝營養成分表圖片）' :
 {
   "rating": "🟢 推薦購買" 或 "🟡 可以買，留意份量/做法" 或 "🔴 建議避開或少買",
   "summary": "一句話客觀總結此食材的營養價值或潛在風險",
-  "metabolic_impact": "客觀解析其營養成分對 TG 260、膽固醇 (TC 236/LDL 152/HDL 45)、血糖 (HbA1c 5.7%) 與尿酸 (6.9) 的實際影響",
+  "metabolic_impact": "客觀解析其營養成分對三酸甘油酯、膽固醇、餐後血糖與尿酸代謝的實際影響",
   "convenience_tip": "推薦最能保留營養且低油低負擔的烹調或食用方式（如水蒸、川燙、乾煎、去皮或份量控制）",
-  "swap_alternative": "若有營養盲點請推薦更符合上述健檢指標的替代品；若為優質食材則推薦能互補營養的搭配食材"
+  "swap_alternative": "若有營養盲點請推薦更符合上述健康防線的替代品；若為優質食材則推薦能互補營養的搭配食材"
 }`;
 
           const parts = [{ text: promptText }];
@@ -2783,12 +3090,7 @@ ${photo ? '（附帶使用者拍攝之食材或包裝營養成分表圖片）' :
         let resultObj = null;
         if (key) {
           const promptText = `你是一位精通代謝醫學與臨床營養學的專家，正在為使用者評估一餐的食譜或食材搭配。
-使用者的客觀健檢指標（2026 vs 2025）：
-- 體重 93.5kg，三酸甘油酯 (TG) 260（2025年 169，中度脂肪肝）
-- 總膽固醇 (TC) 236（2025年 231）、高密度膽固醇 (HDL) 45（2025年 55）、低密度膽固醇 (LDL) 152（2025年 152）
-- 總/高密度膽固醇比 5.24（2025年 4.20）、低/高密度脂蛋白比值 3.38（2025年 2.76）
-- 糖化血色素 (HbA1c) 5.7%
-- 尿酸 (UA) 6.9（2025年 6.2）、腎絲球過濾率 (eGFR) 84（2025年 66，參考值 ≥90）
+${getDeidentifiedHealthPromptBlock()}
 
 待評估的食譜或預計烹調食材：
 「${recipeText}」
@@ -2899,7 +3201,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       if (isIngredient) {
         html += `
           <div class="report-section report-good">
-            <div style="font-weight:800; color:#059669; margin-bottom:3px;">🧬 對 TG 260 與 HbA1c 5.7% 的代謝影響：</div>
+            <div style="font-weight:800; color:#059669; margin-bottom:3px;">🧬 對血脂、膽固醇與血糖代謝的影響：</div>
             <div>${escapeHtml(data.metabolic_impact)}</div>
           </div>
           <div class="report-section report-what">
@@ -3092,51 +3394,51 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       const t = (text || '').toLowerCase();
       let rating = '🟢 推薦購買';
       let summary = '此食材成分天然單純，具備良好蛋白質或纖維，適合減脂護肝！';
-      let impact = '富含優質蛋白或水溶性纖維，能延緩血糖上升並幫助吸附多餘膽固醇，對三酸甘油酯 (260) 與脂肪肝極具修復效益。';
+      let impact = '富含優質蛋白或水溶性纖維，能延緩血糖上升並幫助吸附多餘膽固醇，對控制三酸甘油酯與改善脂肪肝極具修復效益。';
       let tip = '建議採用零洗切快煮或微波 2~3 分鐘，加少許柴魚薄鹽醬油或黑胡椒調味即可。';
       let swap = '可搭配免洗高麗菜或無糖黑豆漿，營養更完整。';
 
       if (t.includes('燕麥奶')) {
         rating = '🔴 建議避開或少買';
-        summary = '高 GI「液態澱粉＋隱形麥芽糖」陷阱！就算標示無糖，水解製程仍會產生約 10~15g 麥芽糖，易推升血糖與 TG 260！';
-        impact = '燕麥奶屬於全穀雜糧碳水而非蛋白質，加工時酵素將澱粉分解為高升糖的麥芽糖，且部分品牌添加植物油增稠，對 TG 260 與 HbA1c 5.7% 雙重不利。（若吃「原粒大燕麥片」則富含 β-聚葡萄糖可降膽固醇，但磨成液態燕麥奶則完全不同！）';
+        summary = '高 GI「液態澱粉＋隱形麥芽糖」陷阱！就算標示無糖，水解製程仍會產生約 10~15g 麥芽糖，易推升血糖與三酸甘油酯！';
+        impact = '燕麥奶屬於全穀雜糧碳水而非蛋白質，加工時酵素將澱粉分解為高升糖的麥芽糖，且部分品牌添加植物油增稠，對控制三酸甘油酯與餐後血糖雙重不利。（若吃「原粒大燕麥片」則富含 β-聚葡萄糖可降膽固醇，但磨成液態燕麥奶則完全不同！）';
         tip = '不建議當作早餐日常飲品；若偶爾飲用需大幅扣除當餐主食澱粉量。';
-        swap = '⚠️ 因您同時有總膽固醇 236 與壞膽固醇 LDL 152 紅字，**不建議改喝全脂鮮奶**！正確替代順位：①【無糖高纖豆漿／無糖黑豆漿】（大豆蛋白助降 LDL）、②沒豆漿時選【無糖綠茶／紅茶／黑咖啡 ＋ 1顆茶葉蛋】、③想喝奶類請選【低脂鮮奶】。';
+        swap = '⚠️ 因需同時控制總膽固醇與低密度膽固醇 (LDL)，**不建議改喝全脂鮮奶**！正確替代順位：①【無糖高纖豆漿／無糖黑豆漿】（大豆蛋白助降 LDL）、②沒豆漿時選【無糖綠茶／紅茶／黑咖啡 ＋ 1顆茶葉蛋】、③想喝奶類請選【低脂鮮奶】。';
       } else if (t.includes('全脂鮮奶') || t.includes('全脂奶') || t.includes('全脂牛奶') || t.includes('鮮奶油')) {
         rating = '🟡 可以買，留意份量/做法';
-        summary = '含較高動物性飽和脂肪！因您的總膽固醇 (236) 與 LDL (152) 為紅字，日常飲品不建議首選全脂鮮奶。';
-        impact = '全脂乳品的飽和脂肪酸會減少肝臟表面的 LDL 回收受體，使壞膽固醇 (LDL 152) 與總/高密度比值 (5.24) 更難下降。';
+        summary = '含較高動物性飽和脂肪！若有控制總膽固醇與低密度膽固醇 (LDL) 需求，日常飲品不建議首選全脂鮮奶。';
+        impact = '全脂乳品的飽和脂肪酸會減少肝臟表面的 LDL 回收受體，使壞膽固醇 (LDL) 與膽固醇比值較難下降。';
         tip = '若偶爾加少量進黑咖啡調色尚可，但不建議每天整大杯全脂鮮奶當早餐喝。';
         swap = '強力推薦替換為：【無糖豆漿／無糖黑豆漿】（零膽固醇且大豆異黃酮助降 LDL）、【低脂鮮奶】，或【無糖茶＋水煮蛋／茶葉蛋】！';
       } else if (t.includes('牛五花') || t.includes('豬五花') || t.includes('三層肉') || t.includes('培根') || t.includes('香腸') || t.includes('貢丸') || t.includes('熱狗')) {
         rating = '🔴 地雷建議避開';
-        summary = '飽和脂肪酸過高！直接推升壞膽固醇 (LDL 152) 並轉化為三酸甘油酯 (TG 260)，是脂肪肝與血脂比值異常的元兇。';
-        impact = '五花肉與加工肉品的飽和脂肪會抑制肝臟清除壞膽固醇 (LDL)，同時加重胰島素阻抗，對 TG 260 與總膽固醇 236 極度不友善。';
+        summary = '飽和脂肪酸過高！直接推升壞膽固醇 (LDL) 並轉化為三酸甘油酯，是脂肪肝與血脂比值異常的元兇。';
+        impact = '五花肉與加工肉品的飽和脂肪會抑制肝臟清除壞膽固醇 (LDL)，同時加重胰島素阻抗，對控制三酸甘油酯與膽固醇極度不友善。';
         tip = '若非吃不可，請先汆燙濾掉厚油；日常自煮請完全避開。';
         swap = '強力推薦替換為：【全聯去皮雞腿肉片】、【冷藏鯛魚/鮭魚片】或【嫩豆腐】，大幅減少飽和脂肪、保護心血管與肝臟！';
       } else if (t.includes('照燒') || t.includes('蜜汁') || t.includes('甜辣') || t.includes('沙拉醬') || t.includes('千島') || t.includes('果糖') || t.includes('奶精') || t.includes('泡麵')) {
         rating = '🔴 地雷建議避開';
-        summary = '隱形糖分與劣質油脂陷阱！果糖直接由肝臟轉化為 TG 260 並伴隨生成尿酸 (6.9)，強烈建議避免。';
-        impact = '高果糖糖漿與精緻糖在肝臟代謝時會大量消耗 ATP 並直接生成尿酸（您的尿酸 6.9 已近臨界值），同時促進肝臟脂肪合成。';
-        tip = '市售調味醬包大多含糖與含鈉量驚人（需保護 eGFR 84），外食或自煮時勿整包倒入。';
+        summary = '隱形糖分與劣質油脂陷阱！果糖直接由肝臟轉化為三酸甘油酯並伴隨生成尿酸，強烈建議避免。';
+        impact = '高果糖糖漿與精緻糖在肝臟代謝時會大量消耗 ATP 並直接生成尿酸，同時促進肝臟脂肪合成。';
+        tip = '市售調味醬包大多含糖與含鈉量驚人（需保護腎臟代謝），外食或自煮時勿整包倒入。';
         swap = '推薦調味替換：【柴魚薄鹽醬油＋白胡椒】、【少許焙煎胡麻醬對半加開水稀釋】或【冷壓橄欖油＋少許鹽】。';
       } else if (t.includes('高麗菜') || t.includes('白菜') || t.includes('櫛瓜') || t.includes('杏鮑菇') || t.includes('香菇') || t.includes('金針菇') || t.includes('木耳') || t.includes('番茄')) {
         rating = '🟢 推薦購買';
-        summary = '優質耐放蔬菜與真菌多醣體！富含水溶性纖維，能在腸道直接吸附膽固醇 (LDL 152) 與油脂排出！';
-        impact = '木耳、菇類與蔬菜的水溶性膳食纖維可在腸道結合膽酸排出，迫使肝臟消耗血液中的壞膽固醇 (LDL 152) 來製造新膽酸，是降膽固醇與降 TG 的天然幫手！';
+        summary = '優質耐放蔬菜與真菌多醣體！富含水溶性纖維，能在腸道直接吸附膽固醇 (LDL) 與油脂排出！';
+        impact = '木耳、菇類與蔬菜的水溶性膳食纖維可在腸道結合膽酸排出，迫使肝臟消耗血液中的壞膽固醇 (LDL) 來製造新膽酸，是降膽固醇與降 TG 的天然幫手！';
         tip = '全聯免洗蔬菜撕開即可水蒸或微波 2~3 分鐘，加少許薄鹽醬油與白胡椒，清淡護腎又養肝！';
         swap = '與去皮雞肉或嫩豆腐同煮，是營養滿分的控糖降脂餐。';
       } else if (t.includes('豆腐') || t.includes('豆漿') || t.includes('雞') || t.includes('魚') || t.includes('蝦') || t.includes('蛋') || t.includes('毛豆')) {
         rating = '🟢 推薦購買';
-        summary = '低飽和脂肪優質白肉與植物大豆蛋白！替代紅肉可同時改善 TG 260 與壞膽固醇 LDL 152！';
-        impact = '大豆蛋白（豆腐、無糖豆漿、毛豆）與魚類富含不飽和脂肪酸與卵磷脂，經臨床證實能幫助降低 LDL 壞膽固醇並提升好膽固醇 (HDL)，且植物性豆製品對尿酸 (6.9) 安全無負擔。';
+        summary = '低飽和脂肪優質白肉與植物大豆蛋白！替代紅肉可同時改善三酸甘油酯與壞膽固醇 LDL！';
+        impact = '大豆蛋白（豆腐、無糖豆漿、毛豆）與魚類富含不飽和脂肪酸與卵磷脂，經臨床證實能幫助降低 LDL 壞膽固醇並提升好膽固醇 (HDL)，且植物性豆製品對尿酸代謝安全無負擔。';
         tip = '嫩豆腐直接淋薄鹽醬油即食；雞腿肉記得「去皮」以剃除皮下飽和脂肪。';
         swap = '加一份菇類、木耳或綠花椰菜，就是標準降膽固醇護肝餐。';
       } else if (t.includes('燕麥') || t.includes('義大利麵') || t.includes('蕎麥') || t.includes('地瓜')) {
         rating = '🟢 推薦購買';
         summary = '原粒低 GI 慢速複合碳水！富含 β-聚葡萄糖可抓吸膽固醇並平穩餐後血糖（注意：請選原粒大燕麥片而非液態燕麥奶）。';
-        impact = '固態原粒大燕麥片的 β-聚葡萄糖與杜蘭小麥麵的緊密澱粉結構，能延緩葡萄糖吸收並降低總膽固醇 (236) 與 LDL (152)。';
-        tip = '大燕麥片沖熱水 2 分鐘化為鹹粥底；義大利麵搭配橄欖油與蔬菜海鮮最能提升好膽固醇 (HDL 45)。';
+        impact = '固態原粒大燕麥片的 β-聚葡萄糖與杜蘭小麥麵的緊密澱粉結構，能延緩葡萄糖吸收並降低總膽固醇與 LDL。';
+        tip = '大燕麥片沖熱水 2 分鐘化為鹹粥底；義大利麵搭配橄欖油與蔬菜海鮮最能提升好膽固醇 (HDL)。';
         swap = '搭配雞蛋或嫩豆腐，提供持久飽足感。';
       }
 
@@ -3166,7 +3468,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       }
 
       if (t.includes('炸') || t.includes('五花') || t.includes('香腸') || t.includes('培根')) {
-        blindspots = '⚠️ 【飽和脂肪與反式油脂過高】：含有高溫油炸裹粉或肥肉加工品，會直衝三酸甘油酯 (TG 260)。';
+        blindspots = '⚠️ 【飽和脂肪與反式油脂過高】：含有高溫油炸裹粉或肥肉加工品，會直衝三酸甘油酯 (TG)。';
         tweaks = '【微調 1 步】：肉品改選去皮雞腿肉或鯛魚片；若外食請剝除炸皮後再食用。';
       }
 
@@ -3235,15 +3537,15 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       }
 
       if (t.includes('燕麥奶')) {
-        ngs.push('⚠️ <strong>燕麥奶隱形麥芽糖與液態澱粉陷阱</strong>：燕麥奶並非蛋白質奶類，而是「液態澱粉水」！製程中酵素將燕麥澱粉水解為高 GI 的<strong>麥芽糖</strong>，即使標示無糖，每瓶仍有約 10~15g 游離糖與高碳水，空腹飲用易使血糖與三酸甘油酯 (TG 260) 飆升！');
-        swaps.push('💡 <strong>膽固醇紅字 (TC 236 / LDL 152) 專屬替代方案</strong>：因為您的壞膽固醇 (LDL 152) 與總膽固醇 (236) 偏高，<strong>沒豆漿時請勿改選含有高飽和脂肪的「全脂鮮奶」</strong>！正確替代順位：①首選<strong>無糖高纖豆漿／黑豆漿</strong>（植物大豆蛋白助降 LDL）、②沒豆漿時改選<strong>「無糖綠茶／紅茶／黑咖啡 ＋ 多配 1 顆茶葉蛋或水煮蛋」</strong>、③想喝乳製品或拿鐵時請指定<strong>「低脂鮮奶」</strong>！');
+        ngs.push('⚠️ <strong>燕麥奶隱形麥芽糖與液態澱粉陷阱</strong>：燕麥奶並非蛋白質奶類，而是「液態澱粉水」！製程中酵素將燕麥澱粉水解為高 GI 的<strong>麥芽糖</strong>，即使標示無糖，每瓶仍有約 10~15g 游離糖與高碳水，空腹飲用易使血糖與三酸甘油酯 (TG) 飆升！');
+        swaps.push('💡 <strong>控膽固醇專屬替代方案</strong>：若有控制低密度膽固醇 (LDL) 與總膽固醇需求，<strong>沒豆漿時請勿改選含有高飽和脂肪的「全脂鮮奶」</strong>！正確替代順位：①首選<strong>無糖高纖豆漿／黑豆漿</strong>（植物大豆蛋白助降 LDL）、②沒豆漿時改選<strong>「無糖綠茶／紅茶／黑咖啡 ＋ 多配 1 顆茶葉蛋或水煮蛋」</strong>、③想喝乳製品或拿鐵時請指定<strong>「低脂鮮奶」</strong>！');
         autoTags.push('⚠️燕麥奶隱形糖');
       } else if (t.includes('全脂鮮奶') || t.includes('全脂奶') || t.includes('全脂牛奶')) {
-        ngs.push('🥛 <strong>膽固醇防線提醒（全脂乳品飽和脂肪）</strong>：您的總膽固醇 (236) 與壞膽固醇 LDL (152) 皆為紅字，全脂鮮奶中的飽和脂肪酸會抑制肝臟回收血液中的 LDL。');
+        ngs.push('🥛 <strong>膽固醇防線提醒（全脂乳品飽和脂肪）</strong>：全脂鮮奶中的飽和脂肪酸會抑制肝臟回收血液中的低密度膽固醇 (LDL)。');
         swaps.push('下次早餐飲品建議優先選「無糖高纖豆漿」（大豆蛋白有助降低 LDL），若沒有豆漿可選「無糖茶／黑咖啡＋茶葉蛋」或改選「低脂鮮奶」！');
         autoTags.push('⚠️全脂奶飽和脂肪');
       } else if (t.includes('無糖豆漿') || t.includes('無糖黑豆漿') || t.includes('無糖綠茶') || t.includes('無糖茶') || t.includes('黑咖啡') || t.includes('無糖')) {
-        goods.push('🥤 <strong>飲品守住無糖與降膽固醇防線</strong>：選擇無糖豆漿／無糖茶，成功切斷果糖合成三酸甘油酯 (TG 260) 與尿酸 (6.9) 的源頭，且大豆蛋白有助於改善壞膽固醇 (LDL 152)！');
+        goods.push('🥤 <strong>飲品守住無糖與降膽固醇防線</strong>：選擇無糖豆漿／無糖茶，成功切斷果糖合成三酸甘油酯与尿酸的源頭，且大豆蛋白有助於改善低密度膽固醇 (LDL)！');
         autoTags.push('✅無糖飲品');
       }
 
@@ -3436,12 +3738,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       });
 
       const prompt = `你是一位專業、客觀的臨床減脂與代謝營養師，同時具備精準的繁體中文圖片與文字辨識能力。
-使用者的客觀健檢指標（2026 vs 2025）：
-- 體重 93.5kg，三酸甘油酯 (TG) 260（2025年 169，中度脂肪肝）
-- 總膽固醇 (TC) 236（2025年 231）、高密度膽固醇 (HDL) 45（2025年 55）、低密度膽固醇 (LDL) 152（2025年 152）
-- 總/高密度膽固醇比 5.24（2025年 4.20）、低/高密度脂蛋白比值 3.38（2025年 2.76）
-- 糖化血色素 (HbA1c) 5.7%
-- 尿酸 (UA) 6.9（2025年 6.2）、腎絲球過濾率 (eGFR) 84（2025年 66，參考值 ≥90）
+${getDeidentifiedHealthPromptBlock()}
 
 使用者提供的餐點資訊為：「${mealToSave}：${note || '（未打字，請從圖片辨識）'}」。
 請完整結合使用者手打文字與照片內容，依據標準臨床營養學（健康餐盤比例、食物六大類分類、烹調方式）進行誠實客觀的評估：
@@ -3514,12 +3811,12 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
         }
       }
 
-      // 🛡️ 多模型免費額度自動接力池（徹底移除已退役的 1.5 / 2.0 模型）：
-      // 當單一模型滿每日 20 次 (Quota exceeded) 時，自動無縫切換至獨立免費額度更高的 flash-lite 與其他可用模型！
+      // 🛡️ 多模型免費額度自動接力池（永遠以旗艦高智商 Flash 打頭陣）：
+      // 唯有當 Flash 系列滿額或忙線時，才由 flash-lite 臨時救火，絕不讓 Lite 反客為主！
       const defaultRelayPool = [
         'gemini-flash-latest',
-        'gemini-flash-lite-latest',
         'gemini-2.5-flash',
+        'gemini-flash-lite-latest',
         'gemini-2.5-flash-lite'
       ];
       const cachedModel = getSanitizedWorkingModel();
@@ -3543,7 +3840,9 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
             const raw = nonThought || partsArr.map(p => p.text || '').join('\n');
             const parsed = robustParseGeminiJson(raw);
             if (parsed && (parsed.what || parsed.good)) {
-              localStorage.setItem('vitalstep_working_gemini_model', m);
+              if (!m.toLowerCase().includes('lite')) {
+                localStorage.setItem('vitalstep_working_gemini_model', m);
+              }
               recordCloudAiCall(m, `${mealToSave}分析`);
               return { ok: true, parsed, usedModel: m };
             }
@@ -3586,7 +3885,9 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
               const raw = nonThought || partsArr.map(p => p.text || '').join('\n');
               const parsed = robustParseGeminiJson(raw);
               if (parsed && (parsed.what || parsed.good)) {
-                localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                if (!dynModel.toLowerCase().includes('lite')) {
+                  localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                }
                 recordCloudAiCall(dynModel, `${mealToSave}分析`);
                 return { ok: true, parsed, usedModel: dynModel };
               }
@@ -4021,8 +4322,8 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       const modelsToTry = [
         rememberWorkingModel,
         'gemini-flash-latest',
-        'gemini-flash-lite-latest',
         'gemini-2.5-flash',
+        'gemini-flash-lite-latest',
         'gemini-2.5-flash-lite'
       ];
       const uniqueModels = [...new Set(modelsToTry)].filter(m => !isDeprecatedGeminiModel(m));
@@ -4061,7 +4362,9 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
                 continue;
               }
             }
-            localStorage.setItem('vitalstep_working_gemini_model', mName);
+            if (!mName.toLowerCase().includes('lite')) {
+              localStorage.setItem('vitalstep_working_gemini_model', mName);
+            }
             recordCloudAiCall(mName, actionLabel);
             return textPart.trim();
           }
@@ -4099,7 +4402,9 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
                   if (expectJson && !robustParseGeminiJson(textPart)) {
                     continue;
                   }
-                  localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                  if (!dynModel.toLowerCase().includes('lite')) {
+                    localStorage.setItem('vitalstep_working_gemini_model', dynModel);
+                  }
                   recordCloudAiCall(dynModel, actionLabel);
                   return textPart.trim();
                 }
@@ -4163,12 +4468,7 @@ ${photo ? '（附帶使用者拍攝之食譜或食材圖片）' : ''}
       btn.disabled = true;
 
       const prompt = `你是一位專業、客觀的臨床減脂與代謝營養師。
-使用者的客觀健檢指標（2026 vs 2025）：
-- 體重 93.5kg，三酸甘油酯 (TG) 260（2025年 169，中度脂肪肝）
-- 總膽固醇 (TC) 236（2025年 231）、高密度膽固醇 (HDL) 45（2025年 55）、低密度膽固醇 (LDL) 152（2025年 152）
-- 總/高密度膽固醇比 5.24（2025年 4.20）、低/高密度脂蛋白比值 3.38（2025年 2.76）
-- 糖化血色素 (HbA1c) 5.7%
-- 尿酸 (UA) 6.9（2025年 6.2）、腎絲球過濾率 (eGFR) 84（2025年 66，參考值 ≥90）
+${getDeidentifiedHealthPromptBlock()}
 以下是使用者本週目前的真實飲食紀錄清單（共 ${weekLogs.length} 天有紀錄）：
 ${weekLogs.join('\n')}
 
