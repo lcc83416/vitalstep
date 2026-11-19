@@ -660,7 +660,7 @@
   </div>
 
   <script>
-    const BUILD_VERSION_TIMESTAMP = 1763474400000; // 2026-11-18 v6.0.4 鎖定旗艦高智商 Flash 優先順序，阻斷 Lite 降階逆向快取 Bug
+    const BUILD_VERSION_TIMESTAMP = 1763524800000; // 2026-11-19 v6.0.5 修復未填容量自動誤加 300ml 飲水記錄 Bug，增加防呆提醒並保留輸入內容
     const ISOLATED_KEY_NAME = 'vitalstep_meal_ai_isolated_key';
     const AI_USAGE_COUNTER_KEY = 'vitalstep_cloud_ai_usage_v1';
     const MEAL_AI_LOGS_KEY = 'vitalstep_meal_ai_daily_logs';
@@ -1039,7 +1039,7 @@
             list.forEach(item => {
               if (item && item.text) {
                 const corrected = extractMlFromText(item.text);
-                if (corrected !== item.ml) {
+                if (corrected && corrected !== item.ml) {
                   const innerMatch = item.text.match(/\(([^)]*)\)|（([^）]*)）/);
                   if (innerMatch && (innerMatch[1] || innerMatch[2] || '').includes(String(item.ml))) {
                     item.ml = corrected;
@@ -1682,7 +1682,7 @@
     }
 
     function extractMlFromText(text) {
-      if (!text) return 300;
+      if (!text) return null;
 
       // 1. 優先檢查明確的「共 / 總共 / 合計 / 整杯」數字（例如：綠茶+芭樂汁 共850）
       const totalMatch = text.match(/(?:共|總共|合計|整杯)\s*(\d{2,4})\s*(?:ml|毫升|c\.?c\.?)?/i);
@@ -1720,7 +1720,7 @@
         }
       }
 
-      return 300; // 預設一杯約 300ml
+      return null;
     }
 
     function addDrinkLog() {
@@ -1731,8 +1731,17 @@
         showToast('請先輸入飲品或水分名稱喔！');
         return;
       }
-      const time = timeInp?.value || new Date().toTimeString().slice(0, 5);
       const ml = extractMlFromText(text);
+      if (!ml) {
+        showToast(`⚠️ 請填寫容量毫升數喔！（例：${text} 400 或 開水 500）`);
+        if (textInp) {
+          textInp.focus();
+          const len = textInp.value.length;
+          textInp.setSelectionRange(len, len);
+        }
+        return;
+      }
+      const time = timeInp?.value || new Date().toTimeString().slice(0, 5);
       const category = isPlainWaterDrink(text) ? 'water' : 'other';
       const newEntry = {
         id: Date.now(),
